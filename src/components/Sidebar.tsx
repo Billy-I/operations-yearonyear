@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, Database, BarChart2, ShoppingCart, Compass, LineChart, LogOut } from 'lucide-react';
+import { LayoutDashboard, Settings, Database, BarChart2, ShoppingCart, Compass, LineChart, LogOut, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Sidebar() {
@@ -26,6 +26,10 @@ export default function Sidebar() {
             <Link to="/analytics/explorer" className="flex items-center space-x-2 p-2 hover:bg-gray-200 rounded">
               <LineChart size={20} />
               <span>Explorer</span>
+            </Link>
+            <Link to="/analytics/multi-year" className="flex items-center space-x-2 p-2 hover:bg-gray-200 rounded">
+              <TrendingUp size={20} />
+              <span>Multi Year</span>
             </Link>
           </div>
         </div>
