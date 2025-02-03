@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import OperationsCenter from './pages/OperationsCenter';
 import Explorer from './pages/Explorer';
 import CropDetails from './pages/CropDetails';
+import MultiYear from './pages/MultiYear';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
             <Route path="/data/operations" element={<OperationsCenter />} />
             <Route path="/analytics/explorer" element={<Explorer />} />
             <Route path="/analytics/explorer/:crop" element={<CropDetails />} />
+            <Route path="/analytics/multi-year" element={<MultiYear />} />
           </Routes>
         </div>
       </div>

@@ -290,6 +290,14 @@ export default function CropDetails() {
         </div>
         <div className="flex items-center space-x-4">
           <button className="px-4 py-2 bg-gray-100 rounded-md text-gray-700">
+            <Link
+              to="/analytics/multi-year"
+              className="text-gray-700 hover:text-gray-900"
+            >
+              Multi year
+            </Link>
+          </button>
+          <button className="px-4 py-2 bg-gray-100 rounded-md text-gray-700">
             View programmes
           </button>
           <div className="flex items-center space-x-2">
