@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ViewType, UnitType, Year, ChemicalBreakdown } from '../../types/analytics';
 import { metricsData } from '../../data/metricsData';
+import { getVariableCosts, getOperationsCosts, getTotalCosts } from '../../utils/metricsCalculations';
 
-type DataMetricType = Exclude<keyof typeof metricsData, 'chemicalBreakdown'>;
+type DataMetricType = Exclude<keyof typeof metricsData, 'chemicalBreakdown'> | 'variableCosts' | 'operationsCosts' | 'totalCosts';
 
 const CHEMICAL_COLORS = {
   traceElement: '#1F2937',  // Darkest gray
@@ -47,6 +48,9 @@ export function MultiYearGraph({ selectedView, selectedYears, selectedUnit }: Mu
       case 'Total':
         return [
           { value: 'production', label: 'Production' },
+          { value: 'variableCosts', label: 'Variable Costs' },
+          { value: 'operationsCosts', label: 'Operations Costs' },
+          { value: 'totalCosts', label: 'Total Costs' },
           { value: 'netMargin', label: 'Net Margin' },
           { value: 'yield', label: 'Yield' }
         ];
@@ -68,6 +72,27 @@ export function MultiYearGraph({ selectedView, selectedYears, selectedUnit }: Mu
       return year === 'Yearly avg' ||
         (Number(year) >= 2019 && Number(year) <= 2024 && !isNaN(Number(year)));
     });
+
+    if (selectedMetric === 'variableCosts') {
+      return validYears.map(year => ({
+        year,
+        value: getVariableCosts(year, selectedUnit)
+      }));
+    }
+
+    if (selectedMetric === 'operationsCosts') {
+      return validYears.map(year => ({
+        year,
+        value: getOperationsCosts(year, selectedUnit)
+      }));
+    }
+
+    if (selectedMetric === 'totalCosts') {
+      return validYears.map(year => ({
+        year,
+        value: getTotalCosts(year, selectedUnit)
+      }));
+    }
 
     if (selectedMetric === 'chemicals') {
       return validYears.map(year => {
