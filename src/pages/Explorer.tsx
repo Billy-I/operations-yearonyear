@@ -225,12 +225,14 @@ export default function Explorer() {
                       <ChevronDown size={16} />
                     </div>
                   </th>
-                  <th className="px-4 py-3">
-                    <div className="flex items-center justify-center space-x-1">
-                      <span>Market Range</span>
-                      <HelpCircle size={16} className="text-gray-400" />
-                    </div>
-                  </th>
+                  {selectedView === 'Variable' && (
+                    <th className="px-4 py-3">
+                      <div className="flex items-center justify-center space-x-1">
+                        <span>Market Range</span>
+                        <HelpCircle size={16} className="text-gray-400" />
+                      </div>
+                    </th>
+                  )}
                   <th className="px-4 py-3">
                     <div className="flex items-center justify-end space-x-1">
                       <span>CoP</span>
@@ -274,30 +276,32 @@ export default function Explorer() {
                         </Link>
                       </td>
                       <td className="px-4 py-4">{crop.area}</td>
-                      <td className="px-4 py-4">
-                        <div className="relative w-48 mx-auto">
-                          <div className="h-1 bg-gray-200 rounded">
-                            <div 
-                              className="absolute h-1 bg-gray-400 rounded"
-                              style={{
-                                left: `${(crop.marketRange.min / crop.marketRange.max) * 100}%`,
-                                right: `${100 - ((crop.marketRange.current / crop.marketRange.max) * 100)}%`
-                              }}
-                            />
-                          </div>
-                          <div 
-                            className="absolute top-1/2 w-2 h-2 bg-gray-600 rounded-full transform -translate-y-1/2"
-                            style={{
-                              left: `${(crop.marketRange.current / crop.marketRange.max) * 100}%`,
-                              marginLeft: '-4px'
-                            }}
-                          />
-                          <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>£{crop.marketRange.min.toFixed(2)}/t</span>
-                            <span>£{crop.marketRange.max.toFixed(2)}/t</span>
-                          </div>
-                        </div>
-                      </td>
+                     {selectedView === 'Variable' && (
+                       <td className="px-4 py-4">
+                         <div className="relative w-48 mx-auto">
+                           <div className="h-1 bg-gray-200 rounded">
+                             <div
+                               className="absolute h-1 bg-gray-400 rounded"
+                               style={{
+                                 left: `${(crop.marketRange.min / crop.marketRange.max) * 100}%`,
+                                 right: `${100 - ((crop.marketRange.current / crop.marketRange.max) * 100)}%`
+                               }}
+                             />
+                           </div>
+                           <div
+                             className="absolute top-1/2 w-2 h-2 bg-gray-600 rounded-full transform -translate-y-1/2"
+                             style={{
+                               left: `${(crop.marketRange.current / crop.marketRange.max) * 100}%`,
+                               marginLeft: '-4px'
+                             }}
+                           />
+                           <div className="flex justify-between text-xs text-gray-500 mt-1">
+                             <span>£{crop.marketRange.min.toFixed(2)}/t</span>
+                             <span>£{crop.marketRange.max.toFixed(2)}/t</span>
+                           </div>
+                         </div>
+                       </td>
+                     )}
                       <td className="px-4 py-4 text-right">
                         <span className={crop.cop.hasWarning ? 'text-gray-700 font-medium' : ''}>
                           £{(crop.cop.value * multiplier).toFixed(2)}/t

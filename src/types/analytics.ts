@@ -5,11 +5,19 @@ export interface MetricData {
   perHectare: number;
 }
 
+export interface ChemicalBreakdown {
+  traceElement: { [key in Year]: MetricData };
+  herbicide: { [key in Year]: MetricData };
+  fungicide: { [key in Year]: MetricData };
+  adjuvant: { [key in Year]: MetricData };
+}
+
 export interface MetricsData {
   costOfProduction: { [key in Year]: MetricData };
   seed: { [key in Year]: MetricData };
   fertiliser: { [key in Year]: MetricData };
   chemicals: { [key in Year]: MetricData };
+  chemicalBreakdown: ChemicalBreakdown;
   grossMargin: { [key in Year]: MetricData };
   cultivating: { [key in Year]: MetricData };
   drilling: { [key in Year]: MetricData };

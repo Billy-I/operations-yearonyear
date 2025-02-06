@@ -352,15 +352,21 @@ export default function CropDetails() {
                 <HelpCircle size={16} className="text-gray-400" />
               </div>
               <div className="p-4 bg-gray-50 rounded-lg h-[120px]">
-                <div className="font-bold mb-2">8.40 t/ha</div>
-                <div className="relative w-full h-1 bg-gray-200 rounded">
-                  <div className="absolute h-full bg-gray-400 rounded" style={{ width: '60%' }} />
-                  <div className="absolute w-2 h-2 bg-black rounded-full top-1/2 transform -translate-y-1/2" style={{ left: '60%' }} />
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>4.77t/ha</span>
-                  <span>11.15t/ha</span>
-                </div>
+                {crop === "Wheat (Winter)" && selectedView !== "Variable" ? (
+                  <div className="font-bold">Not available</div>
+                ) : (
+                  <>
+                    <div className="font-bold mb-2">8.40 t/ha</div>
+                    <div className="relative w-full h-1 bg-gray-200 rounded">
+                      <div className="absolute h-full bg-gray-400 rounded" style={{ width: '60%' }} />
+                      <div className="absolute w-2 h-2 bg-black rounded-full top-1/2 transform -translate-y-1/2" style={{ left: '60%' }} />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>4.77t/ha</span>
+                      <span>11.15t/ha</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -402,15 +408,21 @@ export default function CropDetails() {
                 <HelpCircle size={16} className="text-gray-400" />
               </div>
               <div className="p-4 bg-gray-50 rounded-lg h-[120px]">
-                <div className="font-bold mb-2">{getCostValue(varietyData[0], 'costPerTonne')}</div>
-                <div className="relative w-full h-1 bg-gray-200 rounded">
-                  <div className="absolute h-full bg-gray-400 rounded" style={{ width: '40%' }} />
-                  <div className="absolute w-2 h-2 bg-black rounded-full top-1/2 transform -translate-y-1/2" style={{ left: '40%' }} />
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>£3.08/t</span>
-                  <span>£254.32/t</span>
-                </div>
+                {crop === "Wheat (Winter)" && selectedView !== "Variable" ? (
+                  <div className="font-bold">Not available</div>
+                ) : (
+                  <>
+                    <div className="font-bold mb-2">{getCostValue(varietyData[0], 'costPerTonne')}</div>
+                    <div className="relative w-full h-1 bg-gray-200 rounded">
+                      <div className="absolute h-full bg-gray-400 rounded" style={{ width: '40%' }} />
+                      <div className="absolute w-2 h-2 bg-black rounded-full top-1/2 transform -translate-y-1/2" style={{ left: '40%' }} />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>£3.08/t</span>
+                      <span>£254.32/t</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

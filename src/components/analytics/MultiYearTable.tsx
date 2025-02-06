@@ -1,5 +1,7 @@
-import { ViewType, UnitType } from '../../types/analytics';
+import { useState } from 'react';
+import { ViewType, UnitType, Year } from '../../types/analytics';
 import { getValue, getVariableCosts, getOperationsCosts, getTotalCosts } from '../../utils/metricsCalculations';
+import { metricsData } from '../../data/metricsData';
 
 interface MultiYearTableProps {
   selectedView: ViewType;
@@ -14,6 +16,9 @@ export const MultiYearTable = ({
   selectedUnit,
   setSelectedUnit
 }: MultiYearTableProps) => {
+  const [isChemicalsOpen, setIsChemicalsOpen] = useState(false);
+  const [selectedChemical, setSelectedChemical] = useState<keyof typeof metricsData.chemicalBreakdown | null>(null);
+
   const renderVariableView = () => (
     <>
       <tr>
@@ -52,7 +57,15 @@ export const MultiYearTable = ({
         </td>
       </tr>
       <tr>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Chemicals</td>
+        <td
+          className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 cursor-pointer"
+          onClick={() => setIsChemicalsOpen(!isChemicalsOpen)}
+        >
+          <div className="flex items-center space-x-2">
+            <span>{isChemicalsOpen ? '▼' : '▶'}</span>
+            <span>Chemicals</span>
+          </div>
+        </td>
         {selectedYears.map((year) => (
           <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
             {getValue('chemicals', year, selectedUnit).toFixed(2)}
@@ -62,6 +75,74 @@ export const MultiYearTable = ({
           {getValue('chemicals', 'Yearly avg', selectedUnit).toFixed(2)}
         </td>
       </tr>
+      {isChemicalsOpen && (
+        <>
+          <tr className="bg-gray-50">
+            <td className="pl-12 py-2 whitespace-nowrap text-sm text-gray-900">
+              Trace Element
+            </td>
+            {selectedYears.map((year) => {
+              const yearKey = year as Year;
+              return (
+                <td key={year} className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                  {metricsData.chemicalBreakdown.traceElement[yearKey][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'].toFixed(2)}
+                </td>
+              );
+            })}
+            <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+              {metricsData.chemicalBreakdown.traceElement['Yearly avg'][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'].toFixed(2)}
+            </td>
+          </tr>
+          <tr className="bg-gray-50">
+            <td className="pl-12 py-2 whitespace-nowrap text-sm text-gray-900">
+              Herbicide
+            </td>
+            {selectedYears.map((year) => {
+              const yearKey = year as Year;
+              return (
+                <td key={year} className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                  {metricsData.chemicalBreakdown.herbicide[yearKey][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'].toFixed(2)}
+                </td>
+              );
+            })}
+            <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+              {metricsData.chemicalBreakdown.herbicide['Yearly avg'][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'].toFixed(2)}
+            </td>
+          </tr>
+          <tr className="bg-gray-50">
+            <td className="pl-12 py-2 whitespace-nowrap text-sm text-gray-900">
+              Fungicide
+            </td>
+            {selectedYears.map((year) => {
+              const yearKey = year as Year;
+              return (
+                <td key={year} className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                  {metricsData.chemicalBreakdown.fungicide[yearKey][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'].toFixed(2)}
+                </td>
+              );
+            })}
+            <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+              {metricsData.chemicalBreakdown.fungicide['Yearly avg'][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'].toFixed(2)}
+            </td>
+          </tr>
+          <tr className="bg-gray-50">
+            <td className="pl-12 py-2 whitespace-nowrap text-sm text-gray-900">
+              Adjuvant
+            </td>
+            {selectedYears.map((year) => {
+              const yearKey = year as Year;
+              return (
+                <td key={year} className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                  {metricsData.chemicalBreakdown.adjuvant[yearKey][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'].toFixed(2)}
+                </td>
+              );
+            })}
+            <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+              {metricsData.chemicalBreakdown.adjuvant['Yearly avg'][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'].toFixed(2)}
+            </td>
+          </tr>
+        </>
+      )}
       <tr className="bg-gray-50">
         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Variable Costs</td>
         {selectedYears.map((year) => (

@@ -117,5 +117,43 @@ export const metricsData: MetricsData = {
     '2023': { perTonne: 569.80, perHectare: 4671.74 },
     '2024': { perTonne: 585.50, perHectare: 4795.85 },
     'Yearly avg': { perTonne: 627.60, perHectare: 5132.72 }
+  },
+  chemicalBreakdown: {
+    traceElement: {
+      '2019': { perTonne: 11.03, perHectare: 90.19 },
+      '2020': { perTonne: 12.17, perHectare: 99.45 },
+      '2021': { perTonne: 0, perHectare: 0 },
+      '2022': { perTonne: 12.46, perHectare: 101.85 },
+      '2023': { perTonne: 10.67, perHectare: 87.20 },
+      '2024': { perTonne: 11.04, perHectare: 90.19 },
+      'Yearly avg': { perTonne: 11.67, perHectare: 95.40 }
+    },
+    herbicide: {
+      '2019': { perTonne: 13.24, perHectare: 108.22 },
+      '2020': { perTonne: 14.60, perHectare: 119.34 },
+      '2021': { perTonne: 0, perHectare: 0 },
+      '2022': { perTonne: 14.95, perHectare: 122.22 },
+      '2023': { perTonne: 12.80, perHectare: 104.64 },
+      '2024': { perTonne: 13.25, perHectare: 108.23 },
+      'Yearly avg': { perTonne: 14.01, perHectare: 114.48 }
+    },
+    fungicide: {
+      '2019': { perTonne: 11.03, perHectare: 90.19 },
+      '2020': { perTonne: 12.17, perHectare: 99.45 },
+      '2021': { perTonne: 0, perHectare: 0 },
+      '2022': { perTonne: 12.46, perHectare: 101.85 },
+      '2023': { perTonne: 10.67, perHectare: 87.20 },
+      '2024': { perTonne: 11.04, perHectare: 90.19 },
+      'Yearly avg': { perTonne: 11.67, perHectare: 95.40 }
+    },
+    adjuvant: {
+      '2019': { perTonne: 8.83, perHectare: 72.14 },
+      '2020': { perTonne: 9.73, perHectare: 79.56 },
+      '2021': { perTonne: 0, perHectare: 0 },
+      '2022': { perTonne: 9.97, perHectare: 81.48 },
+      '2023': { perTonne: 8.53, perHectare: 69.76 },
+      '2024': { perTonne: 8.83, perHectare: 72.14 },
+      'Yearly avg': { perTonne: 9.34, perHectare: 76.32 }
+    }
   }
 };

@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ViewType, UnitType, Year } from '../../types/analytics';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { ViewType, UnitType, Year, ChemicalBreakdown } from '../../types/analytics';
 import { metricsData } from '../../data/metricsData';
 
-type DataMetricType = keyof typeof metricsData;
+type DataMetricType = Exclude<keyof typeof metricsData, 'chemicalBreakdown'>;
+
+const CHEMICAL_COLORS = {
+  traceElement: '#1F2937',  // Darkest gray
+  herbicide: '#4B5563',     // Dark gray
+  fungicide: '#6B7280',     // Medium gray
+  adjuvant: '#9CA3AF'       // Light gray
+};
 
 interface MultiYearGraphProps {
   selectedView: ViewType;
@@ -57,20 +64,32 @@ export function MultiYearGraph({ selectedView, selectedYears, selectedUnit }: Mu
   }, [selectedView]);
 
   const getData = () => {
-    return selectedYears
-      .filter((year): year is Year => {
-        return year === 'Yearly avg' || 
-          (Number(year) >= 2019 && Number(year) <= 2024 && !isNaN(Number(year)));
-      })
-      .map(year => {
-        const yearData = {
-          year,
-          value: selectedUnit === '£/t' 
-            ? metricsData[selectedMetric][year].perTonne
-            : metricsData[selectedMetric][year].perHectare
-        };
+    const validYears = selectedYears.filter((year): year is Year => {
+      return year === 'Yearly avg' ||
+        (Number(year) >= 2019 && Number(year) <= 2024 && !isNaN(Number(year)));
+    });
+
+    if (selectedMetric === 'chemicals') {
+      return validYears.map(year => {
+        const chemicalTypes = Object.keys(metricsData.chemicalBreakdown) as Array<keyof ChemicalBreakdown>;
+        const yearData: { [key: string]: any } = { year };
+        
+        chemicalTypes.forEach(type => {
+          yearData[type] = selectedUnit === '£/t'
+            ? metricsData.chemicalBreakdown[type][year].perTonne
+            : metricsData.chemicalBreakdown[type][year].perHectare;
+        });
+        
         return yearData;
       });
+    }
+
+    return validYears.map(year => ({
+      year,
+      value: selectedUnit === '£/t'
+        ? metricsData[selectedMetric][year].perTonne
+        : metricsData[selectedMetric][year].perHectare
+    }));
   };
 
   const metricOptions = getMetricOptions();
@@ -93,21 +112,49 @@ export function MultiYearGraph({ selectedView, selectedYears, selectedUnit }: Mu
 
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={getData()} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <BarChart data={getData()} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="year" />
             <YAxis />
             <Tooltip />
             <Legend />
-            <Line 
-              type="monotone" 
-              dataKey="value" 
-              name={`${metricOptions.find(opt => opt.value === selectedMetric)?.label} (${selectedUnit})`}
-              stroke="#8884d8" 
-              strokeWidth={2}
-              dot={{ r: 6 }}
-            />
-          </LineChart>
+            {selectedMetric === 'chemicals' ? (
+              <>
+                <Bar
+                  dataKey="traceElement"
+                  name={`Trace Element (${selectedUnit})`}
+                  fill={CHEMICAL_COLORS.traceElement}
+                  stackId="chemicals"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="herbicide"
+                  name={`Herbicide (${selectedUnit})`}
+                  fill={CHEMICAL_COLORS.herbicide}
+                  stackId="chemicals"
+                />
+                <Bar
+                  dataKey="fungicide"
+                  name={`Fungicide (${selectedUnit})`}
+                  fill={CHEMICAL_COLORS.fungicide}
+                  stackId="chemicals"
+                />
+                <Bar
+                  dataKey="adjuvant"
+                  name={`Adjuvant (${selectedUnit})`}
+                  fill={CHEMICAL_COLORS.adjuvant}
+                  stackId="chemicals"
+                />
+              </>
+            ) : (
+              <Bar
+                dataKey="value"
+                name={`${metricOptions.find(opt => opt.value === selectedMetric)?.label} (${selectedUnit})`}
+                fill="#6B7280"
+                radius={[4, 4, 0, 0]}
+              />
+            )}
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>
