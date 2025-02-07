@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ViewType, UnitType, Year, ChemicalBreakdown } from '../../types/analytics';
+import { ViewType, UnitType, Year, ChemicalBreakdown, TabType, MetricsData } from '../../types/analytics';
 import { metricsData } from '../../data/metricsData';
+import { fieldsData } from '../../data/fieldData';
 import { getVariableCosts, getOperationsCosts, getTotalCosts } from '../../utils/metricsCalculations';
 
-type DataMetricType = Exclude<keyof typeof metricsData, 'chemicalBreakdown'> | 'variableCosts' | 'operationsCosts' | 'totalCosts';
+type BasicMetricType = Exclude<keyof MetricsData, 'chemicalBreakdown'>;
+type CompositeMetricType = 'variableCosts' | 'operationsCosts' | 'totalCosts';
+type DataMetricType = BasicMetricType | CompositeMetricType;
 
 const CHEMICAL_COLORS = {
   traceElement: '#1F2937',  // Darkest gray
@@ -17,12 +20,32 @@ interface MultiYearGraphProps {
   selectedView: ViewType;
   selectedYears: string[];
   selectedUnit: UnitType;
+  selectedTab?: TabType;
+  selectedField?: string;
 }
 
-export function MultiYearGraph({ selectedView, selectedYears, selectedUnit }: MultiYearGraphProps) {
+const isBasicMetric = (metric: DataMetricType): metric is BasicMetricType => {
+  return metric !== 'variableCosts' && metric !== 'operationsCosts' && metric !== 'totalCosts';
+};
+
+export function MultiYearGraph({ 
+  selectedView, 
+  selectedYears, 
+  selectedUnit,
+  selectedTab = 'comparison',
+  selectedField
+}: MultiYearGraphProps) {
   const [selectedMetric, setSelectedMetric] = useState<DataMetricType>('costOfProduction');
 
   const getMetricOptions = (): { value: DataMetricType; label: string }[] => {
+    if (selectedTab === 'rotation') {
+      return [
+        { value: 'costOfProduction', label: 'Cost of Production' },
+        { value: 'yield', label: 'Yield' },
+        { value: 'grossMargin', label: 'Gross Margin' }
+      ];
+    }
+
     switch (selectedView) {
       case 'Variable':
         return [
@@ -65,7 +88,24 @@ export function MultiYearGraph({ selectedView, selectedYears, selectedUnit }: Mu
     if (options.length > 0 && !options.some(opt => opt.value === selectedMetric)) {
       setSelectedMetric(options[0].value);
     }
-  }, [selectedView]);
+  }, [selectedView, selectedTab]);
+
+  const getMetricValue = (metric: DataMetricType, year: Year, unit: UnitType): number => {
+    switch (metric) {
+      case 'variableCosts':
+        return getVariableCosts(year, unit);
+      case 'operationsCosts':
+        return getOperationsCosts(year, unit);
+      case 'totalCosts':
+        return getTotalCosts(year, unit);
+      default:
+        if (isBasicMetric(metric) && metric in metricsData) {
+          const metricData = metricsData[metric];
+          return unit === '£/t' ? metricData[year].perTonne : metricData[year].perHectare;
+        }
+        return 0;
+    }
+  };
 
   const getData = () => {
     const validYears = selectedYears.filter((year): year is Year => {
@@ -73,24 +113,14 @@ export function MultiYearGraph({ selectedView, selectedYears, selectedUnit }: Mu
         (Number(year) >= 2019 && Number(year) <= 2024 && !isNaN(Number(year)));
     });
 
-    if (selectedMetric === 'variableCosts') {
-      return validYears.map(year => ({
-        year,
-        value: getVariableCosts(year, selectedUnit)
-      }));
-    }
+    if (selectedTab === 'rotation' && selectedField) {
+      const fieldData = fieldsData.find(field => field.id === selectedField);
+      if (!fieldData) return [];
 
-    if (selectedMetric === 'operationsCosts') {
       return validYears.map(year => ({
         year,
-        value: getOperationsCosts(year, selectedUnit)
-      }));
-    }
-
-    if (selectedMetric === 'totalCosts') {
-      return validYears.map(year => ({
-        year,
-        value: getTotalCosts(year, selectedUnit)
+        'Field Value': selectedField === 'field1' && year === '2021' ? null : fieldData.metrics[year][selectedMetric as keyof typeof fieldData.metrics[Year]],
+        'Farm Average': selectedField === 'field1' && year === '2021' ? null : getMetricValue(selectedMetric, year, selectedUnit)
       }));
     }
 
@@ -111,9 +141,7 @@ export function MultiYearGraph({ selectedView, selectedYears, selectedUnit }: Mu
 
     return validYears.map(year => ({
       year,
-      value: selectedUnit === '£/t'
-        ? metricsData[selectedMetric][year].perTonne
-        : metricsData[selectedMetric][year].perHectare
+      value: getMetricValue(selectedMetric, year, selectedUnit)
     }));
   };
 
@@ -143,7 +171,22 @@ export function MultiYearGraph({ selectedView, selectedYears, selectedUnit }: Mu
             <YAxis />
             <Tooltip />
             <Legend />
-            {selectedMetric === 'chemicals' ? (
+            {selectedTab === 'rotation' ? (
+              <>
+                <Bar
+                  dataKey="Field Value"
+                  name={`Field Value (${selectedUnit})`}
+                  fill="#6B7280"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="Farm Average"
+                  name={`Farm Average (${selectedUnit})`}
+                  fill="#9CA3AF"
+                  radius={[4, 4, 0, 0]}
+                />
+              </>
+            ) : selectedMetric === 'chemicals' ? (
               <>
                 <Bar
                   dataKey="traceElement"

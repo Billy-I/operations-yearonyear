@@ -17,7 +17,6 @@ export const MultiYearTable = ({
   setSelectedUnit
 }: MultiYearTableProps) => {
   const [isChemicalsOpen, setIsChemicalsOpen] = useState(false);
-  const [selectedChemical, setSelectedChemical] = useState<keyof typeof metricsData.chemicalBreakdown | null>(null);
 
   const renderVariableView = () => (
     <>
@@ -155,7 +154,7 @@ export const MultiYearTable = ({
         </td>
       </tr>
       <tr>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Production (tonnes)</td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Production</td>
         {selectedYears.map((year) => (
           <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
             {getValue('production', year, selectedUnit).toFixed(2)}
@@ -259,7 +258,7 @@ export const MultiYearTable = ({
         </td>
       </tr>
       <tr>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Production (tonnes)</td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Production</td>
         {selectedYears.map((year) => (
           <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
             {getValue('production', year, selectedUnit).toFixed(2)}
@@ -330,7 +329,7 @@ export const MultiYearTable = ({
         </td>
       </tr>
       <tr>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Production (tonnes)</td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Production</td>
         {selectedYears.map((year) => (
           <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
             {getValue('production', year, selectedUnit).toFixed(2)}
