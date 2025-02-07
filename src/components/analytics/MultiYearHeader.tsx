@@ -47,6 +47,16 @@ export const MultiYearHeader = ({
           </select>
         </div>
         <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
+          <select
+            value={selectedUnit}
+            onChange={(e) => setSelectedUnit(e.target.value as UnitType)}
+            className="bg-transparent border-none focus:ring-0"
+          >
+            <option value="£/t">Per Tonne</option>
+            <option value="£/ha">Per Hectare</option>
+          </select>
+        </div>
+        <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
           <div className="relative">
             <button
               className="bg-transparent border-none focus:ring-0 flex items-center space-x-2"
