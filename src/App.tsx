@@ -4,6 +4,7 @@ import OperationsCenter from './pages/OperationsCenter';
 import Explorer from './pages/Explorer';
 import CropDetails from './pages/CropDetails';
 import MultiYear from './pages/MultiYear';
+import Budgets from './pages/Budgets';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/analytics/explorer" element={<Explorer />} />
             <Route path="/analytics/explorer/:crop" element={<CropDetails />} />
             <Route path="/analytics/multi-year" element={<MultiYear />} />
+            <Route path="/tracker/budgets" element={<Budgets />} />
           </Routes>
         </div>
       </div>

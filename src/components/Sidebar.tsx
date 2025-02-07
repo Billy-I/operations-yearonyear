@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, Database, BarChart2, ShoppingCart, Compass, LineChart, LogOut } from 'lucide-react';
+import { LayoutDashboard, Settings, Database, BarChart2, ShoppingCart, Compass, LineChart, LogOut, Target, Wallet } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 export default function Sidebar() {
@@ -44,11 +44,23 @@ export default function Sidebar() {
           </div>
         </div>
         <div>
+          <Link to="/tracker" className={getLinkClasses('/tracker')}>
+            <Target size={20} />
+            <span>Tracker</span>
+          </Link>
+          <div className="pl-8 space-y-2">
+            <Link to="/tracker/budgets" className={getLinkClasses('/tracker/budgets')}>
+              <Wallet size={20} />
+              <span>Budgets</span>
+            </Link>
+          </div>
+        </div>
+        <div>
           <Link to="/data" className={getLinkClasses('/data')}>
             <Database size={20} />
             <span>Data</span>
           </Link>
-          <div className="pl-8">
+          <div className="pl-8 space-y-2">
             <Link to="/data/operations" className={getLinkClasses('/data/operations')}>
               <Compass size={20} />
               <span>Operations</span>
