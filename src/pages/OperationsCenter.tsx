@@ -134,10 +134,18 @@ export default function OperationsCenter() {
   };
 
   const handleCropChange = (newCrop: string) => {
-    if (!hasChanges) {
-      setOriginalSelectedCrop(newCrop);
-    }
     setSelectedCrop(newCrop);
+    setOriginalSelectedCrop(newCrop);
+    
+    // Recalculate totals for the new crop
+    const totals = calculateTotalAverages(data, newCrop);
+    const newData = {
+      ...data,
+      totalAverageCost: totals.totalAverageCost,
+      totalCost: totals.totalCost
+    };
+    setData(newData);
+    setOriginalData(newData);
   };
 
   const handleFilterChange = (value: string) => {
@@ -209,7 +217,7 @@ export default function OperationsCenter() {
         [category]: updatedOperation
       };
 
-      const totals = calculateTotalAverages(newData);
+      const totals = calculateTotalAverages(newData, selectedCrop);
       return {
         ...newData,
         totalAverageCost: totals.totalAverageCost,
@@ -218,34 +226,55 @@ export default function OperationsCenter() {
     });
   };
 
-  const calculateTotalAverages = (newData: OperationsData) => {
+  const calculateTotalAverages = (newData: OperationsData, cropOverride?: string) => {
     const categories: (keyof OperationsData)[] = ['cultivation', 'drilling', 'application', 'harvesting', 'other'];
-    let totalCategoryAverageCost = 0;
-    let totalCost = 0;
-
-    categories.forEach(category => {
-      const operation = newData[category] as Operation;
-      if (operation && typeof operation === 'object') {
-        const displayOperation = {
-          ...operation,
-          costPerHa: operation.cropData?.[selectedCrop]?.costPerHa || operation.costPerHa,
-          totalCost: operation.cropData?.[selectedCrop]?.totalCost || operation.totalCost,
-          subOperations: operation.subOperations?.filter(op => op.cropData?.[selectedCrop]).map(subOp => ({
-            ...subOp,
-            costPerHa: subOp.cropData?.[selectedCrop]?.costPerHa || subOp.costPerHa,
-            totalCost: subOp.cropData?.[selectedCrop]?.totalCost || subOp.totalCost
-          }))
-        };
-
-        totalCategoryAverageCost += displayOperation.costPerHa;
-        totalCost += displayOperation.totalCost;
-      }
-    });
-
-    return {
-      totalAverageCost: totalCategoryAverageCost,
-      totalCost: totalCost
-    };
+    const currentCrop = cropOverride || selectedCrop;
+    
+    if (currentCrop === 'All crops') {
+      // For "All crops", calculate weighted average across all crops
+      let allCropsTotal = 0;
+      let totalHectares = 0;
+      
+      Object.entries(newData.crops).forEach(([crop, data]) => {
+        if (crop !== 'All crops') {
+          let cropTotal = 0;
+          categories.forEach(category => {
+            const operation = newData[category] as Operation;
+            if (operation?.cropData?.[crop]) {
+              cropTotal += operation.cropData[crop].totalCost;
+            }
+          });
+          allCropsTotal += cropTotal;
+          totalHectares += data.hectares;
+        }
+      });
+      
+      const totalAverageCost = totalHectares > 0 ? allCropsTotal / totalHectares : 0;
+      
+      return {
+        totalAverageCost,
+        totalCost: allCropsTotal
+      };
+    } else {
+      // For specific crops
+      let totalCost = 0;
+      let sumCostPerHa = 0;
+      
+      // Sum up the category costs for the specific crop
+      categories.forEach(category => {
+        const operation = newData[category] as Operation;
+        if (operation && typeof operation === 'object' && operation.cropData?.[currentCrop]) {
+          const cropData = operation.cropData[currentCrop];
+          sumCostPerHa += cropData.costPerHa;
+          totalCost += cropData.totalCost;
+        }
+      });
+      
+      return {
+        totalAverageCost: sumCostPerHa,
+        totalCost
+      };
+    }
   };
 
   const calculateCategoryAverage = (subOperations: Operation[]) => {
@@ -348,7 +377,7 @@ export default function OperationsCenter() {
         [category]: updatedOperation
       };
       
-      const totals = calculateTotalAverages(newData);
+      const totals = calculateTotalAverages(newData, selectedCrop);
       
       return {
         ...newData,
@@ -413,7 +442,7 @@ export default function OperationsCenter() {
         }));
       }
 
-      const totals = calculateTotalAverages(newData);
+      const totals = calculateTotalAverages(newData, selectedCrop);
       return {
         ...newData,
         totalAverageCost: totals.totalAverageCost,
@@ -472,7 +501,7 @@ export default function OperationsCenter() {
         };
       }
 
-      const totals = calculateTotalAverages(newData);
+      const totals = calculateTotalAverages(newData, selectedCrop);
       return {
         ...newData,
         totalAverageCost: totals.totalAverageCost,
@@ -518,7 +547,7 @@ export default function OperationsCenter() {
     });
 
     // Recalculate totals
-    const totals = calculateTotalAverages(updatedData);
+    const totals = calculateTotalAverages(updatedData, selectedCrop);
     const finalData = {
       ...updatedData,
       totalAverageCost: totals.totalAverageCost,
@@ -784,12 +813,12 @@ export default function OperationsCenter() {
               <div className="text-2xl font-bold">{data.crops[selectedCrop]?.hectares || 0}</div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="text-sm text-gray-600 mb-1">Total Average Cost (£/ha)</div>
-              <div className="text-2xl font-bold">£{data.totalAverageCost.toFixed(2)}</div>
+              <div className="text-sm text-gray-600 mb-1">Average Cost (£/ha)</div>
+              <div className="text-2xl font-bold">£{data.totalAverageCost.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="text-sm text-gray-600 mb-1">Total Cost (£)</div>
-              <div className="text-2xl font-bold">£{data.totalCost.toFixed(2)}</div>
+              <div className="text-2xl font-bold">£{data.totalCost.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
             </div>
           </div>
         </div>
