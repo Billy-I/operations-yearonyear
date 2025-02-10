@@ -8,18 +8,16 @@ interface OperationRowProps {
   onToggle?: () => void;
   isExpandable?: boolean;
   onDelete?: () => void;
-  isSubOperation?: boolean;
   onUpdateCost: (newCost: number) => void;
   isEditable?: boolean;
 }
 
-export default function OperationRow({ 
-  operation, 
-  isExpanded, 
-  onToggle, 
+export default function OperationRow({
+  operation,
+  isExpanded,
+  onToggle,
   isExpandable = false,
   onDelete,
-  isSubOperation = false,
   onUpdateCost,
   isEditable = true
 }: OperationRowProps) {
@@ -74,10 +72,6 @@ export default function OperationRow({
     setIsEditing(false);
   };
 
-  const handleBlur = () => {
-    handleSave();
-  };
-
   return (
     <div 
       className={`border-b border-gray-200 ${isExpandable ? 'cursor-pointer hover:bg-gray-50' : ''}`}
@@ -99,7 +93,7 @@ export default function OperationRow({
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              onBlur={handleBlur}
+              onBlur={handleSave}
               className="w-24 text-right border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
               step="0.01"
               min="0"
