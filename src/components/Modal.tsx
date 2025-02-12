@@ -6,9 +6,19 @@ interface ModalProps {
   onConfirm: () => void;
   title: string;
   children: ReactNode;
+  confirmText?: string;
+  confirmButtonClass?: string;
 }
 
-export default function Modal({ isOpen, onClose, onConfirm, title, children }: ModalProps) {
+export default function Modal({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  children,
+  confirmText = 'Confirm',
+  confirmButtonClass = 'bg-blue-500 hover:bg-blue-600'
+}: ModalProps) {
   if (!isOpen) return null;
 
   const handleConfirm = () => {
@@ -30,9 +40,9 @@ export default function Modal({ isOpen, onClose, onConfirm, title, children }: M
           </button>
           <button
             onClick={handleConfirm}
-            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+            className={`px-4 py-2 text-white rounded-md ${confirmButtonClass}`}
           >
-            Delete
+            {confirmText}
           </button>
         </div>
       </div>

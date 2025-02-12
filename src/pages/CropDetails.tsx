@@ -352,9 +352,7 @@ export default function CropDetails() {
                 <HelpCircle size={16} className="text-gray-400" />
               </div>
               <div className="p-4 bg-gray-50 rounded-lg h-[120px]">
-                {crop === "Wheat (Winter)" && selectedView !== "Variable" ? (
-                  <div className="font-bold">Not available</div>
-                ) : (
+                {selectedView === "Variable" ? (
                   <>
                     <div className="font-bold mb-2">8.40 t/ha</div>
                     <div className="relative w-full h-1 bg-gray-200 rounded">
@@ -366,6 +364,8 @@ export default function CropDetails() {
                       <span>11.15t/ha</span>
                     </div>
                   </>
+                ) : (
+                  <div className="font-bold">8.40 t/ha</div>
                 )}
               </div>
             </div>
@@ -408,9 +408,7 @@ export default function CropDetails() {
                 <HelpCircle size={16} className="text-gray-400" />
               </div>
               <div className="p-4 bg-gray-50 rounded-lg h-[120px]">
-                {crop === "Wheat (Winter)" && selectedView !== "Variable" ? (
-                  <div className="font-bold">Not available</div>
-                ) : (
+                {selectedView === "Variable" ? (
                   <>
                     <div className="font-bold mb-2">{getCostValue(varietyData[0], 'costPerTonne')}</div>
                     <div className="relative w-full h-1 bg-gray-200 rounded">
@@ -422,6 +420,8 @@ export default function CropDetails() {
                       <span>£254.32/t</span>
                     </div>
                   </>
+                ) : (
+                  <div className="font-bold">{getCostValue(varietyData[0], 'costPerTonne')}</div>
                 )}
               </div>
             </div>
@@ -574,7 +574,7 @@ export default function CropDetails() {
                     <th className="px-4 py-2 text-center">Performance</th>
                     <th className="px-4 py-2 text-right">Yield</th>
                     <th className="px-4 py-2 text-right">Cost(£/ha)</th>
-                    <th className="px-4 py-2 text-right">GM</th>
+                    <th className="px-4 py-2 text-right">{selectedView === 'Total' ? 'Net Margin' : 'GM'}</th>
                   </tr>
                 </thead>
                 <tbody>

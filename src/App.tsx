@@ -5,6 +5,8 @@ import Explorer from './pages/Explorer';
 import CropDetails from './pages/CropDetails';
 import MultiYear from './pages/MultiYear';
 import Budgets from './pages/Budgets';
+import BudgetsAlternative from './pages/BudgetsAlternative';
+import AddBudget from './pages/AddBudget';
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
             <Route path="/analytics/explorer/:crop" element={<CropDetails />} />
             <Route path="/analytics/multi-year" element={<MultiYear />} />
             <Route path="/tracker/budgets" element={<Budgets />} />
+            <Route path="/tracker/budgets-alt" element={<BudgetsAlternative />} />
+            <Route path="/tracker/budgets-alt/add" element={<AddBudget />} />
           </Routes>
         </div>
       </div>

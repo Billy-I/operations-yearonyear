@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { X } from 'lucide-react';
 import { initialData } from '../data';
+import { metricsData } from '../data/metricsData';
 
 interface AddBudgetPanelProps {
   isOpen: boolean;
@@ -29,12 +30,22 @@ const AddBudgetPanel: React.FC<AddBudgetPanelProps> = ({ isOpen, onClose, onAdd 
   });
 
   const operationsCostsRef = useRef<HTMLDivElement>(null);
-
-  const loadBaseline = (source: 'operations' | 'yagro') => {
-    setFormData(prev => {
-      if (source === 'yagro') {
-        // Use Yagro baseline values
-        const newData = {
+const loadBaseline = (source: 'operations' | 'yagro' | 'variable') => {
+  setFormData(prev => {
+    switch (source) {
+      case 'variable':
+        return {
+          ...prev,
+          seed: metricsData.seed['Yearly avg'].perHectare.toString(),
+          fertiliser: metricsData.fertiliser['Yearly avg'].perHectare.toString(),
+          chemical: metricsData.chemicals['Yearly avg'].perHectare.toString()
+        };
+      
+      case 'yagro':
+        setTimeout(() => {
+          operationsCostsRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+        return {
           ...prev,
           cultivation: '290.61',
           drilling: '233.61',
@@ -42,34 +53,23 @@ const AddBudgetPanel: React.FC<AddBudgetPanelProps> = ({ isOpen, onClose, onAdd 
           harvesting: '430.99',
           other: '223.71'
         };
-        // Scroll to operations costs section
+      
+      default: // operations
+        const operationsData = initialData;
         setTimeout(() => {
           operationsCostsRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
-        return newData;
-      } else {
-        // Fetch values from Operations Center for the selected crop
-        const operationsData = initialData;
-        const cropData = {
+        return {
+          ...prev,
           cultivation: operationsData.cultivation?.cropData?.[prev.crop]?.costPerHa.toString() || '',
           drilling: operationsData.drilling?.cropData?.[prev.crop]?.costPerHa.toString() || '',
           application: operationsData.application?.cropData?.[prev.crop]?.costPerHa.toString() || '',
           harvesting: operationsData.harvesting?.cropData?.[prev.crop]?.costPerHa.toString() || '',
           other: operationsData.other?.cropData?.[prev.crop]?.costPerHa.toString() || ''
         };
-
-        // Scroll to operations costs section
-        setTimeout(() => {
-          operationsCostsRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-
-        return {
-          ...prev,
-          ...cropData
-        };
-      }
-    });
-  };
+    }
+  });
+};
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,25 +160,17 @@ const AddBudgetPanel: React.FC<AddBudgetPanelProps> = ({ isOpen, onClose, onAdd 
                 </select>
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => loadBaseline('yagro')}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Load Yagro Baseline
-                </button>
-                <button
-                  type="button"
-                  onClick={() => loadBaseline('operations')}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Load Operations Center Custom Baseline
-                </button>
-              </div>
-
               <div className="border-t border-gray-200 pt-4">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Variable Costs</h3>
+                <div className="mb-4">
+                  <button
+                    type="button"
+                    onClick={() => loadBaseline('variable')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Load 3-Year Average Values
+                  </button>
+                </div>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Area (ha)</label>
@@ -245,6 +237,22 @@ const AddBudgetPanel: React.FC<AddBudgetPanelProps> = ({ isOpen, onClose, onAdd 
 
               <div className="border-t border-gray-200 pt-4" ref={operationsCostsRef}>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Operation Costs</h3>
+                <div className="mb-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => loadBaseline('yagro')}
+                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Load Yagro Baseline
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => loadBaseline('operations')}
+                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Load Operations Center Custom Baseline
+                  </button>
+                </div>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Cultivation (£)</label>

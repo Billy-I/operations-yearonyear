@@ -10,6 +10,7 @@ interface OperationRowProps {
   onDelete?: () => void;
   onUpdateCost: (newCost: number) => void;
   isEditable?: boolean;
+  isSubOperation?: boolean;
 }
 
 export default function OperationRow({
@@ -19,14 +20,14 @@ export default function OperationRow({
   isExpandable = false,
   onDelete,
   onUpdateCost,
-  isEditable = true
+  isEditable = true,
+  isSubOperation = false
 }: OperationRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(operation.costPerHa.toString());
   const [originalValue, setOriginalValue] = useState(operation.costPerHa);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Keep editValue in sync with operation.costPerHa when not editing
   useEffect(() => {
     if (!isEditing) {
       setEditValue(operation.costPerHa.toString());
@@ -73,17 +74,21 @@ export default function OperationRow({
   };
 
   return (
-    <div 
-      className={`border-b border-gray-200 ${isExpandable ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+    <div
+      className={`w-full border-b border-gray-200 ${
+        isSubOperation ? 'bg-gray-50' : ''
+      } ${isExpandable ? 'cursor-pointer hover:bg-gray-50' : ''}`}
       onClick={isExpandable ? onToggle : undefined}
     >
       <div className="flex items-center px-4 py-3">
-        {isExpandable && (
-          <span className="mr-2">{isExpanded ? '▼' : '▶'}</span>
-        )}
-        <div className="flex-1">{operation.name}</div>
+        <div className="flex-1 flex items-center">
+          {isExpandable && (
+            <span className="mr-2 w-4 inline-block text-center">{isExpanded ? '▼' : '▶'}</span>
+          )}
+          <span>{operation.name}</span>
+        </div>
         <div 
-          className="flex-1 text-right"
+          className="w-48 text-right pr-12"
           onClick={(e) => e.stopPropagation()}
         >
           {isEditing ? (
@@ -107,7 +112,7 @@ export default function OperationRow({
             </span>
           )}
         </div>
-        <div className="flex-1 text-right">£{operation.totalCost.toFixed(2)}</div>
+        <div className="w-48 text-right pr-12">£{operation.totalCost.toFixed(2)}</div>
         <div className="w-10 flex justify-center">
           {onDelete && isEditable && (
             <button 

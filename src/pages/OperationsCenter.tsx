@@ -824,10 +824,13 @@ export default function OperationsCenter() {
         </div>
 
         <div className="p-4">
-          <div className="mb-4 grid grid-cols-3 px-4">
-            <div>Operation Category</div>
-            <div className="text-right">Avg Cost (£/ha)</div>
-            <div className="text-right">Total Cost (£)</div>
+          <div className="mb-4 px-4">
+            <div className="flex items-center">
+              <div className="flex-1">Operation Category</div>
+              <div className="w-48 text-right pr-12">Avg Cost (£/ha)</div>
+              <div className="w-48 text-right pr-12">Total Cost (£)</div>
+              <div className="w-10"></div>
+            </div>
           </div>
 
           <div className="border rounded-lg">
