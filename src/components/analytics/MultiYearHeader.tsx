@@ -68,11 +68,11 @@ export const MultiYearHeader = ({
                     type="checkbox"
                     checked={selectedYears.includes(year)}
                     onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedYears([...selectedYears, year]);
-                      } else {
-                        setSelectedYears(selectedYears.filter((y) => y !== year));
-                      }
+                      const newSelectedYears = e.target.checked
+                        ? [...selectedYears, year]
+                        : selectedYears.filter((y) => y !== year);
+                      // Maintain the original order from AVAILABLE_YEARS
+                      setSelectedYears(AVAILABLE_YEARS.filter(y => newSelectedYears.includes(y)));
                     }}
                     className="mr-2"
                   />
