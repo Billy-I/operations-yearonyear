@@ -57,6 +57,10 @@ export default function Sidebar() {
               <Wallet size={20} />
               <span>Budgets (Alt)</span>
             </Link>
+            <Link to="/tracker/budgets-simple" className={getLinkClasses('/tracker/budgets-simple')}>
+              <Wallet size={20} />
+              <span>Budgets Simple</span>
+            </Link>
           </div>
         </div>
         <div>

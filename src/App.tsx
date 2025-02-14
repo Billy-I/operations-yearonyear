@@ -6,6 +6,7 @@ import CropDetails from './pages/CropDetails';
 import MultiYear from './pages/MultiYear';
 import Budgets from './pages/Budgets';
 import BudgetsAlternative from './pages/BudgetsAlternative';
+import BudgetsSimple from './pages/BudgetsSimple';
 import AddBudget from './pages/AddBudget';
 
 function App() {
@@ -23,6 +24,8 @@ function App() {
             <Route path="/tracker/budgets" element={<Budgets />} />
             <Route path="/tracker/budgets-alt" element={<BudgetsAlternative />} />
             <Route path="/tracker/budgets-alt/add" element={<AddBudget />} />
+            <Route path="/tracker/budgets-simple" element={<BudgetsSimple />} />
+            <Route path="/tracker/budgets-simple/add" element={<AddBudget />} />
           </Routes>
         </div>
       </div>

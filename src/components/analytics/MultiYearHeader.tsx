@@ -9,7 +9,7 @@ interface MultiYearHeaderProps {
   selectedYears: string[];
   setSelectedYears: (years: string[]) => void;
   selectedUnit: UnitType;
-  setSelectedUnit: (unit: UnitType) => void;
+  setSelectedUnit?: (unit: UnitType) => void;
 }
 
 export const MultiYearHeader = ({
@@ -17,8 +17,7 @@ export const MultiYearHeader = ({
   setSelectedView,
   selectedYears,
   setSelectedYears,
-  selectedUnit,
-  setSelectedUnit
+  selectedUnit
 }: MultiYearHeaderProps) => {
   return (
     <div className="flex justify-between items-center mb-6">
@@ -44,16 +43,6 @@ export const MultiYearHeader = ({
             <option value="Variable">Variable</option>
             <option value="Operations">Operations</option>
             <option value="Total">Total</option>
-          </select>
-        </div>
-        <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
-          <select
-            value={selectedUnit}
-            onChange={(e) => setSelectedUnit(e.target.value as UnitType)}
-            className="bg-transparent border-none focus:ring-0"
-          >
-            <option value="£/t">Per Tonne</option>
-            <option value="£/ha">Per Hectare</option>
           </select>
         </div>
         <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">

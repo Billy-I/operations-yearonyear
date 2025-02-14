@@ -25,7 +25,8 @@ const AddBudget: React.FC = () => {
             crop: budget.crop,
             area: budget.area,
             yield: budget.yield,
-            price: budget.price
+            price: budget.price,
+            year: budget.year || new Date().getFullYear().toString()
           });
           setVariableCosts(budget.variableCosts);
           setOperations(budget.operations);
@@ -47,7 +48,8 @@ const AddBudget: React.FC = () => {
     crop: '',
     area: '',
     yield: '',
-    price: ''
+    price: '',
+    year: new Date().getFullYear().toString()
   });
 
   const [grossMargin, setGrossMargin] = useState('');
@@ -122,13 +124,26 @@ const AddBudget: React.FC = () => {
     return true;
   };
 
-  const handleAddBudget = () => {
+  const handleAddBudget = async () => {
     if (validateBudget()) {
-      if (isEditMode) {
-        // When editing, keep the existing status
-        handleStatusSelection(undefined);
-      } else {
-        setShowStatusModal(true);
+      try {
+        // When in edit mode, we don't need to validate uniqueness
+        if (!isEditMode) {
+          await budgetService.validateBudget(budgetDetails.name, budgetDetails.year);
+        }
+        
+        if (isEditMode) {
+          // When editing, keep the existing status
+          handleStatusSelection(undefined);
+        } else {
+          setShowStatusModal(true);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          alert(error.message);
+        } else {
+          alert('Failed to validate budget');
+        }
       }
     }
   };
@@ -144,12 +159,16 @@ const AddBudget: React.FC = () => {
         status: currentStatus,
         variableCosts,
         operations,
-        grossMargin
+        grossMargin,
+        year: budgetDetails.year
       };
       
       await budgetService.addBudget(budget);
       setShowStatusModal(false);
-      navigate('/tracker/budgets-alt');
+      navigate(location.pathname.includes('budgets-simple')
+        ? '/tracker/budgets-simple'
+        : '/tracker/budgets-alt'
+      );
     } catch (error) {
       console.error('Error saving budget:', error);
       alert('Failed to save budget. Please try again.');
@@ -321,12 +340,21 @@ const AddBudget: React.FC = () => {
         <div className="py-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-semibold text-gray-900">{isEditMode ? 'Edit Budget' : 'Add Budget'}</h1>
-            <Link
-              to="/tracker/budgets-alt"
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-            >
-              Cancel
-            </Link>
+            {location.pathname.includes('budgets-simple') ? (
+              <Link
+                to="/tracker/budgets-simple"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </Link>
+            ) : (
+              <Link
+                to="/tracker/budgets-alt"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </Link>
+            )}
           </div>
           <div className="mt-6">
             <div className="space-y-6">
@@ -349,6 +377,21 @@ const AddBudget: React.FC = () => {
                         readOnly={isEditMode}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       />
+                    </div>
+                    <div>
+                      <label htmlFor="year" className="block text-sm font-medium text-gray-700">
+                        Year
+                      </label>
+                      <select
+                        id="year"
+                        value={budgetDetails.year}
+                        onChange={handleBudgetDetailsChange('year')}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      >
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
+                      </select>
                     </div>
                     <div>
                       <label htmlFor="crop" className="block text-sm font-medium text-gray-700">

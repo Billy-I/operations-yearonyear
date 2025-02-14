@@ -8,6 +8,7 @@ export interface Budget {
   price: string;
   grossMargin: string;
   status: 'draft' | 'active';
+  year: string;
   variableCosts: {
     seed: string;
     fertiliser: string;
@@ -32,21 +33,44 @@ const saveBudgetsToStorage = (budgets: Budget[]) => {
 };
 
 export const budgetService = {
-  addBudget: (budget: Budget) => {
-    const budgets = getBudgetsFromStorage();
-    
-    // Format the values before saving
-    const formattedBudget = {
-      ...budget,
-      yield: `${budget.yield} t/ha`,
-      price: `£${budget.price} /t`,
-      area: `${budget.area} ha`,
-      grossMargin: formatCurrency(parseFloat(budget.grossMargin))
-    };
-    
-    budgets.push(formattedBudget);
-    saveBudgetsToStorage(budgets);
-    return Promise.resolve(formattedBudget);
+  clearStorage: () => {
+    localStorage.removeItem(STORAGE_KEY);
+  },
+
+  addBudget: async (budget: Budget) => {
+    try {
+      // Ensure year exists
+      const budgetWithYear = {
+        ...budget,
+        year: budget.year || new Date().getFullYear().toString()
+      };
+
+      // Only validate for new budgets (not during edit)
+      const existingBudgets = await budgetService.getBudgets();
+      const existingBudget = existingBudgets.find((b: Budget) => b.name === budget.name);
+      if (!existingBudget) {
+        await budgetService.validateBudget(budgetWithYear.name, budgetWithYear.year);
+      }
+
+      const budgets = getBudgetsFromStorage();
+      
+      // Format the values before saving
+      const formattedBudget: Budget = {
+        ...budgetWithYear,
+        yield: `${budgetWithYear.yield} t/ha`,
+        price: `£${budgetWithYear.price} /t`,
+        area: `${budgetWithYear.area} ha`,
+        grossMargin: formatCurrency(parseFloat(budgetWithYear.grossMargin))
+      };
+      
+      // Remove existing budget if it exists
+      const filteredBudgets = budgets.filter(b => b.name !== budgetWithYear.name);
+      filteredBudgets.push(formattedBudget);
+      saveBudgetsToStorage(filteredBudgets);
+      return Promise.resolve(formattedBudget);
+    } catch (error) {
+      return Promise.reject(error);
+    }
   },
 
   getBudgets: () => {
@@ -65,15 +89,34 @@ export const budgetService = {
 
   toggleStatus: async (budgetName: string) => {
     const budgets = getBudgetsFromStorage();
-    const budgetIndex = budgets.findIndex(b => b.name === budgetName);
+    const budgetToToggle = budgets.find(b => b.name === budgetName);
     
-    if (budgetIndex !== -1) {
-      budgets[budgetIndex].status = budgets[budgetIndex].status === 'active' ? 'draft' : 'active';
-      saveBudgetsToStorage(budgets);
-      return Promise.resolve(budgets[budgetIndex]);
+    if (!budgetToToggle) {
+      return Promise.reject(new Error('Budget not found'));
     }
+
+    // Create a new array without the budget we want to toggle
+    const filteredBudgets = budgets.filter(b => b.name !== budgetName);
     
-    return Promise.reject(new Error('Budget not found'));
+    // Add the budget back with toggled status
+    const newStatus: 'draft' | 'active' = budgetToToggle.status === 'active' ? 'draft' : 'active';
+    const toggledBudget: Budget = {
+      ...budgetToToggle,
+      status: newStatus
+    };
+    
+    filteredBudgets.push(toggledBudget);
+    saveBudgetsToStorage(filteredBudgets);
+    return Promise.resolve(toggledBudget);
+  },
+
+  validateBudget: async (name: string, year: string) => {
+    const budgets = getBudgetsFromStorage();
+    const exists = budgets.some(b => b.name === name && b.year === year);
+    if (exists) {
+      throw new Error(`A budget with name "${name}" already exists for year ${year}`);
+    }
+    return Promise.resolve(true);
   },
 
   getBudgetByName: async (budgetName: string) => {
@@ -81,13 +124,14 @@ export const budgetService = {
     const budget = budgets.find(b => b.name === budgetName);
     
     if (budget) {
-      // Remove units from stored values for editing
+      // Remove units from stored values for editing and ensure year exists
       return Promise.resolve({
         ...budget,
         yield: budget.yield ? budget.yield.split(' ')[0] : '',
         price: budget.price ? budget.price.replace(/[£\s\/t]/g, '') : '',
         area: budget.area ? budget.area.split(' ')[0] : '',
-        grossMargin: budget.grossMargin ? budget.grossMargin.replace(/[£\s\/ha]/g, '') : ''
+        grossMargin: budget.grossMargin ? budget.grossMargin.replace(/[£\s\/ha]/g, '') : '',
+        year: budget.year || new Date().getFullYear().toString()
       });
     }
     

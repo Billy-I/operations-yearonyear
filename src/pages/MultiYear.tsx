@@ -29,7 +29,6 @@ export default function MultiYear() {
             selectedYears={selectedYears}
             setSelectedYears={setSelectedYears}
             selectedUnit={selectedUnit}
-            setSelectedUnit={setSelectedUnit}
           />
 
           <div className="mt-6">

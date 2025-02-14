@@ -9,19 +9,23 @@ interface FieldRotationTableProps {
   selectedView: ViewType;
   selectedYears: string[];
   selectedUnit: UnitType;
-  setSelectedUnit: (unit: UnitType) => void;
+  setSelectedUnit?: (unit: UnitType) => void;
   selectedField: string;
 }
 
 export const FieldRotationTable = ({
   selectedYears,
   selectedUnit,
-  setSelectedUnit,
   selectedField,
-  selectedView
+  selectedView,
+  setSelectedUnit
 }: FieldRotationTableProps) => {
   const fieldData = fieldsData.find(field => field.id === selectedField);
   
+  const formatValueWithUnit = (value: number): string => {
+    return `£${value.toFixed(2)} ${selectedUnit === '£/t' ? '/t' : '/ha'}`;
+  };
+
   const getComparisonText = (metric: keyof typeof metricsData | 'totalVariableCosts' | 'totalOperationsCosts' | 'totalCosts', year: Year, value: number) => {
     if (!fieldData) return '';
     
@@ -66,13 +70,13 @@ export const FieldRotationTable = ({
                 'data-tooltip-content': getComparisonText(metric, yearKey, value)
               } : {})}
             >
-              {value.toFixed(2)}
+              {formatValueWithUnit(value)}
               {selectedView === 'Variable' && <Tooltip id={`metric-${metric}-${yearKey}`} />}
             </td>
           );
         })}
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-          {getValue(metric, 'Yearly avg', selectedUnit).toFixed(2)}
+          {formatValueWithUnit(getValue(metric, 'Yearly avg', selectedUnit))}
         </td>
       </tr>
     );
@@ -103,16 +107,15 @@ export const FieldRotationTable = ({
                     data-tooltip-id={`total-variable-${yearKey}`}
                     data-tooltip-content={getComparisonText('totalVariableCosts', yearKey, value)}
                   >
-                    {value.toFixed(2)}
+                    {formatValueWithUnit(value)}
                     <Tooltip id={`total-variable-${yearKey}`} />
                   </td>
                 );
               })}
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {getVariableCosts('Yearly avg', selectedUnit).toFixed(2)}
+                {formatValueWithUnit(getVariableCosts('Yearly avg', selectedUnit))}
               </td>
             </tr>
-
             {/* Production Metrics */}
             {renderMetricRow('Production', 'production')}
             {renderMetricRow('Gross Margin', 'grossMargin')}
@@ -139,15 +142,14 @@ export const FieldRotationTable = ({
                     key={year}
                     className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
                   >
-                    {value.toFixed(2)}
+                    {formatValueWithUnit(value)}
                   </td>
                 );
               })}
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {getOperationsCosts('Yearly avg', selectedUnit).toFixed(2)}
+                {formatValueWithUnit(getOperationsCosts('Yearly avg', selectedUnit))}
               </td>
             </tr>
-
             {/* Production Metrics */}
             {renderMetricRow('Production', 'production')}
             {renderMetricRow('Gross Margin', 'grossMargin')}
@@ -169,12 +171,12 @@ export const FieldRotationTable = ({
                     key={year}
                     className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
                   >
-                    {value.toFixed(2)}
+                    {formatValueWithUnit(value)}
                   </td>
                 );
               })}
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {getVariableCosts('Yearly avg', selectedUnit).toFixed(2)}
+                {formatValueWithUnit(getVariableCosts('Yearly avg', selectedUnit))}
               </td>
             </tr>
             <tr>
@@ -189,12 +191,12 @@ export const FieldRotationTable = ({
                     key={year}
                     className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
                   >
-                    {value.toFixed(2)}
+                    {formatValueWithUnit(value)}
                   </td>
                 );
               })}
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {getOperationsCosts('Yearly avg', selectedUnit).toFixed(2)}
+                {formatValueWithUnit(getOperationsCosts('Yearly avg', selectedUnit))}
               </td>
             </tr>
             <tr className="bg-gray-100">
@@ -209,12 +211,12 @@ export const FieldRotationTable = ({
                     key={year}
                     className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
                   >
-                    {value.toFixed(2)}
+                    {formatValueWithUnit(value)}
                   </td>
                 );
               })}
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {getTotalCosts('Yearly avg', selectedUnit).toFixed(2)}
+                {formatValueWithUnit(getTotalCosts('Yearly avg', selectedUnit))}
               </td>
             </tr>
             {renderMetricRow('Production', 'production')}
@@ -238,13 +240,13 @@ export const FieldRotationTable = ({
                 <div className="flex items-center space-x-2">
                   <button
                     className={`px-2 py-1 text-xs rounded ${selectedUnit === '£/t' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-                    onClick={() => setSelectedUnit('£/t')}
+                    onClick={() => setSelectedUnit?.('£/t')}
                   >
                     £/t
                   </button>
                   <button
                     className={`px-2 py-1 text-xs rounded ${selectedUnit === '£/ha' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-                    onClick={() => setSelectedUnit('£/ha')}
+                    onClick={() => setSelectedUnit?.('£/ha')}
                   >
                     £/ha
                   </button>
