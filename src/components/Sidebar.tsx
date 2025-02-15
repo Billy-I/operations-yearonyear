@@ -5,14 +5,13 @@ import { useState } from 'react';
 interface DropdownProps {
   title: string;
   icon: React.ReactNode;
-  path: string;
   isActive: boolean;
   isOpen: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }
 
-const DropdownSection = ({ title, icon, path, isActive, isOpen, onClick, children }: DropdownProps) => {
+const DropdownSection = ({ title, icon, isActive, isOpen, onClick, children }: DropdownProps) => {
   return (
     <div>
       <button
@@ -81,7 +80,6 @@ export default function Sidebar() {
         <DropdownSection
           title="Analytics"
           icon={<BarChart2 size={20} />}
-          path="/analytics"
           isActive={isActive('/analytics')}
           isOpen={openSections.analytics}
           onClick={() => toggleSection('analytics')}
@@ -95,7 +93,6 @@ export default function Sidebar() {
         <DropdownSection
           title="Tracker"
           icon={<Target size={20} />}
-          path="/tracker"
           isActive={isActive('/tracker')}
           isOpen={openSections.tracker}
           onClick={() => toggleSection('tracker')}
@@ -117,7 +114,6 @@ export default function Sidebar() {
         <DropdownSection
           title="Data"
           icon={<Database size={20} />}
-          path="/data"
           isActive={isActive('/data')}
           isOpen={openSections.data}
           onClick={() => toggleSection('data')}

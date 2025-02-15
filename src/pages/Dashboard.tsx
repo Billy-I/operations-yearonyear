@@ -1,14 +1,8 @@
 import { useState } from 'react';
-import { HelpCircle, TrendingUp, AlertTriangle, Clipboard } from 'lucide-react';
+import { TrendingUp, AlertTriangle, Clipboard } from 'lucide-react';
 import { cropData } from '../data/cropData';
 import { fieldsData } from '../data/fieldData';
-import { yearOnYear } from '../data/metricsData';
-
-interface YearOnYearMetric {
-  name: string;
-  value: string;
-  trend: number;
-}
+import DashboardCharts from '../components/analytics/DashboardCharts';
 
 export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState('2024');
@@ -24,7 +18,7 @@ export default function Dashboard() {
   const underperformingCrops = cropData.filter(crop => crop.yield.hasWarning || crop.cop.hasWarning);
   
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="flex items-center space-x-4">
@@ -39,13 +33,14 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Financial Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Financial Overview */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center">
+          <div className="flex items-center mb-4">
             <Clipboard className="mr-2" size={20} />
-            Financial Overview
-          </h2>
+            <h2 className="text-lg font-semibold">Financial Overview</h2>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="text-sm text-gray-600">Total Farm Cost</div>
@@ -68,10 +63,10 @@ export default function Dashboard() {
 
         {/* Operations Summary */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center">
+          <div className="flex items-center mb-4">
             <TrendingUp className="mr-2" size={20} />
-            Operations Summary
-          </h2>
+            <h2 className="text-lg font-semibold">Operations Summary</h2>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="text-sm text-gray-600">Total Hectares</div>
@@ -93,9 +88,32 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Crop Performance and Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Performance Indicators */}
+      {/* Market Prices */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold mb-4">Market Prices</h2>
+        <div className="space-y-4">
+          {cropData.map((crop, index) => (
+            <div key={index} className="flex justify-between items-center">
+              <div className="font-medium">{crop.name}</div>
+              <div className="flex items-center space-x-4">
+                <div className="text-sm text-gray-600">
+                  Range: £{crop.marketRange.min.toFixed(2)} - £{crop.marketRange.max.toFixed(2)}
+                </div>
+                <div className="font-medium text-blue-600">
+                  Current: £{crop.marketRange.current.toFixed(2)}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <DashboardCharts selectedYear={selectedYear} />
+
+      {/* Performance and Alerts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Performing Crops */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Top Performing Crops</h2>
@@ -127,12 +145,10 @@ export default function Dashboard() {
                 <div key={index} className="flex justify-between items-center">
                   <div>
                     <div className="font-medium">{crop.name}</div>
-                    <div className="text-sm text-gray-600">{crop.area}</div>
+                    <div className="text-sm text-gray-600">{crop.area} ha</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-medium">
-                      £{crop.displayValue.toFixed(2)}/ha
-                    </div>
+                    <div className="font-medium">£{crop.displayValue.toFixed(2)}/ha</div>
                     <div className="text-sm text-gray-600">{crop.yield.value.toFixed(1)} t/ha</div>
                   </div>
                 </div>
@@ -140,12 +156,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Alerts and Warnings */}
+        {/* Alerts */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center">
+          <div className="flex items-center mb-4">
             <AlertTriangle className="mr-2" size={20} />
-            Alerts & Warnings
-          </h2>
+            <h2 className="text-lg font-semibold">Alerts & Warnings</h2>
+          </div>
           <div className="space-y-4">
             {underperformingCrops.map((crop, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-yellow-50 rounded-md">
@@ -158,51 +174,6 @@ export default function Dashboard() {
                 <div className="text-right">
                   <div className="font-medium">£{crop.cop.value.toFixed(2)}/t</div>
                   <div className="text-sm text-gray-600">{crop.yield.value.toFixed(1)} t/ha</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Market Prices and Year-on-Year Comparison */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Market Prices */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center">
-            <HelpCircle className="mr-2" size={20} />
-            Market Prices
-          </h2>
-          <div className="space-y-4">
-            {cropData.map((crop, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="font-medium">{crop.name}</div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-sm">
-                    <span className="text-gray-600">Range: </span>
-                    £{crop.marketRange.min.toFixed(2)} - £{crop.marketRange.max.toFixed(2)}
-                  </div>
-                  <div className="font-medium">
-                    Current: £{crop.marketRange.current.toFixed(2)}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Year on Year Analysis */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Year-on-Year Analysis</h2>
-          <div className="space-y-4">
-            {yearOnYear.map((metric: YearOnYearMetric, index: number) => (
-              <div key={index} className="flex justify-between items-center">
-                <div className="font-medium">{metric.name}</div>
-                <div className="flex items-center space-x-2">
-                  <span className={`text-sm ${metric.trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {metric.trend >= 0 ? '+' : ''}{metric.trend}%
-                  </span>
-                  <span className="font-medium">{metric.value}</span>
                 </div>
               </div>
             ))}
