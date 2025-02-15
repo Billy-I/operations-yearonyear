@@ -84,8 +84,10 @@ export default function OperationsCenter() {
   });
 
   useEffect(() => {
+    // Only load from localStorage if we explicitly want to restore a previous session
+    const shouldRestoreSession = false; // This ensures we always use initialData on fresh load
     const savedData = localStorage.getItem('operationsData');
-    if (savedData) {
+    if (shouldRestoreSession && savedData) {
       const parsedData = JSON.parse(savedData);
       setData(parsedData);
       setOriginalData(parsedData);
@@ -499,6 +501,8 @@ export default function OperationsCenter() {
     setSelectedTemplate(template);
     if (template === 'yagro') {
       setData(initialData);
+      // Clear localStorage when switching to Yagro template
+      localStorage.removeItem('operationsData');
     }
   };
 
@@ -682,6 +686,9 @@ export default function OperationsCenter() {
   };
 
   const confirmResetTable = () => {
+    // Clear localStorage to ensure we start fresh
+    localStorage.removeItem('operationsData');
+    
     setData(initialData);
     setOriginalData(initialData);
     setSelectedCrop('All crops');
