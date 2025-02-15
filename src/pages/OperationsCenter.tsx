@@ -137,15 +137,24 @@ export default function OperationsCenter() {
     setSelectedCrop(newCrop);
     setOriginalSelectedCrop(newCrop);
     
-    // Recalculate totals for the new crop
-    const totals = calculateTotalAverages(data, newCrop);
-    const newData = {
-      ...data,
+    // Reset filters
+    setSelectedFilter('none');
+    setSelectedSubFilters([]);
+    setShowSubFilters(false);
+    
+    // Reset to full hectares for the new crop
+    const fullHectares = data.crops[newCrop]?.hectares || 0;
+    const newData = updateDataWithFilteredHectares(data, newCrop, fullHectares);
+    const totals = calculateTotalAverages(newData, newCrop);
+    
+    const finalData = {
+      ...newData,
       totalAverageCost: totals.totalAverageCost,
       totalCost: totals.totalCost
     };
-    setData(newData);
-    setOriginalData(newData);
+    
+    setData(finalData);
+    setOriginalData(finalData);
   };
 
   const handleFilterChange = (value: string) => {
@@ -154,8 +163,92 @@ export default function OperationsCenter() {
       setOriginalSubFilters([]);
     }
     setSelectedFilter(value);
-    setSelectedSubFilters([]);
+    
+    // Automatically select all applicable sub-filters for the current crop
+    if (value === 'end_use_market' && data.crops[selectedCrop]?.endUseMarket) {
+      const availableFilters = Object.keys(data.crops[selectedCrop].endUseMarket);
+      setSelectedSubFilters(availableFilters);
+      
+      // Calculate initial filtered hectares
+      const filteredHectares = calculateFilteredHectares(selectedCrop, availableFilters);
+      const newData = updateDataWithFilteredHectares(data, selectedCrop, filteredHectares);
+      const totals = calculateTotalAverages(newData, selectedCrop);
+      const finalData = {
+        ...newData,
+        totalAverageCost: totals.totalAverageCost,
+        totalCost: totals.totalCost
+      };
+      
+      // Update both current and original data
+      setData(finalData);
+      setOriginalData(finalData);
+    } else {
+      setSelectedSubFilters([]);
+      
+      // Reset to full hectares if changing away from end_use_market
+      if (value !== 'end_use_market') {
+        const fullHectares = data.crops[selectedCrop]?.hectares || 0;
+        const newData = updateDataWithFilteredHectares(data, selectedCrop, fullHectares);
+        const totals = calculateTotalAverages(newData, selectedCrop);
+        const finalData = {
+          ...newData,
+          totalAverageCost: totals.totalAverageCost,
+          totalCost: totals.totalCost
+        };
+        
+        // Update both current and original data
+        setData(finalData);
+        setOriginalData(finalData);
+      }
+    }
+    
     setShowSubFilters(value !== 'none');
+  };
+
+  const calculateFilteredHectares = (cropName: string, selectedFilters: string[]) => {
+    const crop = data.crops[cropName];
+    if (!crop?.endUseMarket || selectedFilters.length === 0) {
+      return crop?.hectares || 0;
+    }
+
+    return selectedFilters.reduce((total, filter) => {
+      return total + (crop.endUseMarket?.[filter]?.hectares || 0);
+    }, 0);
+  };
+
+  const updateDataWithFilteredHectares = (
+    currentData: OperationsData,
+    cropName: string,
+    filteredHectares: number
+  ) => {
+    const categories: (keyof OperationsData)[] = ['cultivation', 'drilling', 'application', 'harvesting', 'other'];
+    const newData = { ...currentData };
+
+    categories.forEach(category => {
+      const operation = newData[category] as Operation;
+      if (operation.cropData?.[cropName]) {
+        const costPerHa = operation.cropData[cropName].costPerHa;
+        operation.cropData[cropName] = {
+          hectares: filteredHectares,
+          costPerHa: costPerHa,
+          totalCost: costPerHa * filteredHectares
+        };
+
+        // Update sub-operations
+        operation.subOperations?.forEach(subOp => {
+          if (subOp.cropData?.[cropName]) {
+            const subCostPerHa = subOp.cropData[cropName].costPerHa;
+            subOp.cropData[cropName] = {
+              hectares: filteredHectares,
+              costPerHa: subCostPerHa,
+              totalCost: subCostPerHa * filteredHectares
+            };
+          }
+        });
+      }
+    });
+
+    return newData;
   };
 
   const handleSubFilterChange = (value: string) => {
@@ -164,11 +257,24 @@ export default function OperationsCenter() {
       const newSubFilters = isSelected
         ? prev.filter(v => v !== value)
         : [...prev, value];
+
+      // Calculate new hectares based on selected filters
+      const filteredHectares = newSubFilters.length === 0 ? 0 : calculateFilteredHectares(selectedCrop, newSubFilters);
       
-      // Only update original values if this is the first change
-      if (selectedFilter === originalFilter && originalSubFilters.length === 0) {
-        setOriginalSubFilters(newSubFilters);
-      }
+      // Update data with new hectares
+      const newData = updateDataWithFilteredHectares(data, selectedCrop, filteredHectares);
+      
+      // Recalculate totals
+      const totals = calculateTotalAverages(newData, selectedCrop);
+      const finalData = {
+        ...newData,
+        totalAverageCost: totals.totalAverageCost,
+        totalCost: totals.totalCost
+      };
+
+      // Update both current and original data to prevent save/cancel buttons
+      setData(finalData);
+      setOriginalData(finalData);
       
       return newSubFilters;
     });
@@ -813,7 +919,7 @@ export default function OperationsCenter() {
               <div className="text-2xl font-bold">{data.crops[selectedCrop]?.hectares || 0}</div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="text-sm text-gray-600 mb-1">Average Cost (£/ha)</div>
+              <div className="text-sm text-gray-600 mb-1">Cost (£/ha)</div>
               <div className="text-2xl font-bold">£{data.totalAverageCost.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
@@ -827,7 +933,7 @@ export default function OperationsCenter() {
           <div className="mb-4 px-4">
             <div className="flex items-center">
               <div className="flex-1">Operation Category</div>
-              <div className="w-48 text-right pr-12">Avg Cost (£/ha)</div>
+              <div className="w-48 text-right pr-12">Cost (£/ha)</div>
               <div className="w-48 text-right pr-12">Total Cost (£)</div>
               <div className="w-10"></div>
             </div>

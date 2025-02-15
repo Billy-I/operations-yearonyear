@@ -1,103 +1,8 @@
 import { HelpCircle, ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-interface CropData {
-  name: string;
-  area: string;
-  marketRange: {
-    min: number;
-    max: number;
-    current: number;
-  };
-  cop: {
-    value: number;
-    hasWarning?: boolean;
-  };
-  cost: {
-    value: number;
-  };
-  yield: {
-    value: number;
-    hasWarning?: boolean;
-  };
-  gm: {
-    value: number;
-    isInfo?: boolean;
-  };
-}
-
-const cropData: CropData[] = [
-  {
-    name: "Wheat (Winter)",
-    area: "612.34 ha",
-    marketRange: { min: 45.17, max: 152.14, current: 98 },
-    cop: { value: 97.12, hasWarning: true },
-    cost: { value: 769.43 },
-    yield: { value: 8.30, hasWarning: true },
-    gm: { value: 1048.74 }
-  },
-  {
-    name: "Field Bean (Spring)",
-    area: "233.47 ha",
-    marketRange: { min: 54.88, max: 160.19, current: 80 },
-    cop: { value: 62.78 },
-    cost: { value: 346.63 },
-    yield: { value: 5.55 },
-    gm: { value: 873.58 }
-  },
-  {
-    name: "Barley (Winter)",
-    area: "171.40 ha",
-    marketRange: { min: 38.72, max: 142.97, current: 90 },
-    cop: { value: 71.24 },
-    cost: { value: 630.34 },
-    yield: { value: 10.11 },
-    gm: { value: 986.63 }
-  },
-  {
-    name: "Linseed",
-    area: "155.18 ha",
-    marketRange: { min: 129.00, max: 244.60, current: 200 },
-    cop: { value: 244.60 },
-    cost: { value: 478.46 },
-    yield: { value: 1.99 },
-    gm: { value: 343.07 }
-  },
-  {
-    name: "Oats (Spring)",
-    area: "122.79 ha",
-    marketRange: { min: 35.46, max: 103.22, current: 70 },
-    cop: { value: 53.26 },
-    cost: { value: 380.49 },
-    yield: { value: 7.14 },
-    gm: { value: 1048.28 }
-  },
-  {
-    name: "Mustard",
-    area: "85.54 ha",
-    marketRange: { min: 113.23, max: 279.45, current: 250 },
-    cop: { value: 351.89 },
-    cost: { value: 296.03 },
-    yield: { value: 0.88 },
-    gm: { value: 754.04 }
-  },
-  {
-    name: "Maize (Forage)",
-    area: "3.00 ha",
-    marketRange: { min: 9.74, max: 20.73, current: 15 },
-    cop: { value: 4.33, hasWarning: true },
-    cost: { value: 151.56 },
-    yield: { value: 35.00, hasWarning: true },
-    gm: { value: 0, isInfo: true }
-  }
-];
-
-const VIEW_MULTIPLIERS = {
-  Variable: 1,
-  Operations: 0.75,
-  Total: 1.75
-};
+import { cropData } from '../data/cropData';
+import { VIEW_MULTIPLIERS } from '../constants/analytics';
 
 export default function Explorer() {
   const [selectedYear, setSelectedYear] = useState('2024');
@@ -261,7 +166,7 @@ export default function Explorer() {
               </thead>
               <tbody>
                 {cropData.map((crop, index) => {
-                  const multiplier = VIEW_MULTIPLIERS[selectedView as keyof typeof VIEW_MULTIPLIERS];
+                  const multiplier = VIEW_MULTIPLIERS[selectedView as keyof typeof VIEW_MULTIPLIERS] || 1;
                   const adjustedCost = crop.cost.value * multiplier;
                   const adjustedMargin = crop.gm.value * (2 - multiplier);
 
@@ -276,32 +181,32 @@ export default function Explorer() {
                         </Link>
                       </td>
                       <td className="px-4 py-4">{crop.area}</td>
-                     {selectedView === 'Variable' && (
-                       <td className="px-4 py-4">
-                         <div className="relative w-48 mx-auto">
-                           <div className="h-1 bg-gray-200 rounded">
-                             <div
-                               className="absolute h-1 bg-gray-400 rounded"
-                               style={{
-                                 left: `${(crop.marketRange.min / crop.marketRange.max) * 100}%`,
-                                 right: `${100 - ((crop.marketRange.current / crop.marketRange.max) * 100)}%`
-                               }}
-                             />
-                           </div>
-                           <div
-                             className="absolute top-1/2 w-2 h-2 bg-gray-600 rounded-full transform -translate-y-1/2"
-                             style={{
-                               left: `${(crop.marketRange.current / crop.marketRange.max) * 100}%`,
-                               marginLeft: '-4px'
-                             }}
-                           />
-                           <div className="flex justify-between text-xs text-gray-500 mt-1">
-                             <span>£{crop.marketRange.min.toFixed(2)}/t</span>
-                             <span>£{crop.marketRange.max.toFixed(2)}/t</span>
-                           </div>
-                         </div>
-                       </td>
-                     )}
+                      {selectedView === 'Variable' && (
+                        <td className="px-4 py-4">
+                          <div className="relative w-48 mx-auto">
+                            <div className="h-1 bg-gray-200 rounded">
+                              <div
+                                className="absolute h-1 bg-gray-400 rounded"
+                                style={{
+                                  left: `${(crop.marketRange.min / crop.marketRange.max) * 100}%`,
+                                  right: `${100 - ((crop.marketRange.current / crop.marketRange.max) * 100)}%`
+                                }}
+                              />
+                            </div>
+                            <div
+                              className="absolute top-1/2 w-2 h-2 bg-gray-600 rounded-full transform -translate-y-1/2"
+                              style={{
+                                left: `${(crop.marketRange.current / crop.marketRange.max) * 100}%`,
+                                marginLeft: '-4px'
+                              }}
+                            />
+                            <div className="flex justify-between text-xs text-gray-500 mt-1">
+                              <span>£{crop.marketRange.min.toFixed(2)}/t</span>
+                              <span>£{crop.marketRange.max.toFixed(2)}/t</span>
+                            </div>
+                          </div>
+                        </td>
+                      )}
                       <td className="px-4 py-4 text-right">
                         <span className={crop.cop.hasWarning ? 'text-gray-700 font-medium' : ''}>
                           £{(crop.cop.value * multiplier).toFixed(2)}/t

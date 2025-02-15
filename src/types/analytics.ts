@@ -1,4 +1,6 @@
-export type Year = '2019' | '2020' | '2021' | '2022' | '2023' | '2024' | 'Yearly avg';
+import { Year } from '../constants/analytics';
+
+export type { Year };
 
 export interface MetricData {
   perTonne: number;

@@ -12,6 +12,15 @@ export interface Operation {
   };
 }
 
+export interface CropData {
+  hectares: number;
+  endUseMarket?: {
+    [key: string]: {
+      hectares: number;
+    }
+  };
+}
+
 export interface OperationsData {
   cultivation: Operation;
   drilling: Operation;
@@ -22,8 +31,6 @@ export interface OperationsData {
   totalAverageCost: number;
   totalCost: number;
   crops: {
-    [key: string]: {
-      hectares: number;
-    }
+    [key: string]: CropData;
   };
 }

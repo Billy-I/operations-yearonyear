@@ -68,7 +68,7 @@ export default function Sidebar() {
       </div>
       
       <nav className="space-y-2">
-        <Link to="/" className={getLinkClasses('/')}>
+        <Link to="/dashboard" className={getLinkClasses('/dashboard')}>
           <LayoutDashboard size={20} />
           <span>Dashboard</span>
         </Link>

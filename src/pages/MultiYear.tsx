@@ -7,14 +7,17 @@ import { FieldRotationTable } from '../components/analytics/FieldRotationTable';
 import { MultiYearGraph } from '../components/analytics/MultiYearGraph';
 import { MultiYearPDFWrapper } from '../components/analytics/MultiYearPDF';
 import { ViewType, UnitType, TabType } from '../types/analytics';
-import { AVAILABLE_YEARS } from '../constants/analytics';
+import { AVAILABLE_YEARS, AVAILABLE_CROPS } from '../constants/analytics';
 import { fieldsData } from '../data/fieldData';
+
+// Get the type of available crops from the constant
+type AvailableCrop = typeof AVAILABLE_CROPS[number];
 
 export default function MultiYear() {
   const [selectedView, setSelectedView] = useState<ViewType>('Variable');
   const [selectedYears, setSelectedYears] = useState<string[]>([...AVAILABLE_YEARS]);
   const [selectedUnit, setSelectedUnit] = useState<UnitType>('£/t');
-  const [selectedCrop, setSelectedCrop] = useState('Wheat(Winter)');
+  const [selectedCrop, setSelectedCrop] = useState<AvailableCrop>(AVAILABLE_CROPS[0]);
   const [selectedFilter, setSelectedFilter] = useState('None');
   const [selectedTab, setSelectedTab] = useState<TabType>('comparison');
   const [selectedField, setSelectedField] = useState(fieldsData[0].id);
@@ -38,7 +41,7 @@ export default function MultiYear() {
                   {selectedTab === 'comparison' ? (
                     <MultiYearControls
                       selectedCrop={selectedCrop}
-                      setSelectedCrop={setSelectedCrop}
+                      setSelectedCrop={(crop: AvailableCrop) => setSelectedCrop(crop)}
                       selectedFilter={selectedFilter}
                       setSelectedFilter={setSelectedFilter}
                       selectedTab={selectedTab}

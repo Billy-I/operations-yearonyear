@@ -2,9 +2,11 @@ import { Leaf, Filter } from 'lucide-react';
 import { AVAILABLE_CROPS, AVAILABLE_FILTERS } from '../../constants/analytics';
 import { TabType } from '../../types/analytics';
 
+type AvailableCrop = typeof AVAILABLE_CROPS[number];
+
 interface MultiYearControlsProps {
-  selectedCrop: string;
-  setSelectedCrop: (crop: string) => void;
+  selectedCrop: AvailableCrop;
+  setSelectedCrop: (crop: AvailableCrop) => void;
   selectedFilter: string;
   setSelectedFilter: (filter: string) => void;
   selectedTab: TabType;
@@ -29,7 +31,7 @@ export const MultiYearControls = ({
             <Leaf className="w-5 h-5 text-gray-500" />
             <select
               value={selectedCrop}
-              onChange={(e) => setSelectedCrop(e.target.value)}
+              onChange={(e) => setSelectedCrop(e.target.value as AvailableCrop)}
               className="bg-transparent border-none focus:ring-0"
             >
               {AVAILABLE_CROPS.map((crop) => (
