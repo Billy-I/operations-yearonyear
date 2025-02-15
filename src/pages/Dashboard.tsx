@@ -12,6 +12,7 @@ interface YearOnYearMetric {
 
 export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState('2024');
+  const [showNetMargin, setShowNetMargin] = useState(false);
 
   // Calculate summary metrics
   const totalHectares = Object.values(cropData).reduce((sum, crop) => sum + parseFloat(crop.area), 0);
@@ -96,10 +97,31 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Performance Indicators */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Top Performing Crops</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Top Performing Crops</h2>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowNetMargin(false)}
+                className={`px-3 py-1 text-sm rounded-md ${!showNetMargin ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}`}
+              >
+                Gross Margin
+              </button>
+              <button
+                onClick={() => setShowNetMargin(true)}
+                className={`px-3 py-1 text-sm rounded-md ${showNetMargin ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}`}
+              >
+                Net Margin
+              </button>
+            </div>
+          </div>
           <div className="space-y-4">
-            {cropData
-              .sort((a, b) => b.gm.value - a.gm.value)
+            {[...cropData]
+              .map(crop => ({
+                ...crop,
+                netMargin: crop.gm.value - crop.cost.value,
+                displayValue: showNetMargin ? (crop.gm.value - crop.cost.value) : crop.gm.value
+              }))
+              .sort((a, b) => b.displayValue - a.displayValue)
               .slice(0, 3)
               .map((crop, index) => (
                 <div key={index} className="flex justify-between items-center">
@@ -108,7 +130,9 @@ export default function Dashboard() {
                     <div className="text-sm text-gray-600">{crop.area}</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-medium">£{crop.gm.value.toFixed(2)}/ha</div>
+                    <div className="font-medium">
+                      £{crop.displayValue.toFixed(2)}/ha
+                    </div>
                     <div className="text-sm text-gray-600">{crop.yield.value.toFixed(1)} t/ha</div>
                   </div>
                 </div>
