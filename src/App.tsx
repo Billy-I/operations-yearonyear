@@ -9,6 +9,7 @@ import Budgets from './pages/Budgets';
 import BudgetsAlternative from './pages/BudgetsAlternative';
 import BudgetsSimple from './pages/BudgetsSimple';
 import AddBudget from './pages/AddBudget';
+import CropProgress from './pages/CropProgress';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <Route path="/tracker/budgets-alt/add" element={<AddBudget />} />
             <Route path="/tracker/budgets-simple" element={<BudgetsSimple />} />
             <Route path="/tracker/budgets-simple/add" element={<AddBudget />} />
+            <Route path="/tracker/crop-progress" element={<CropProgress />} />
           </Routes>
         </div>
       </div>

@@ -5,20 +5,19 @@ import { useState } from 'react';
 interface DropdownProps {
   title: string;
   icon: React.ReactNode;
-  path: string;
   isActive: boolean;
   isOpen: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }
 
-const DropdownSection = ({ title, icon, path, isActive, isOpen, onClick, children }: DropdownProps) => {
+const DropdownSection = ({ title, icon, isActive, isOpen, onClick, children }: DropdownProps) => {
   return (
     <div>
       <button
         onClick={onClick}
         className={`flex items-center justify-between w-full p-2 rounded ${
-          isActive ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-200'
+          isActive ? 'bg-gray-200 text-gray-900' : 'hover:bg-gray-200'
         }`}
       >
         <div className="flex items-center space-x-2">
@@ -49,7 +48,7 @@ export default function Sidebar() {
   const getLinkClasses = (path: string) => {
     return `flex items-center space-x-2 p-2 rounded ${
       isActive(path)
-        ? 'bg-blue-100 text-blue-600'
+        ? 'bg-gray-200 text-gray-900'
         : 'hover:bg-gray-200'
     }`;
   };
@@ -81,7 +80,6 @@ export default function Sidebar() {
         <DropdownSection
           title="Analytics"
           icon={<BarChart2 size={20} />}
-          path="/analytics"
           isActive={isActive('/analytics')}
           isOpen={openSections.analytics}
           onClick={() => toggleSection('analytics')}
@@ -95,11 +93,14 @@ export default function Sidebar() {
         <DropdownSection
           title="Tracker"
           icon={<Target size={20} />}
-          path="/tracker"
           isActive={isActive('/tracker')}
           isOpen={openSections.tracker}
           onClick={() => toggleSection('tracker')}
         >
+          <Link to="/tracker/crop-progress" className={getLinkClasses('/tracker/crop-progress')}>
+            <LineChart size={20} />
+            <span>Crop Progress</span>
+          </Link>
           <Link to="/tracker/budgets" className={getLinkClasses('/tracker/budgets')}>
             <Wallet size={20} />
             <span>Budgets</span>
@@ -117,7 +118,6 @@ export default function Sidebar() {
         <DropdownSection
           title="Data"
           icon={<Database size={20} />}
-          path="/data"
           isActive={isActive('/data')}
           isOpen={openSections.data}
           onClick={() => toggleSection('data')}
