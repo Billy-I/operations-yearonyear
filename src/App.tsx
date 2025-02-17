@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import OperationsCenter from './pages/OperationsCenter';
 import Explorer from './pages/Explorer';
 import CropDetails from './pages/CropDetails';
+import ExplorerCropDetails from './pages/ExplorerCropDetails';
 import MultiYear from './pages/MultiYear';
 import Budgets from './pages/Budgets';
 import BudgetsAlternative from './pages/BudgetsAlternative';
@@ -22,7 +23,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/data/operations" element={<OperationsCenter />} />
             <Route path="/analytics/explorer" element={<Explorer />} />
-            <Route path="/analytics/explorer/:crop" element={<CropDetails />} />
+            <Route path="/analytics/explorer/:crop" element={<ExplorerCropDetails />} />
             <Route path="/analytics/multi-year" element={<MultiYear />} />
             <Route path="/tracker/budgets" element={<Budgets />} />
             <Route path="/tracker/budgets-alt" element={<BudgetsAlternative />} />
