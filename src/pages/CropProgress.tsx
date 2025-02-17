@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const CropProgress = () => {
   const [view, setView] = useState<'Table' | 'Grid'>('Table');
@@ -123,7 +124,11 @@ const CropProgress = () => {
           <tbody>
             {crops.map((crop, index) => (
               <tr key={index} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-200">
-                <td className="p-4 text-gray-900">{crop.name}</td>
+                <td className="p-4 text-gray-900">
+                  <Link to={`/tracker/crop-progress/${encodeURIComponent(crop.name)}`} className="hover:underline">
+                    {crop.name}
+                  </Link>
+                </td>
                 <td className="p-4 text-gray-600">{crop.area.toFixed(2)}</td>
                 <td className="p-4">
                   <span className="text-gray-600">{crop.yield.value.toFixed(2)}</span>

@@ -30,6 +30,7 @@ function App() {
             <Route path="/tracker/budgets-simple" element={<BudgetsSimple />} />
             <Route path="/tracker/budgets-simple/add" element={<AddBudget />} />
             <Route path="/tracker/crop-progress" element={<CropProgress />} />
+            <Route path="/tracker/crop-progress/:crop" element={<CropDetails />} />
           </Routes>
         </div>
       </div>
