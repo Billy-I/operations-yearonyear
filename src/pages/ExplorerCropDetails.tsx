@@ -1,3 +1,4 @@
+// Explorer Crop Details page with Variable/Total view switching
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { HelpCircle, ArrowLeft, ChevronDown } from 'lucide-react';
