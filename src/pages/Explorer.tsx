@@ -57,7 +57,6 @@ export default function Explorer() {
                 className="bg-transparent border-none focus:ring-0"
               >
                 <option value="Variable">Variable</option>
-                <option value="Operations">Operations</option>
                 <option value="Total">Total</option>
               </select>
             </div>
@@ -158,7 +157,7 @@ export default function Explorer() {
                   </th>
                   <th className="px-4 py-3">
                     <div className="flex items-center justify-end space-x-1">
-                      <span>{selectedView === 'Total' ? 'NM' : 'GM'}</span>
+                      <span>{selectedView === 'Total' ? 'Net Margin' : 'GM'}</span>
                       <HelpCircle size={16} className="text-gray-400" />
                     </div>
                   </th>
