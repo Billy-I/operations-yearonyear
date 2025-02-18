@@ -273,17 +273,6 @@ export const MultiYearTable = ({
         </td>
       </tr>
       <tr>
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Gross Margin</td>
-        {selectedYears.map((year) => (
-          <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            {formatValueWithUnit(getValue('grossMargin', year, selectedUnit))}
-          </td>
-        ))}
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-          {formatValueWithUnit(getValue('grossMargin', 'Yearly avg', selectedUnit))}
-        </td>
-      </tr>
-      <tr>
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Yield</td>
         {selectedYears.map((year) => (
           <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

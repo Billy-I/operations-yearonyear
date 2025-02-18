@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { ViewType, UnitType, Year, ChemicalBreakdown, TabType, MetricsData } from '../../types/analytics';
 import { metricsData } from '../../data/metricsData';
 import { fieldsData } from '../../data/fieldData';
-import { getVariableCosts, getOperationsCosts, getTotalCosts } from '../../utils/metricsCalculations';
+import { getValue, getVariableCosts, getOperationsCosts, getTotalCosts } from '../../utils/metricsCalculations';
 
 type BasicMetricType = Exclude<keyof MetricsData, 'chemicalBreakdown'>;
 type CompositeMetricType = 'variableCosts' | 'operationsCosts' | 'totalCosts';
@@ -39,11 +39,39 @@ export function MultiYearGraph({
 
   const getMetricOptions = (): { value: DataMetricType; label: string }[] => {
     if (selectedTab === 'rotation') {
-      return [
-        { value: 'costOfProduction', label: 'Cost of Production' },
-        { value: 'yield', label: 'Yield' },
-        { value: 'grossMargin', label: 'Gross Margin' }
-      ];
+      switch (selectedView) {
+        case 'Operations':
+          return [
+            { value: 'cultivating', label: 'Cultivating' },
+            { value: 'drilling', label: 'Drilling' },
+            { value: 'applications', label: 'Applications' },
+            { value: 'harvesting', label: 'Harvesting' },
+            { value: 'other', label: 'Other' },
+            { value: 'production', label: 'Production' },
+            { value: 'yield', label: 'Yield' }
+          ];
+        case 'Variable':
+          return [
+            { value: 'costOfProduction', label: 'Cost of Production' },
+            { value: 'seed', label: 'Seed' },
+            { value: 'fertiliser', label: 'Fertiliser' },
+            { value: 'chemicals', label: 'Chemicals' },
+            { value: 'production', label: 'Production' },
+            { value: 'grossMargin', label: 'Gross Margin' },
+            { value: 'yield', label: 'Yield' }
+          ];
+        case 'Total':
+          return [
+            { value: 'variableCosts', label: 'Variable Costs' },
+            { value: 'operationsCosts', label: 'Operations Costs' },
+            { value: 'totalCosts', label: 'Total Costs' },
+            { value: 'production', label: 'Production' },
+            { value: 'netMargin', label: 'Net Margin' },
+            { value: 'yield', label: 'Yield' }
+          ];
+        default:
+          return [];
+      }
     }
 
     switch (selectedView) {
@@ -65,7 +93,6 @@ export function MultiYearGraph({
           { value: 'harvesting', label: 'Harvesting' },
           { value: 'other', label: 'Other' },
           { value: 'production', label: 'Production' },
-          { value: 'grossMargin', label: 'Gross Margin' },
           { value: 'yield', label: 'Yield' }
         ];
       case 'Total':
@@ -117,11 +144,17 @@ export function MultiYearGraph({
       const fieldData = fieldsData.find(field => field.id === selectedField);
       if (!fieldData) return [];
 
-      return validYears.map(year => ({
-        year,
-        'Field Value': selectedField === 'field1' && year === '2021' ? null : fieldData.metrics[year][selectedMetric as keyof typeof fieldData.metrics[Year]],
-        'Farm Average': selectedField === 'field1' && year === '2021' ? null : getMetricValue(selectedMetric, year, selectedUnit)
-      }));
+      return validYears.map(year => {
+        const yearKey = year as Year;
+        const isInvalidField = selectedField === 'field1' && year === '2021';
+        
+        return {
+          year,
+          'Field Value': isInvalidField ? null : fieldData.metrics[yearKey][selectedMetric as keyof typeof fieldData.metrics[Year]],
+          'Farm Average': isInvalidField ? null :
+            isBasicMetric(selectedMetric) ? getValue(selectedMetric, yearKey, selectedUnit) : getMetricValue(selectedMetric, yearKey, selectedUnit)
+        };
+      });
     }
 
     if (selectedMetric === 'chemicals') {
@@ -171,7 +204,7 @@ export function MultiYearGraph({
             <YAxis />
             <Tooltip />
             <Legend />
-            {selectedTab === 'rotation' ? (
+            {(selectedTab === 'rotation' && (selectedView === 'Variable' || selectedView === 'Operations' || selectedView === 'Total')) ? (
               <>
                 <Bar
                   dataKey="Field Value"

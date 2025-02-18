@@ -152,7 +152,6 @@ export const FieldRotationTable = ({
             </tr>
             {/* Production Metrics */}
             {renderMetricRow('Production', 'production')}
-            {renderMetricRow('Gross Margin', 'grossMargin')}
             {renderMetricRow('Yield', 'yield')}
           </>
         );
