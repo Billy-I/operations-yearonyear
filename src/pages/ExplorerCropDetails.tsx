@@ -1,100 +1,142 @@
-// Explorer Crop Details page with Variable/Total view switching
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { HelpCircle, ArrowLeft, ChevronDown } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { HelpCircle, ArrowLeft } from 'lucide-react';
+import CombinedCostChart from '../components/analytics/CombinedCostChart';
+import ExpandableCostPanel from '../components/analytics/ExpandableCostPanel';
+import DetailedPerformanceTable from '../components/analytics/DetailedPerformanceTable';
+import { MetricsData, Year } from '../types/analytics';
+import { AVAILABLE_YEARS } from '../constants/analytics';
 
-const variableCostData = [
-  { year: '2018', marketMedian: 120, yourPerformance: 130 },
-  { year: '2019', marketMedian: 125, yourPerformance: 128 },
-  { year: '2020', marketMedian: 135, yourPerformance: 145 },
-  { year: '2021', marketMedian: 130, yourPerformance: 132 },
-  { year: '2022', marketMedian: 128, yourPerformance: 130 },
-  { year: '2023', marketMedian: 140, yourPerformance: null }
-];
+// Helper function to create yearly data with average
+const createYearlyData = (baseValue: number, yearlyIncrease: number = 2) => {
+  const result: { [key in Year]: { perTonne: number; perHectare: number } } = {
+    '2019': { perTonne: baseValue, perHectare: baseValue * 8.1 },
+    '2020': { perTonne: baseValue + yearlyIncrease, perHectare: (baseValue + yearlyIncrease) * 8.2 },
+    '2021': { perTonne: baseValue + yearlyIncrease * 2, perHectare: (baseValue + yearlyIncrease * 2) * 8.3 },
+    '2022': { perTonne: baseValue + yearlyIncrease * 3, perHectare: (baseValue + yearlyIncrease * 3) * 8.35 },
+    '2023': { perTonne: baseValue + yearlyIncrease * 4, perHectare: (baseValue + yearlyIncrease * 4) * 8.35 },
+    '2024': { perTonne: baseValue + yearlyIncrease * 5, perHectare: (baseValue + yearlyIncrease * 5) * 8.4 },
+    'Yearly avg': { perTonne: baseValue + yearlyIncrease * 2.5, perHectare: (baseValue + yearlyIncrease * 2.5) * 8.28 }
+  };
+  return result;
+};
 
-const totalCostData = [
-  { year: '2018', marketMedian: 288, yourPerformance: 312 },
-  { year: '2019', marketMedian: 300, yourPerformance: 307 },
-  { year: '2020', marketMedian: 324, yourPerformance: 348 },
-  { year: '2021', marketMedian: 312, yourPerformance: 317 },
-  { year: '2022', marketMedian: 307, yourPerformance: 312 },
-  { year: '2023', marketMedian: 336, yourPerformance: null }
-];
-
-const grossMarginData = [
-  { year: '2018', margin: 150 },
-  { year: '2019', margin: 155 },
-  { year: '2020', margin: 160 },
-  { year: '2021', margin: 158 },
-  { year: '2022', margin: 162 },
-  { year: '2023', margin: 165 }
-];
-
-const netMarginData = [
-  { year: '2018', margin: 85 },
-  { year: '2019', margin: 88 },
-  { year: '2020', margin: 92 },
-  { year: '2021', margin: 90 },
-  { year: '2022', margin: 93 },
-  { year: '2023', margin: 95 }
-];
+// Mock data structure following MetricsData interface
+const metricsData: MetricsData = {
+  costOfProduction: createYearlyData(270, 3),
+  seed: createYearlyData(11, 0.2),
+  fertiliser: createYearlyData(60, 1),
+  chemicals: createYearlyData(40, 1),
+  chemicalBreakdown: {
+    herbicide: createYearlyData(18, 0.4),
+    fungicide: createYearlyData(14, 0.3),
+    adjuvant: createYearlyData(4, 0.1),
+    traceElement: createYearlyData(4, 0.2)
+  },
+  grossMargin: createYearlyData(60, 1.5),
+  cultivating: createYearlyData(130, 1.2),
+  drilling: createYearlyData(105, 1.4),
+  applications: createYearlyData(25, 0.4),
+  harvesting: createYearlyData(135, 1.8),
+  other: createYearlyData(0, 0),
+  production: createYearlyData(8.1, 0.06),
+  yield: createYearlyData(8.1, 0.06),
+  netMargin: createYearlyData(32, 0.8)
+};
 
 export default function ExplorerCropDetails() {
   const { crop } = useParams();
-  const [selectedView, setSelectedView] = useState('Variable');
-  const [selectedYear, setSelectedYear] = useState('2024');
+  // Year selection and metrics state
+  const [selectedYear, setSelectedYear] = useState<Year>('2024');
   const [selectedMetric, setSelectedMetric] = useState('Variable cost £/ha');
+  const [groupBy, setGroupBy] = useState<'Variety' | 'Field' | 'Region'>('Variety');
+  const [costUnit, setCostUnit] = useState<'per_ha' | 'total'>('per_ha');
+  
+  // Chart configuration state
+  const [showVariableCosts, setShowVariableCosts] = useState(true);
+  const [showOperationCosts, setShowOperationCosts] = useState(true);
+  const [showTotalCosts, setShowTotalCosts] = useState(true);
+  const [chartType, setChartType] = useState<'stacked-bar' | 'line' | 'grouped-bar'>('stacked-bar');
+  
+  // Cost category filters
+  const [costFilters, setCostFilters] = useState({
+    seed: true,
+    fertiliser: true,
+    chemicals: true,
+    cultivating: true,
+    drilling: true,
+    applications: true,
+    harvesting: true
+  });
+  
+  // Performance table column visibility
+  const [visibleColumns, setVisibleColumns] = useState({
+    area: true,
+    costPerTonne: true,
+    performance: true,
+    yield: true,
+    costPerHa: true,
+    margin: true
+  });
 
-  const variableData = {
-    costPerHectare: '£976.27/ha',
-    totalCost: '£65,528.93',
-    costPerTonne: '£117.90/t',
-    costRangeMin: '£3.56/t',
-    costRangeMax: '£254.32/t',
-    grossMargin: '£536.38/ha',
-  };
+  // Calculate total hectares from the existing data
+  const totalHectares = 607.04; // This is the value shown in the KPI card
 
-  const totalData = {
-    costPerHectare: '£2,342.64/ha',
-    totalCost: '£157,265.46',
-    costPerTonne: '£282.96/t',
-    costRangeMin: '£8.54/t',
-    costRangeMax: '£610.37/t',
-    grossMargin: '£287.15/ha',
-  };
-
-  const variablePerformanceData = [
+  // Cost categories for the expandable panels
+  const variableCostCategories = [
     {
-      name: 'KWS Estate',
-      area: '363.36 ha',
-      costPerTonne: '£117.90/t',
-      performance: 75,
-      yield: '8.40 t/ha',
-      costPerHa: '£976.27/ha',
-      gm: '£536.38/ha'
+      name: 'Seed',
+      data: metricsData.seed
     },
     {
-      name: 'Mayflower',
-      area: '109.47 ha',
-      costPerTonne: '£122.38/t',
-      performance: 66,
-      yield: '8.16 t/ha',
-      costPerHa: '£996.93/ha',
-      gm: '£47,135/ha'
+      name: 'Fertiliser',
+      data: metricsData.fertiliser
     },
     {
-      name: 'Crusoe',
-      area: '134.21 ha',
-      costPerTonne: '£126.00/t',
-      performance: 50,
-      yield: '7.53 t/ha',
-      costPerHa: '£949.32/ha',
-      gm: '£858.84/ha'
+      name: 'Chemicals',
+      data: metricsData.chemicals,
+      subcategories: [
+        {
+          name: 'Herbicide',
+          data: metricsData.chemicalBreakdown.herbicide
+        },
+        {
+          name: 'Fungicide',
+          data: metricsData.chemicalBreakdown.fungicide
+        },
+        {
+          name: 'Adjuvant',
+          data: metricsData.chemicalBreakdown.adjuvant
+        },
+        {
+          name: 'Trace Element',
+          data: metricsData.chemicalBreakdown.traceElement
+        }
+      ]
     }
   ];
 
-  const totalPerformanceData = [
+  const operationCostCategories = [
+    {
+      name: 'Cultivations',
+      data: metricsData.cultivating
+    },
+    {
+      name: 'Drilling',
+      data: metricsData.drilling
+    },
+    {
+      name: 'Applications',
+      data: metricsData.applications
+    },
+    {
+      name: 'Harvesting',
+      data: metricsData.harvesting
+    }
+  ];
+
+  // Performance data
+  const performanceData = [
     {
       name: 'KWS Estate',
       area: '363.36 ha',
@@ -102,7 +144,8 @@ export default function ExplorerCropDetails() {
       performance: 75,
       yield: '8.40 t/ha',
       costPerHa: '£2,342.64/ha',
-      gm: '£287.15/ha'
+      grossMargin: '£536.38/ha',
+      netMargin: '£287.15/ha'
     },
     {
       name: 'Mayflower',
@@ -111,7 +154,8 @@ export default function ExplorerCropDetails() {
       performance: 66,
       yield: '8.16 t/ha',
       costPerHa: '£2,392.63/ha',
-      gm: '£25,272/ha'
+      grossMargin: '£47,135/ha',
+      netMargin: '£25,272/ha'
     },
     {
       name: 'Crusoe',
@@ -120,15 +164,16 @@ export default function ExplorerCropDetails() {
       performance: 50,
       yield: '7.53 t/ha',
       costPerHa: '£2,278.37/ha',
-      gm: '£461.53/ha'
+      grossMargin: '£858.84/ha',
+      netMargin: '£461.53/ha'
     }
   ];
 
-  const currentData = selectedView === 'Variable' ? variableData : totalData;
-  const currentPerformanceData = selectedView === 'Variable' ? variablePerformanceData : totalPerformanceData;
+  const availableYearsReversed = [...AVAILABLE_YEARS].reverse();
 
   return (
     <div className="p-6">
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-4">
           <Link to="/analytics/explorer" className="text-gray-600 hover:text-gray-900">
@@ -152,43 +197,72 @@ export default function ExplorerCropDetails() {
           </button>
 
           <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
-            <svg className="w-5 h-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-              <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-            </svg>
-            <select
-              value={selectedView}
-              onChange={(e) => setSelectedView(e.target.value)}
-              className="bg-transparent border-none focus:ring-0"
-            >
-              <option value="Variable">Variable</option>
-              <option value="Total">Total</option>
-            </select>
-          </div>
-
-          <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
-            <svg className="w-5 h-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-            </svg>
             <select
               value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
+              onChange={(e) => setSelectedYear(e.target.value as Year)}
               className="bg-transparent border-none focus:ring-0"
             >
-              <option value="2024">2024</option>
-              <option value="2023">2023</option>
+              {availableYearsReversed.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
             </select>
           </div>
         </div>
       </div>
 
+      {/* Filter Bar */}
+      <div className="flex justify-between items-center mb-6 bg-gray-50 p-4 rounded-lg">
+        {/* Cost Category Filters */}
+        <div className="flex items-center space-x-4">
+          <span className="text-sm font-medium text-gray-700">Cost Categories:</span>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(costFilters).map(([category, isVisible]) => (
+              <button
+                key={category}
+                onClick={() => setCostFilters(prev => ({ ...prev, [category]: !isVisible }))}
+                className={`px-3 py-1 rounded-full text-sm ${
+                  isVisible
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-gray-200 text-gray-600'
+                }`}
+              >
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Column Visibility Menu */}
+        <div className="relative group">
+          <button className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+            Columns
+          </button>
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg p-2 invisible group-hover:visible">
+            {Object.entries(visibleColumns).map(([column, isVisible]) => (
+              <label key={column} className="flex items-center p-2 hover:bg-gray-50">
+                <input
+                  type="checkbox"
+                  checked={isVisible}
+                  onChange={() => setVisibleColumns(prev => ({ ...prev, [column]: !isVisible }))}
+                  className="mr-2"
+                />
+                <span className="text-sm text-gray-700">
+                  {column.replace(/([A-Z])/g, ' $1').trim()}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
       <div className="grid grid-cols-4 gap-6 mb-6">
         <div className="bg-gray-50 rounded-lg p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600">Yield</span>
             <HelpCircle size={16} className="text-gray-400" />
           </div>
-          <div className="text-2xl font-bold mb-2">8.40 t/ha</div>
+          <div className="text-2xl font-bold mb-2">{metricsData.yield[selectedYear].perHectare.toFixed(2)} t/ha</div>
           <div className="relative w-full">
             <div className="h-1 bg-gray-200 rounded">
               <div
@@ -209,9 +283,14 @@ export default function ExplorerCropDetails() {
         <div className="bg-gray-50 rounded-lg p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600">Cost per hectare</span>
-            <HelpCircle size={16} className="text-gray-400" />
+            <div className="relative group">
+              <HelpCircle size={16} className="text-gray-400 cursor-help" />
+              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
+                Total cost per hectare including variable costs (seed, fertilizer, chemicals) and operation costs (cultivations, drilling, applications, harvesting)
+              </div>
+            </div>
           </div>
-          <div className="text-2xl font-bold">{currentData.costPerHectare}</div>
+          <div className="text-2xl font-bold">£{metricsData.costOfProduction[selectedYear].perHectare.toFixed(2)}/ha</div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-6">
@@ -227,15 +306,20 @@ export default function ExplorerCropDetails() {
             <span className="text-sm text-gray-600">Harvested area</span>
             <HelpCircle size={16} className="text-gray-400" />
           </div>
-          <div className="text-2xl font-bold">607.04 ha (100%)</div>
+          <div className="text-2xl font-bold">{totalHectares} ha (100%)</div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600">Cost per tonne</span>
-            <HelpCircle size={16} className="text-gray-400" />
+            <div className="relative group">
+              <HelpCircle size={16} className="text-gray-400 cursor-help" />
+              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
+                Total cost per tonne = (Variable Costs + Operation Costs) / Total Production. Shows the complete cost to produce one tonne of crop.
+              </div>
+            </div>
           </div>
-          <div className="text-2xl font-bold mb-2">{currentData.costPerTonne}</div>
+          <div className="text-2xl font-bold mb-2">£{metricsData.costOfProduction[selectedYear].perTonne.toFixed(2)}/t</div>
           <div className="relative w-full">
             <div className="h-1 bg-gray-200 rounded">
               <div
@@ -247,8 +331,8 @@ export default function ExplorerCropDetails() {
               />
             </div>
             <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>{currentData.costRangeMin}</span>
-              <span>{currentData.costRangeMax}</span>
+              <span>£3.56/t</span>
+              <span>£254.32/t</span>
             </div>
           </div>
         </div>
@@ -256,9 +340,14 @@ export default function ExplorerCropDetails() {
         <div className="bg-gray-50 rounded-lg p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-600">Total cost</span>
-            <HelpCircle size={16} className="text-gray-400" />
+            <div className="relative group">
+              <HelpCircle size={16} className="text-gray-400 cursor-help" />
+              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
+                Total cost across all hectares = Cost per hectare × Total hectares. Includes all variable and operation costs for the entire crop area.
+              </div>
+            </div>
           </div>
-          <div className="text-2xl font-bold">{currentData.totalCost}</div>
+          <div className="text-2xl font-bold">£157,265.46</div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-6">
@@ -266,207 +355,105 @@ export default function ExplorerCropDetails() {
             <span className="text-sm text-gray-600">Production</span>
             <HelpCircle size={16} className="text-gray-400" />
           </div>
-          <div className="text-2xl font-bold">5,099.14t</div>
-          <div className="text-sm text-gray-500">Sales: £1,012.37 t</div>
+          <div className="text-2xl font-bold">{metricsData.production[selectedYear].perHectare.toFixed(2)}t</div>
+          <div className="text-sm text-gray-500">Sales: £1,012.37/t</div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Gross margin</span>
-            <HelpCircle size={16} className="text-gray-400" />
+            <span className="text-sm text-gray-600">Profitability</span>
+            <div className="relative group">
+              <HelpCircle size={16} className="text-gray-400 cursor-help" />
+              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
+                <div className="mb-2">
+                  <strong>Gross Margin</strong> = Revenue - Variable Costs (seed, fertilizer, chemicals)
+                </div>
+                <div>
+                  <strong>Net Margin</strong> = Gross Margin - Operation Costs (cultivations, drilling, applications, harvesting)
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="text-2xl font-bold">{currentData.grossMargin}</div>
+          <div className="space-y-2">
+            <div>
+              <div className="text-sm text-gray-600">Gross Margin</div>
+              <div className="text-2xl font-bold">£{metricsData.grossMargin[selectedYear].perHectare.toFixed(2)}/ha</div>
+            </div>
+            <div className="border-t border-gray-200 pt-2">
+              <div className="text-sm text-gray-600">Net Margin</div>
+              <div className="text-2xl font-bold">£{metricsData.netMargin[selectedYear].perHectare.toFixed(2)}/ha</div>
+            </div>
+            <div className="border-t border-gray-200 pt-2">
+              <div className="text-sm text-gray-600">Difference</div>
+              <div className="text-lg font-medium text-gray-700">
+                £{(metricsData.grossMargin[selectedYear].perHectare - metricsData.netMargin[selectedYear].perHectare).toFixed(2)}/ha
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex gap-6">
-          <div className="flex-1">
-            <div className="mb-4">
-              <select
-                value={selectedMetric}
-                onChange={(e) => setSelectedMetric(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 w-48"
-              >
-                <option value="Variable cost £/ha">Variable cost £/ha</option>
-                <option value="Cost of production £/t">Cost of production £/t</option>
-                <option value="Production (Tonnes)">Production (Tonnes)</option>
-                <option value="Yield">Yield</option>
-              </select>
-            </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={selectedView === 'Variable' ? variableCostData : totalCostData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="marketMedian" name="Market median" fill="#666666" />
-                  <Bar dataKey="yourPerformance" name="Your Crop performance" fill="#000000" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+      {/* Combined Cost Chart */}
+      <div className="mb-6">
+        <CombinedCostChart
+          data={metricsData}
+          years={AVAILABLE_YEARS}
+          showVariableCosts={showVariableCosts}
+          showOperationCosts={showOperationCosts}
+          showTotalCosts={showTotalCosts}
+          onToggleLayer={(layer) => {
+            if (layer === 'variable') setShowVariableCosts(!showVariableCosts);
+            if (layer === 'operations') setShowOperationCosts(!showOperationCosts);
+            if (layer === 'total') setShowTotalCosts(!showTotalCosts);
+          }}
+          unit={costUnit}
+          hectares={totalHectares}
+          onUnitChange={setCostUnit}
+          costFilters={costFilters}
+          chartType={chartType}
+          onChartTypeChange={setChartType}
+        />
+      </div>
 
-          <div className="flex-1">
-            <h2 className="text-xl font-semibold mb-4">
-              {selectedView === 'Variable' ? 'Gross Margin Analysis' : 'Net Margin Analysis'}
-            </h2>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={selectedView === 'Variable' ? grossMarginData : netMarginData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="margin" stroke="#000000" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+      {/* Cost Breakdowns */}
+      <div className="space-y-6 mb-6">
+        <ExpandableCostPanel
+          title="Variable Costs"
+          categories={variableCostCategories}
+          selectedYear={selectedYear}
+          costFilters={costFilters}
+        />
+        
+        <ExpandableCostPanel
+          title="Operation Costs"
+          categories={operationCostCategories}
+          selectedYear={selectedYear}
+          costFilters={costFilters}
+        />
+      </div>
+
+      {/* Performance Table */}
+      <div>
+        <div className="mb-4">
+          <select
+            value={groupBy}
+            onChange={(e) => setGroupBy(e.target.value as 'Variety' | 'Field' | 'Region')}
+            className="border-gray-300 rounded-md"
+          >
+            <option value="Variety">Variety</option>
+            <option value="Field">Field</option>
+            <option value="Region">Region</option>
+          </select>
         </div>
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Performance by</h2>
-          <div className="flex items-center space-x-2 mb-4">
-            <select className="border-gray-300 rounded-md">
-              <option>Variety</option>
-              <option>Field</option>
-              <option>Region</option>
-            </select>
-          </div>
-
-          <div className="overflow-x-auto border border-gray-200 rounded-lg">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="text-left py-3 font-medium text-gray-600">Variety</th>
-                  <th className="text-left py-3 font-medium text-gray-600">Area</th>
-                  <th className="text-left py-3 font-medium text-gray-600">Cost(£/t)</th>
-                  <th className="text-center py-3 font-medium text-gray-600">Performance</th>
-                  <th className="text-right py-3 font-medium text-gray-600">Yield</th>
-                  <th className="text-right py-3 font-medium text-gray-600">Cost(£/ha)</th>
-                  <th className="text-right py-3 font-medium text-gray-600">
-                    {selectedView === 'Variable' ? 'GM' : 'Net margin'}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentPerformanceData.map((item) => (
-                  <tr key={item.name} className="border-b border-gray-100">
-                    <td className="py-3">{item.name}</td>
-                    <td className="py-3">{item.area}</td>
-                    <td className="py-3">{item.costPerTonne}</td>
-                    <td className="text-center py-3">
-                      <div className="w-32 h-2 bg-gray-100 rounded-full mx-auto relative overflow-hidden">
-                        <div
-                          className="absolute top-0 left-0 h-full bg-gray-600 rounded-full"
-                          style={{ width: `${item.performance}%` }}
-                        ></div>
-                      </div>
-                    </td>
-                    <td className="text-right py-3">{item.yield}</td>
-                    <td className="text-right py-3">{item.costPerHa}</td>
-                    <td className="text-right py-3">{item.gm}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-8">
-            <h3 className="font-semibold mb-4">Category</h3>
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="text-left py-3 font-medium text-gray-600">Category</th>
-                    <th className="text-center py-3 font-medium text-gray-600">Market Range</th>
-                    <th className="text-right py-3 font-medium text-gray-600">Cost(£/t)</th>
-                    <th className="text-right py-3 font-medium text-gray-600">Cost(£/ha)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-gray-100">
-                    <td className="py-3">Seed</td>
-                    <td className="py-3 px-4">
-                      <div className="w-48 h-2 bg-gray-100 rounded-full relative overflow-hidden mx-auto">
-                        <div className="absolute top-0 left-[30%] right-[40%] h-full bg-gray-600 rounded-full"></div>
-                      </div>
-                    </td>
-                    <td className="text-right py-3">£12.05/t</td>
-                    <td className="text-right py-3">£97.49/ha</td>
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="py-3">Fertiliser</td>
-                    <td className="py-3 px-4">
-                      <div className="w-48 h-2 bg-gray-100 rounded-full relative overflow-hidden mx-auto">
-                        <div className="absolute top-0 left-[25%] right-[35%] h-full bg-gray-600 rounded-full"></div>
-                      </div>
-                    </td>
-                    <td className="text-right py-3">£64.19/t</td>
-                    <td className="text-right py-3">£519.46/ha</td>
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="py-3">Chemicals</td>
-                    <td className="py-3 px-4">
-                      <div className="w-48 h-2 bg-gray-100 rounded-full relative overflow-hidden mx-auto">
-                        <div className="absolute top-0 left-[35%] right-[30%] h-full bg-gray-600 rounded-full"></div>
-                      </div>
-                    </td>
-                    <td className="text-right py-3">£44.13/t</td>
-                    <td className="text-right py-3">£357.11/ha</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <h3 className="font-semibold mb-4">Operations</h3>
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="text-left py-3 font-medium text-gray-600">Operations</th>
-                    <th className="text-right py-3 font-medium text-gray-600">Cost (£/ha)</th>
-                    <th className="text-right py-3 font-medium text-gray-600">Total (£)</th>
-                    <th className="text-right py-3 font-medium text-gray-600">Allocation</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-gray-100">
-                    <td className="py-3">Cultivations</td>
-                    <td className="text-right py-3">£1,099.02/ha</td>
-                    <td className="text-right py-3">£32,970.60</td>
-                    <td className="text-right py-3">20%</td>
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="py-3">Drilling</td>
-                    <td className="text-right py-3">£896.10/ha</td>
-                    <td className="text-right py-3">£26,883.00</td>
-                    <td className="text-right py-3">30%</td>
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="py-3">Applications</td>
-                    <td className="text-right py-3">£217.14/ha</td>
-                    <td className="text-right py-3">£6,514.20</td>
-                    <td className="text-right py-3">10%</td>
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="py-3">Harvesting</td>
-                    <td className="text-right py-3">£1,153.13/ha</td>
-                    <td className="text-right py-3">£34,593.90</td>
-                    <td className="text-right py-3">40%</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div className="text-sm text-gray-500 mt-4">
-              ⚠️ Operation costs are using derived data and not completely verified.
-            </div>
-          </div>
-        </div>
+        <DetailedPerformanceTable
+          data={performanceData}
+          metricsData={metricsData}
+          selectedYear={selectedYear}
+          groupBy={groupBy}
+          showNetMargin
+          visibleColumns={visibleColumns}
+        />
       </div>
     </div>
   );
