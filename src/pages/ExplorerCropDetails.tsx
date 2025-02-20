@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { HelpCircle, ArrowLeft } from 'lucide-react';
-import CombinedCostChart from '../components/analytics/CombinedCostChart';
+import { ChartContainer, CostChartView } from '../components/analytics/charts';
 import ExpandableCostPanel from '../components/analytics/ExpandableCostPanel';
 import DetailedPerformanceTable from '../components/analytics/DetailedPerformanceTable';
 import { MetricsData, Year } from '../types/analytics';
@@ -48,17 +48,11 @@ export default function ExplorerCropDetails() {
   const { crop } = useParams();
   // Year selection and metrics state
   const [selectedYear, setSelectedYear] = useState<Year>('2024');
-  const [selectedMetric, setSelectedMetric] = useState('Variable cost £/ha');
   const [groupBy, setGroupBy] = useState<'Variety' | 'Field' | 'Region'>('Variety');
   const [costUnit, setCostUnit] = useState<'per_ha' | 'total'>('per_ha');
+  const [chartView, setChartView] = useState<CostChartView>('distribution');
   
   // Chart configuration state
-  const [showVariableCosts, setShowVariableCosts] = useState(true);
-  const [showOperationCosts, setShowOperationCosts] = useState(true);
-  const [showTotalCosts, setShowTotalCosts] = useState(true);
-  const [chartType, setChartType] = useState<'stacked-bar' | 'line' | 'grouped-bar'>('stacked-bar');
-  
-  // Cost category filters
   const [costFilters, setCostFilters] = useState({
     seed: true,
     fertiliser: true,
@@ -80,9 +74,68 @@ export default function ExplorerCropDetails() {
   });
 
   // Calculate total hectares from the existing data
-  const totalHectares = 607.04; // This is the value shown in the KPI card
+  const totalHectares = 607.04;
 
-  // Cost categories for the expandable panels
+  // Transform metrics data for the new chart component
+  const chartData = {
+    variable: {
+      seed: {
+        type: 'seed' as const,
+        current: metricsData.seed[selectedYear].perHectare,
+        min: metricsData.seed['Yearly avg'].perHectare * 0.8,
+        max: metricsData.seed['Yearly avg'].perHectare * 1.2,
+        average: metricsData.seed['Yearly avg'].perHectare
+      },
+      fertiliser: {
+        type: 'fertiliser' as const,
+        current: metricsData.fertiliser[selectedYear].perHectare,
+        min: metricsData.fertiliser['Yearly avg'].perHectare * 0.8,
+        max: metricsData.fertiliser['Yearly avg'].perHectare * 1.2,
+        average: metricsData.fertiliser['Yearly avg'].perHectare
+      },
+      chemicals: {
+        type: 'chemical' as const,
+        current: metricsData.chemicals[selectedYear].perHectare,
+        min: metricsData.chemicals['Yearly avg'].perHectare * 0.8,
+        max: metricsData.chemicals['Yearly avg'].perHectare * 1.2,
+        average: metricsData.chemicals['Yearly avg'].perHectare,
+        subCategories: {
+          herbicide: {
+            min: metricsData.chemicalBreakdown.herbicide['Yearly avg'].perHectare * 0.8,
+            max: metricsData.chemicalBreakdown.herbicide['Yearly avg'].perHectare * 1.2,
+            average: metricsData.chemicalBreakdown.herbicide['Yearly avg'].perHectare,
+            current: metricsData.chemicalBreakdown.herbicide[selectedYear].perHectare
+          },
+          fungicide: {
+            min: metricsData.chemicalBreakdown.fungicide['Yearly avg'].perHectare * 0.8,
+            max: metricsData.chemicalBreakdown.fungicide['Yearly avg'].perHectare * 1.2,
+            average: metricsData.chemicalBreakdown.fungicide['Yearly avg'].perHectare,
+            current: metricsData.chemicalBreakdown.fungicide[selectedYear].perHectare
+          },
+          adjuvant: {
+            min: metricsData.chemicalBreakdown.adjuvant['Yearly avg'].perHectare * 0.8,
+            max: metricsData.chemicalBreakdown.adjuvant['Yearly avg'].perHectare * 1.2,
+            average: metricsData.chemicalBreakdown.adjuvant['Yearly avg'].perHectare,
+            current: metricsData.chemicalBreakdown.adjuvant[selectedYear].perHectare
+          },
+          traceElement: {
+            min: metricsData.chemicalBreakdown.traceElement['Yearly avg'].perHectare * 0.8,
+            max: metricsData.chemicalBreakdown.traceElement['Yearly avg'].perHectare * 1.2,
+            average: metricsData.chemicalBreakdown.traceElement['Yearly avg'].perHectare,
+            current: metricsData.chemicalBreakdown.traceElement[selectedYear].perHectare
+          }
+        }
+      }
+    },
+    operations: {
+      cultivating: metricsData.cultivating[selectedYear].perHectare,
+      drilling: metricsData.drilling[selectedYear].perHectare,
+      applications: metricsData.applications[selectedYear].perHectare,
+      harvesting: metricsData.harvesting[selectedYear].perHectare
+    }
+  };
+
+  // Cost category panels data
   const variableCostCategories = [
     {
       name: 'Seed',
@@ -393,25 +446,19 @@ export default function ExplorerCropDetails() {
         </div>
       </div>
 
-      {/* Combined Cost Chart */}
-      <div className="mb-6">
-        <CombinedCostChart
-          data={metricsData}
-          years={AVAILABLE_YEARS}
-          showVariableCosts={showVariableCosts}
-          showOperationCosts={showOperationCosts}
-          showTotalCosts={showTotalCosts}
-          onToggleLayer={(layer) => {
-            if (layer === 'variable') setShowVariableCosts(!showVariableCosts);
-            if (layer === 'operations') setShowOperationCosts(!showOperationCosts);
-            if (layer === 'total') setShowTotalCosts(!showTotalCosts);
-          }}
-          unit={costUnit}
+      {/* New Unified Cost Chart */}
+      <div className="mb-6 bg-white rounded-lg shadow" style={{ height: '600px' }}>
+        <ChartContainer
+          costBreakdown={chartData}
+          view={chartView}
+          onViewChange={setChartView}
+          year={selectedYear}
+          costUnit={costUnit}
           hectares={totalHectares}
           onUnitChange={setCostUnit}
-          costFilters={costFilters}
-          chartType={chartType}
-          onChartTypeChange={setChartType}
+          revenue={metricsData.grossMargin[selectedYear].perHectare + metricsData.costOfProduction[selectedYear].perHectare}
+          yield={metricsData.yield[selectedYear].perHectare}
+          pricePerTonne={1012.37}
         />
       </div>
 

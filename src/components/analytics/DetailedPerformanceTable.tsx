@@ -32,12 +32,11 @@ interface DetailedPerformanceTableProps {
 }
 
 interface ExpandedRowContentProps {
-  name: string;
   metricsData: MetricsData;
   selectedYear: Year;
 }
 
-function ExpandedRowContent({ name, metricsData, selectedYear }: ExpandedRowContentProps) {
+function ExpandedRowContent({ metricsData, selectedYear }: ExpandedRowContentProps) {
   return (
     <div className="px-4 py-3 bg-gray-50">
       <div className="grid grid-cols-2 gap-6">
@@ -375,7 +374,6 @@ export default function DetailedPerformanceTable({
                       Object.values(visibleColumns).filter(Boolean).length // Visible columns count
                     }>
                       <ExpandedRowContent
-                        name={item.name}
                         metricsData={metricsData}
                         selectedYear={selectedYear}
                       />

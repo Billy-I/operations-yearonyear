@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, HelpCircle, TrendingUp, TrendingDown } from 'lucide-react';
-import { MetricsData, Year, MetricData } from '../../types/analytics';
+import { Year, MetricData } from '../../types/analytics';
 
 // Helper to calculate year-on-year change
 const getYearOnYearChange = (
