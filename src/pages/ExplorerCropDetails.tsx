@@ -4,6 +4,7 @@ import { HelpCircle, ArrowLeft } from 'lucide-react';
 import { ChartContainer, CostChartView } from '../components/analytics/charts';
 import ExpandableCostPanel from '../components/analytics/ExpandableCostPanel';
 import DetailedPerformanceTable from '../components/analytics/DetailedPerformanceTable';
+import MarketRangeIndicator from '../components/analytics/charts/common/MarketRangeIndicator';
 import { MetricsData, Year } from '../types/analytics';
 import { AVAILABLE_YEARS } from '../constants/analytics';
 
@@ -309,138 +310,122 @@ export default function ExplorerCropDetails() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        {/* Yield and Production Card */}
         <div className="bg-gray-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Yield</span>
-            <HelpCircle size={16} className="text-gray-400" />
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-gray-600">Yield & Production</span>
+            <div className="relative group">
+              <HelpCircle size={16} className="text-gray-400 cursor-help" />
+              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
+                Current yield and production metrics compared to market benchmarks
+              </div>
+            </div>
           </div>
-          <div className="text-2xl font-bold mb-2">{metricsData.yield[selectedYear].perHectare.toFixed(2)} t/ha</div>
-          <div className="relative w-full">
-            <div className="h-1 bg-gray-200 rounded">
-              <div
-                className="absolute h-1 bg-gray-400 rounded"
-                style={{
-                  left: '40%',
-                  right: '20%'
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm text-gray-600">Yield</div>
+              <div className="text-xl font-bold">{metricsData.yield[selectedYear].perHectare.toFixed(2)} t/ha</div>
+              <MarketRangeIndicator
+                data={{
+                  min: 4.77,
+                  max: 11.15,
+                  average: metricsData.yield['Yearly avg'].perHectare,
+                  current: metricsData.yield[selectedYear].perHectare
                 }}
+                width={200}
+                formatValue={(value: number) => `${value.toFixed(2)}t/ha`}
+                height={24}
+                className="mb-1"
               />
             </div>
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>4.77t/ha</span>
-              <span>11.15t/ha</span>
+            <div className="border-t border-gray-200 pt-3">
+              <div className="text-sm text-gray-600">Production</div>
+              <div className="text-xl font-bold">{metricsData.production[selectedYear].perHectare.toFixed(2)}t</div>
+              <div className="text-sm text-gray-500">Sales: £1,012.37/t</div>
             </div>
           </div>
         </div>
 
+        {/* Costs Card */}
         <div className="bg-gray-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Cost per hectare</span>
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-gray-600">Costs</span>
             <div className="relative group">
               <HelpCircle size={16} className="text-gray-400 cursor-help" />
               <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
-                Total cost per hectare including variable costs (seed, fertilizer, chemicals) and operation costs (cultivations, drilling, applications, harvesting)
+                Comprehensive cost metrics including per hectare, per tonne, and total costs
               </div>
             </div>
           </div>
-          <div className="text-2xl font-bold">£{metricsData.costOfProduction[selectedYear].perHectare.toFixed(2)}/ha</div>
-        </div>
-
-        <div className="bg-gray-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600"># Fields</span>
-            <HelpCircle size={16} className="text-gray-400" />
+          <div className="space-y-3">
+            <div>
+              <div className="text-sm text-gray-600">Per hectare</div>
+              <div className="text-xl font-bold">£{metricsData.costOfProduction[selectedYear].perHectare.toFixed(2)}/ha</div>
+            </div>
+            <div className="border-t border-gray-200 pt-3">
+              <div className="text-sm text-gray-600">Per tonne</div>
+              <div className="text-xl font-bold">£{metricsData.costOfProduction[selectedYear].perTonne.toFixed(2)}/t</div>
+            </div>
+            <div className="border-t border-gray-200 pt-3">
+              <div className="text-sm text-gray-600">Total cost</div>
+              <div className="text-xl font-bold">£157,265.46</div>
+            </div>
           </div>
-          <div className="text-2xl font-bold">3</div>
         </div>
 
+        {/* Area Card */}
         <div className="bg-gray-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Harvested area</span>
-            <HelpCircle size={16} className="text-gray-400" />
-          </div>
-          <div className="text-2xl font-bold">{totalHectares} ha (100%)</div>
-        </div>
-
-        <div className="bg-gray-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Cost per tonne</span>
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-gray-600">Area Information</span>
             <div className="relative group">
               <HelpCircle size={16} className="text-gray-400 cursor-help" />
               <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
-                Total cost per tonne = (Variable Costs + Operation Costs) / Total Production. Shows the complete cost to produce one tonne of crop.
+                Field and area statistics
               </div>
             </div>
           </div>
-          <div className="text-2xl font-bold mb-2">£{metricsData.costOfProduction[selectedYear].perTonne.toFixed(2)}/t</div>
-          <div className="relative w-full">
-            <div className="h-1 bg-gray-200 rounded">
-              <div
-                className="absolute h-1 bg-gray-400 rounded"
-                style={{
-                  left: '30%',
-                  right: '25%'
-                }}
-              />
+          <div className="space-y-3">
+            <div>
+              <div className="text-sm text-gray-600">Number of Fields</div>
+              <div className="text-xl font-bold">3</div>
             </div>
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>£3.56/t</span>
-              <span>£254.32/t</span>
+            <div className="border-t border-gray-200 pt-3">
+              <div className="text-sm text-gray-600">Harvested Area</div>
+              <div className="text-xl font-bold">{totalHectares} ha (100%)</div>
             </div>
           </div>
         </div>
 
+        {/* Profitability Card */}
         <div className="bg-gray-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Total cost</span>
-            <div className="relative group">
-              <HelpCircle size={16} className="text-gray-400 cursor-help" />
-              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
-                Total cost across all hectares = Cost per hectare × Total hectares. Includes all variable and operation costs for the entire crop area.
-              </div>
-            </div>
-          </div>
-          <div className="text-2xl font-bold">£157,265.46</div>
-        </div>
-
-        <div className="bg-gray-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Production</span>
-            <HelpCircle size={16} className="text-gray-400" />
-          </div>
-          <div className="text-2xl font-bold">{metricsData.production[selectedYear].perHectare.toFixed(2)}t</div>
-          <div className="text-sm text-gray-500">Sales: £1,012.37/t</div>
-        </div>
-
-        <div className="bg-gray-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-gray-600">Profitability</span>
             <div className="relative group">
               <HelpCircle size={16} className="text-gray-400 cursor-help" />
               <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
-                <div className="mb-2">
-                  <strong>Gross Margin</strong> = Revenue - Variable Costs (seed, fertilizer, chemicals)
-                </div>
-                <div>
-                  <strong>Net Margin</strong> = Gross Margin - Operation Costs (cultivations, drilling, applications, harvesting)
-                </div>
+                Gross and net margin analysis
               </div>
             </div>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-4">
             <div>
               <div className="text-sm text-gray-600">Gross Margin</div>
-              <div className="text-2xl font-bold">£{metricsData.grossMargin[selectedYear].perHectare.toFixed(2)}/ha</div>
+              <div className="text-xl font-bold mb-2">£{metricsData.grossMargin[selectedYear].perHectare.toFixed(2)}/ha</div>
+              <MarketRangeIndicator
+                data={{
+                  min: metricsData.grossMargin['Yearly avg'].perHectare * 0.7,
+                  max: metricsData.grossMargin['Yearly avg'].perHectare * 1.3,
+                  average: metricsData.grossMargin['Yearly avg'].perHectare,
+                  current: metricsData.grossMargin[selectedYear].perHectare
+                }}
+                width={200}
+                formatValue={(value: number) => `£${value.toFixed(2)}/ha`}
+              />
             </div>
-            <div className="border-t border-gray-200 pt-2">
+            <div className="border-t border-gray-200 pt-3">
               <div className="text-sm text-gray-600">Net Margin</div>
-              <div className="text-2xl font-bold">£{metricsData.netMargin[selectedYear].perHectare.toFixed(2)}/ha</div>
-            </div>
-            <div className="border-t border-gray-200 pt-2">
-              <div className="text-sm text-gray-600">Difference</div>
-              <div className="text-lg font-medium text-gray-700">
-                £{(metricsData.grossMargin[selectedYear].perHectare - metricsData.netMargin[selectedYear].perHectare).toFixed(2)}/ha
-              </div>
+              <div className="text-xl font-bold">£{metricsData.netMargin[selectedYear].perHectare.toFixed(2)}/ha</div>
             </div>
           </div>
         </div>
@@ -459,6 +444,13 @@ export default function ExplorerCropDetails() {
           revenue={metricsData.grossMargin[selectedYear].perHectare + metricsData.costOfProduction[selectedYear].perHectare}
           yield={metricsData.yield[selectedYear].perHectare}
           pricePerTonne={1012.37}
+          performanceData={performanceData.map(item => ({
+            name: item.name,
+            area: item.area,
+            performance: item.performance,
+            yield: parseFloat(item.yield.split(' ')[0]),
+            costPerHa: item.costPerHa
+          }))}
         />
       </div>
 
