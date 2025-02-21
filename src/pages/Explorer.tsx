@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { cropData } from '../data/cropData';
 import { VIEW_MULTIPLIERS } from '../constants/analytics';
+import MarketRangeIndicator from '../components/analytics/charts/common/MarketRangeIndicator';
 
 export default function Explorer() {
   const [selectedYear, setSelectedYear] = useState('2024');
@@ -113,7 +114,7 @@ export default function Explorer() {
             <h2 className="text-xl font-semibold">Crop Performance</h2>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-hidden">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50">
@@ -130,7 +131,7 @@ export default function Explorer() {
                     </div>
                   </th>
                   {selectedView === 'Variable' && (
-                    <th className="px-4 py-3">
+                    <th className="px-4 py-3 overflow-hidden">
                       <div className="flex items-center justify-center space-x-1">
                         <span>Market Range</span>
                         <HelpCircle size={16} className="text-gray-400" />
@@ -181,29 +182,16 @@ export default function Explorer() {
                       </td>
                       <td className="px-4 py-4">{crop.area}</td>
                       {selectedView === 'Variable' && (
-                        <td className="px-4 py-4">
-                          <div className="relative w-48 mx-auto">
-                            <div className="h-1 bg-gray-200 rounded">
-                              <div
-                                className="absolute h-1 bg-gray-400 rounded"
-                                style={{
-                                  left: `${(crop.marketRange.min / crop.marketRange.max) * 100}%`,
-                                  right: `${100 - ((crop.marketRange.current / crop.marketRange.max) * 100)}%`
-                                }}
-                              />
-                            </div>
-                            <div
-                              className="absolute top-1/2 w-2 h-2 bg-gray-600 rounded-full transform -translate-y-1/2"
-                              style={{
-                                left: `${(crop.marketRange.current / crop.marketRange.max) * 100}%`,
-                                marginLeft: '-4px'
-                              }}
-                            />
-                            <div className="flex justify-between text-xs text-gray-500 mt-1">
-                              <span>£{crop.marketRange.min.toFixed(2)}/t</span>
-                              <span>£{crop.marketRange.max.toFixed(2)}/t</span>
-                            </div>
-                          </div>
+                        <td className="px-4 py-4 overflow-hidden">
+                          <MarketRangeIndicator
+                            data={{
+                              min: crop.marketRange.min,
+                              max: crop.marketRange.max,
+                              average: (crop.marketRange.min + crop.marketRange.max) / 2,
+                              current: crop.marketRange.current
+                            }}
+                            formatValue={(value) => `£${value.toFixed(2)}/t`}
+                          />
                         </td>
                       )}
                       <td className="px-4 py-4 text-right">
