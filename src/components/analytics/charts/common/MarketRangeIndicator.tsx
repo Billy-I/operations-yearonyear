@@ -39,7 +39,7 @@ const MarketRangeIndicator: React.FC<MarketRangeIndicatorProps> = ({
   return (
     <div className={`flex flex-col ${className}`}>
       <div
-        className="relative"
+        className="relative overflow-hidden"
         style={containerStyle}
       >
         {/* Range bar background */}
