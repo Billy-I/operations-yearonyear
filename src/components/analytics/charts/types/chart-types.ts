@@ -40,9 +40,8 @@ export interface CostBreakdown {
 /**
  * Available view types for the cost chart
  */
-export type CostChartView = 
-  | 'distribution' 
-  | 'variable-analysis' 
+export type CostChartView =
+  | 'distribution'
   | 'financial-impact'
   | 'financial-impact-stacked'
   | 'financial-impact-sunburst'
@@ -71,17 +70,6 @@ export interface CostDistributionViewProps extends BaseChartProps {
 }
 
 /**
- * Variable costs analysis view specific props
- */
-export interface VariableCostsViewProps extends BaseChartProps {
-  verifiedCosts: {
-    [key: string]: VerifiedCost;
-  };
-  showPercentageVariance: boolean;
-  onTogglePercentageVariance: () => void;
-}
-
-/**
  * Financial impact view specific props (base for all financial impact views)
  */
 export interface FinancialImpactViewProps extends BaseChartProps {
@@ -90,6 +78,7 @@ export interface FinancialImpactViewProps extends BaseChartProps {
   operationCosts: number;
   yield: number;
   pricePerTonne: number;
+  showOperationCosts?: boolean;
 }
 
 /**
@@ -139,4 +128,7 @@ export interface ChartContainerProps extends BaseChartProps {
   revenue: number;
   yield: number;
   pricePerTonne: number;
+  showVariableCosts?: boolean;
+  showOperationCosts?: boolean;
+  onToggleLayer?: (layer: 'variable' | 'operations') => void;
 }

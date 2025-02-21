@@ -55,13 +55,8 @@ export default function ExplorerCropDetails() {
   
   // Chart configuration state
   const [costFilters, setCostFilters] = useState({
-    seed: true,
-    fertiliser: true,
-    chemicals: true,
-    cultivating: true,
-    drilling: true,
-    applications: true,
-    harvesting: true
+    variable: true,
+    operations: true
   });
   
   // Performance table column visibility
@@ -265,46 +260,31 @@ export default function ExplorerCropDetails() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex justify-between items-center mb-6 bg-gray-50 p-4 rounded-lg">
+      <div className="flex items-center mb-6 bg-gray-50 p-4 rounded-lg">
         {/* Cost Category Filters */}
         <div className="flex items-center space-x-4">
           <span className="text-sm font-medium text-gray-700">Cost Categories:</span>
           <div className="flex flex-wrap gap-2">
-            {Object.entries(costFilters).map(([category, isVisible]) => (
-              <button
-                key={category}
-                onClick={() => setCostFilters(prev => ({ ...prev, [category]: !isVisible }))}
-                className={`px-3 py-1 rounded-full text-sm ${
-                  isVisible
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Column Visibility Menu */}
-        <div className="relative group">
-          <button className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
-            Columns
-          </button>
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg p-2 invisible group-hover:visible">
-            {Object.entries(visibleColumns).map(([column, isVisible]) => (
-              <label key={column} className="flex items-center p-2 hover:bg-gray-50">
-                <input
-                  type="checkbox"
-                  checked={isVisible}
-                  onChange={() => setVisibleColumns(prev => ({ ...prev, [column]: !isVisible }))}
-                  className="mr-2"
-                />
-                <span className="text-sm text-gray-700">
-                  {column.replace(/([A-Z])/g, ' $1').trim()}
-                </span>
-              </label>
-            ))}
+            <button
+              onClick={() => setCostFilters(prev => ({ ...prev, variable: !prev.variable }))}
+              className={`px-3 py-1 rounded-full text-sm ${
+                costFilters.variable
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              Variable Costs
+            </button>
+            <button
+              onClick={() => setCostFilters(prev => ({ ...prev, operations: !prev.operations }))}
+              className={`px-3 py-1 rounded-full text-sm ${
+                costFilters.operations
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              Operation Costs
+            </button>
           </div>
         </div>
       </div>
@@ -361,15 +341,32 @@ export default function ExplorerCropDetails() {
           <div className="space-y-3">
             <div>
               <div className="text-sm text-gray-600">Per hectare</div>
-              <div className="text-xl font-bold">£{metricsData.costOfProduction[selectedYear].perHectare.toFixed(2)}/ha</div>
+              <div className="text-xl font-bold">
+                £{(
+                  (costFilters.variable ? Object.values(chartData.variable).reduce((sum, cost) => sum + cost.current, 0) : 0) +
+                  (costFilters.operations ? Object.values(chartData.operations).reduce((sum, cost) => sum + cost, 0) : 0)
+                ).toFixed(2)}/ha
+              </div>
             </div>
             <div className="border-t border-gray-200 pt-3">
               <div className="text-sm text-gray-600">Per tonne</div>
-              <div className="text-xl font-bold">£{metricsData.costOfProduction[selectedYear].perTonne.toFixed(2)}/t</div>
+              <div className="text-xl font-bold">
+                £{(
+                  ((costFilters.variable ? Object.values(chartData.variable).reduce((sum, cost) => sum + cost.current, 0) : 0) +
+                  (costFilters.operations ? Object.values(chartData.operations).reduce((sum, cost) => sum + cost, 0) : 0)) /
+                  metricsData.yield[selectedYear].perHectare
+                ).toFixed(2)}/t
+              </div>
             </div>
             <div className="border-t border-gray-200 pt-3">
               <div className="text-sm text-gray-600">Total cost</div>
-              <div className="text-xl font-bold">£157,265.46</div>
+              <div className="text-xl font-bold">
+                £{(
+                  ((costFilters.variable ? Object.values(chartData.variable).reduce((sum, cost) => sum + cost.current, 0) : 0) +
+                  (costFilters.operations ? Object.values(chartData.operations).reduce((sum, cost) => sum + cost, 0) : 0)) *
+                  totalHectares
+                ).toFixed(2)}
+              </div>
             </div>
           </div>
         </div>
@@ -411,21 +408,68 @@ export default function ExplorerCropDetails() {
           <div className="space-y-4">
             <div>
               <div className="text-sm text-gray-600">Gross Margin</div>
-              <div className="text-xl font-bold mb-2">£{metricsData.grossMargin[selectedYear].perHectare.toFixed(2)}/ha</div>
-              <MarketRangeIndicator
-                data={{
-                  min: metricsData.grossMargin['Yearly avg'].perHectare * 0.7,
-                  max: metricsData.grossMargin['Yearly avg'].perHectare * 1.3,
-                  average: metricsData.grossMargin['Yearly avg'].perHectare,
-                  current: metricsData.grossMargin[selectedYear].perHectare
-                }}
-                width={200}
-                formatValue={(value: number) => `£${value.toFixed(2)}/ha`}
-              />
+              {/* Calculate gross margin based on active cost filters */}
+              {(() => {
+                // Only show gross margin when variable costs are active
+                if (!costFilters.variable) {
+                  return (
+                    <>
+                      <div className="text-xl font-bold mb-2">£0.00/ha</div>
+                      <MarketRangeIndicator
+                        data={{
+                          min: 0,
+                          max: 0,
+                          average: 0,
+                          current: 0
+                        }}
+                        width={200}
+                        formatValue={(value: number) => `£${value.toFixed(2)}/ha`}
+                      />
+                    </>
+                  );
+                }
+
+                const variableCosts = Object.values(chartData.variable).reduce((sum, cost) => sum + cost.current, 0);
+                const operationCosts = costFilters.operations ?
+                  Object.values(chartData.operations).reduce((sum, cost) => sum + cost, 0) : 0;
+                const totalCosts = variableCosts + operationCosts;
+                const grossMargin = metricsData.yield[selectedYear].perHectare * 1012.37 - totalCosts;
+                return (
+                  <>
+                    <div className="text-xl font-bold mb-2">£{grossMargin.toFixed(2)}/ha</div>
+                    <MarketRangeIndicator
+                      data={{
+                        min: grossMargin * 0.7,
+                        max: grossMargin * 1.3,
+                        average: grossMargin,
+                        current: grossMargin
+                      }}
+                      width={200}
+                      formatValue={(value: number) => `£${value.toFixed(2)}/ha`}
+                    />
+                  </>
+                );
+              })()}
             </div>
             <div className="border-t border-gray-200 pt-3">
               <div className="text-sm text-gray-600">Net Margin</div>
-              <div className="text-xl font-bold">£{metricsData.netMargin[selectedYear].perHectare.toFixed(2)}/ha</div>
+              {/* Calculate net margin based on active cost filters */}
+              {(() => {
+                // Only show net margin when both cost categories are active
+                if (!costFilters.variable || !costFilters.operations) {
+                  return (
+                    <div className="text-xl font-bold">£0.00/ha</div>
+                  );
+                }
+
+                const totalCosts = Object.values(chartData.variable).reduce((sum, cost) => sum + cost.current, 0) +
+                                 Object.values(chartData.operations).reduce((sum, cost) => sum + cost, 0);
+                const grossMargin = metricsData.yield[selectedYear].perHectare * 1012.37 - totalCosts;
+                const netMargin = grossMargin * 0.535; // Using 53.5% of gross margin as net margin for this example
+                return (
+                  <div className="text-xl font-bold">£{netMargin.toFixed(2)}/ha</div>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -444,13 +488,16 @@ export default function ExplorerCropDetails() {
           revenue={metricsData.grossMargin[selectedYear].perHectare + metricsData.costOfProduction[selectedYear].perHectare}
           yield={metricsData.yield[selectedYear].perHectare}
           pricePerTonne={1012.37}
-          performanceData={performanceData.map(item => ({
-            name: item.name,
-            area: item.area,
-            performance: item.performance,
-            yield: parseFloat(item.yield.split(' ')[0]),
-            costPerHa: item.costPerHa
-          }))}
+          showVariableCosts={costFilters.variable}
+          showOperationCosts={costFilters.operations}
+          onToggleLayer={(layer) => {
+            if (layer === 'variable') {
+              setCostFilters(prev => ({ ...prev, variable: !prev.variable }));
+            }
+            if (layer === 'operations') {
+              setCostFilters(prev => ({ ...prev, operations: !prev.operations }));
+            }
+          }}
         />
       </div>
 
@@ -460,14 +507,14 @@ export default function ExplorerCropDetails() {
           title="Variable Costs"
           categories={variableCostCategories}
           selectedYear={selectedYear}
-          costFilters={costFilters}
+          costFilters={{ variable: costFilters.variable }}
         />
         
         <ExpandableCostPanel
           title="Operation Costs"
           categories={operationCostCategories}
           selectedYear={selectedYear}
-          costFilters={costFilters}
+          costFilters={{ operations: costFilters.operations }}
         />
       </div>
 

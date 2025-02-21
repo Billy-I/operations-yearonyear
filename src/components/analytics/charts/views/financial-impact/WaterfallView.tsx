@@ -26,7 +26,8 @@ const WaterfallView: React.FC<FinancialImpactViewProps> = ({
   yield: yieldValue,
   pricePerTonne,
   costUnit,
-  hectares
+  hectares,
+  showOperationCosts = true
 }) => {
   // Calculate values based on unit selection
   const adjustValue = (value: number) => costUnit === 'per_ha' ? value : value * hectares;
@@ -58,21 +59,27 @@ const WaterfallView: React.FC<FinancialImpactViewProps> = ({
       total: grossMargin,
       isTotal: true,
       fill: '#6B7280' // gray
-    },
-    {
-      name: 'Operation Costs',
-      value: -adjustedOperationCosts,
-      total: grossMargin - adjustedOperationCosts,
-      fill: '#7C3AED' // purple
-    },
-    {
-      name: 'Net Margin',
-      value: 0,
-      total: netMargin,
-      isTotal: true,
-      fill: '#6B7280' // gray
     }
   ];
+
+  // Only add operation costs and net margin if operations are enabled
+  if (showOperationCosts) {
+    waterfallData.push(
+      {
+        name: 'Operation Costs',
+        value: -adjustedOperationCosts,
+        total: grossMargin - adjustedOperationCosts,
+        fill: '#7C3AED' // purple
+      },
+      {
+        name: 'Net Margin',
+        value: 0,
+        total: netMargin,
+        isTotal: true,
+        fill: '#6B7280' // gray
+      }
+    );
+  }
 
   // Format currency values
   const formatCurrency = (value: number) => {
@@ -117,7 +124,7 @@ const WaterfallView: React.FC<FinancialImpactViewProps> = ({
         <div className="bg-gray-50 rounded-lg p-4">
           <p className="text-sm text-gray-600 mb-1">Margin Ratio</p>
           <p className="text-xl font-medium">
-            {((netMargin / adjustedRevenue) * 100).toFixed(1)}%
+            {((showOperationCosts ? netMargin : grossMargin) / adjustedRevenue * 100).toFixed(1)}%
           </p>
         </div>
       </div>

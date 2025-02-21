@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { ChartContainerProps, CostChartView } from './types/chart-types';
 import CostDistributionView from './views/CostDistributionView';
-import VariableCostsView from './views/VariableCostsView';
 import { FinancialImpactContainer } from './views/financial-impact';
-
 const ChartContainer: React.FC<ChartContainerProps> = ({
   costBreakdown,
   view,
@@ -14,19 +12,35 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   onUnitChange,
   revenue,
   yield: yieldValue,
-  pricePerTonne
+  pricePerTonne,
+  showVariableCosts: propShowVariable,
+  showOperationCosts: propShowOperations,
+  onToggleLayer
 }) => {
   // View options for the tab navigation
   const viewOptions: { id: CostChartView; label: string }[] = [
     { id: 'distribution', label: 'Cost Distribution' },
-    { id: 'variable-analysis', label: 'Variable Costs Analysis' },
     { id: 'financial-impact', label: 'Financial Impact' }
   ];
 
-  // Local state for view-specific controls
-  const [showVariableCosts, setShowVariableCosts] = useState(true);
-  const [showOperationCosts, setShowOperationCosts] = useState(true);
-  const [showPercentageVariance, setShowPercentageVariance] = useState(false);
+  // Use props for visibility controls if provided, otherwise use local state
+  const [localShowVariableCosts, setLocalShowVariableCosts] = useState(true);
+  const [localShowOperationCosts, setLocalShowOperationCosts] = useState(true);
+  
+  const showVariableCosts = propShowVariable ?? localShowVariableCosts;
+  const showOperationCosts = propShowOperations ?? localShowOperationCosts;
+  
+  const handleToggleLayer = (layer: 'variable' | 'operations') => {
+    if (onToggleLayer) {
+      onToggleLayer(layer);
+    } else {
+      if (layer === 'variable') {
+        setLocalShowVariableCosts(!localShowVariableCosts);
+      } else {
+        setLocalShowOperationCosts(!localShowOperationCosts);
+      }
+    }
+  };
 
   // Calculate total variable and operation costs
   const totalVariableCosts = Object.values(costBreakdown.variable)
@@ -84,25 +98,10 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
             onUnitChange={onUnitChange}
             showVariableCosts={showVariableCosts}
             showOperationCosts={showOperationCosts}
-            onToggleLayer={(layer) => {
-              if (layer === 'variable') setShowVariableCosts(!showVariableCosts);
-              if (layer === 'operations') setShowOperationCosts(!showOperationCosts);
-            }}
+            onToggleLayer={handleToggleLayer}
           />
         )}
-        
-        {view === 'variable-analysis' && (
-          <VariableCostsView
-            verifiedCosts={costBreakdown.variable}
-            year={year}
-            costUnit={costUnit}
-            hectares={hectares}
-            onUnitChange={onUnitChange}
-            showPercentageVariance={showPercentageVariance}
-            onTogglePercentageVariance={() => setShowPercentageVariance(!showPercentageVariance)}
-          />
-        )}
-        
+
         {isFinancialView && (
           <FinancialImpactContainer
             revenue={revenue}
@@ -116,6 +115,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
             onUnitChange={onUnitChange}
             view={view}
             onViewChange={onViewChange}
+            showOperationCosts={showOperationCosts}
           />
         )}
       </div>

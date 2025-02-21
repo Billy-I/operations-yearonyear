@@ -77,7 +77,7 @@ const MarketRangeIndicator: React.FC<MarketRangeIndicatorProps> = ({
         <div
           className={`absolute ${
             isHorizontal ? 'w-3 h-3 top-1/2 -mt-1.5' : 'h-3 w-3 left-1/2 -ml-1.5'
-          } bg-green-500 rounded-full border-2 border-white shadow-sm`}
+          } ${current > average ? 'bg-green-500' : 'bg-red-500'} rounded-full border-2 border-white shadow-sm`}
           style={
             isHorizontal
               ? { left: `${currentPosition}%` }

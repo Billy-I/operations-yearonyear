@@ -1,23 +1,6 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, HelpCircle, TrendingUp, TrendingDown } from 'lucide-react';
+import { ChevronDown, ChevronRight, HelpCircle } from 'lucide-react';
 import { Year, MetricData } from '../../types/analytics';
-
-// Helper to calculate year-on-year change
-const getYearOnYearChange = (
-  currentYear: Year,
-  data: { [key in Year]: MetricData },
-  metric: 'perTonne' | 'perHectare'
-): number | null => {
-  const years: Year[] = ['2019', '2020', '2021', '2022', '2023', '2024'];
-  const currentIndex = years.indexOf(currentYear);
-  if (currentIndex <= 0) return null;
-  
-  const previousYear = years[currentIndex - 1];
-  const current = data[currentYear][metric];
-  const previous = data[previousYear][metric];
-  
-  return ((current - previous) / previous) * 100;
-};
 
 interface CostCategory {
   name: string;
@@ -26,14 +9,13 @@ interface CostCategory {
 }
 
 interface CostFilters {
-  seed: boolean;
-  fertiliser: boolean;
-  chemicals: boolean;
-  cultivating: boolean;
-  drilling: boolean;
-  applications: boolean;
-  harvesting: boolean;
+  variable?: boolean;
+  operations?: boolean;
 }
+
+// Define which categories belong to each main category
+const VARIABLE_CATEGORIES = ['seed', 'fertiliser', 'chemicals'];
+const OPERATIONS_CATEGORIES = ['cultivating', 'drilling', 'applications', 'harvesting'];
 
 interface ExpandableCostPanelProps {
   title: string;
@@ -54,9 +36,6 @@ function CostRow({
   const [isExpanded, setIsExpanded] = useState(false);
   const hasSubcategories = category.subcategories && category.subcategories.length > 0;
   const currentData = category.data[selectedYear];
-  
-  const yoyChangeTonne = getYearOnYearChange(selectedYear, category.data, 'perTonne');
-  const yoyChangeHectare = getYearOnYearChange(selectedYear, category.data, 'perHectare');
 
   // Market range position (mock data - would come from actual market data)
   const marketMin = currentData.perHectare * 0.7;
@@ -88,26 +67,10 @@ function CostRow({
           </div>
         </td>
         <td className="text-right py-3">
-          <div className="flex items-center justify-end space-x-2">
-            <span>£{currentData.perTonne.toFixed(2)}/t</span>
-            {yoyChangeTonne !== null && (
-              <div className={`text-xs ${yoyChangeTonne >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {yoyChangeTonne >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                {Math.abs(yoyChangeTonne).toFixed(1)}%
-              </div>
-            )}
-          </div>
+          <span>£{currentData.perTonne.toFixed(2)}/t</span>
         </td>
         <td className="text-right py-3">
-          <div className="flex items-center justify-end space-x-2">
-            <span>£{currentData.perHectare.toFixed(2)}/ha</span>
-            {yoyChangeHectare !== null && (
-              <div className={`text-xs ${yoyChangeHectare >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {yoyChangeHectare >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                {Math.abs(yoyChangeHectare).toFixed(1)}%
-              </div>
-            )}
-          </div>
+          <span>£{currentData.perHectare.toFixed(2)}/ha</span>
         </td>
         <td className="py-3 px-4">
           <div className="relative group">
@@ -156,10 +119,15 @@ export default function ExpandableCostPanel({
 }: ExpandableCostPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
-  // Filter categories based on costFilters
-  const filteredCategories = categories.filter(category => {
-    const categoryName = category.name.toLowerCase();
-    return costFilters[categoryName.replace(/\s+/g, '') as keyof typeof costFilters];
+  // Filter categories based on the panel type (variable or operations)
+  const filteredCategories = categories.filter(() => {
+    if (title === "Variable Costs") {
+      return costFilters.variable ?? true;
+    }
+    if (title === "Operation Costs") {
+      return costFilters.operations ?? true;
+    }
+    return true;
   });
 
   // Calculate total costs for visible categories
@@ -243,8 +211,8 @@ export default function ExpandableCostPanel({
                   key={category.name}
                   category={{
                     ...category,
-                    // Only show chemical subcategories when chemicals filter is active
-                    subcategories: category.name.toLowerCase() === 'chemicals' && !costFilters.chemicals
+                    // Only show chemical subcategories when variable costs are active
+                    subcategories: category.name.toLowerCase() === 'chemicals' && !costFilters.variable
                       ? []
                       : category.subcategories
                   }}

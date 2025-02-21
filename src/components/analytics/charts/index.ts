@@ -1,6 +1,5 @@
 export { default as ChartContainer } from './ChartContainer';
 export { default as CostDistributionView } from './views/CostDistributionView';
-export { default as VariableCostsView } from './views/VariableCostsView';
 export {
   FinancialImpactContainer,
   WaterfallView,

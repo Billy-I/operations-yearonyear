@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -7,7 +7,10 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend
+  Legend,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 import { CostDistributionViewProps } from '../types/chart-types';
 import MarketRangeIndicator from '../common/MarketRangeIndicator';
@@ -24,6 +27,13 @@ interface ChartData {
   };
 }
 
+const CHART_COLORS = {
+  variable: '#4F46E5',
+  operation: '#7C3AED'
+};
+
+type ChartType = 'bar' | 'pie';
+
 const CostDistributionView: React.FC<CostDistributionViewProps> = ({
   costBreakdown,
   costUnit,
@@ -32,6 +42,7 @@ const CostDistributionView: React.FC<CostDistributionViewProps> = ({
   showOperationCosts,
   onToggleLayer
 }) => {
+  const [chartType, setChartType] = useState<ChartType>('bar');
   // Transform the data for the chart
   const chartData = useMemo(() => {
     const data: ChartData[] = [];
@@ -114,67 +125,110 @@ const CostDistributionView: React.FC<CostDistributionViewProps> = ({
   return (
     <div className="h-full flex flex-col">
       {/* Chart controls */}
-      <div className="flex items-center space-x-4 mb-4 flex-shrink-0">
-        <label className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            checked={showVariableCosts}
-            onChange={() => onToggleLayer('variable')}
-            className="rounded text-blue-600"
-          />
-          <span className="text-sm">Variable Costs</span>
-        </label>
-        <label className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            checked={showOperationCosts}
-            onChange={() => onToggleLayer('operations')}
-            className="rounded text-blue-600"
-          />
-          <span className="text-sm">Operation Costs</span>
-        </label>
+      <div className="flex flex-wrap items-center gap-4 mb-4 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setChartType('bar')}
+            className={`px-3 py-1 text-sm rounded ${
+              chartType === 'bar'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Bar
+          </button>
+          <button
+            onClick={() => setChartType('pie')}
+            className={`px-3 py-1 text-sm rounded ${
+              chartType === 'pie'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Pie
+          </button>
+        </div>
       </div>
 
       {/* Chart */}
       <div className="flex-grow" style={{ width: '100%', minHeight: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="category"
-              interval={0}
-              tick={{ fontSize: 12 }}
-              height={60}
-              tickFormatter={(value) => value.charAt(0).toUpperCase() + value.slice(1)}
-            />
-            <YAxis
-              tickFormatter={(value) => `£${value}`}
-              label={{
-                value: `Cost (${costUnit === 'per_ha' ? '£/ha' : '£'})`,
-                angle: -90,
-                position: 'insideLeft',
-                style: { textAnchor: 'middle' }
-              }}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            {showVariableCosts && (
-              <Bar
-                dataKey="verifiedValue"
-                name="Verified Costs"
-                fill="#4F46E5"
-                radius={[4, 4, 0, 0]}
+          {chartType === 'bar' ? (
+            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="category"
+                interval={0}
+                tick={{ fontSize: 12 }}
+                height={60}
+                tickFormatter={(value) => value.charAt(0).toUpperCase() + value.slice(1)}
               />
-            )}
-            {showOperationCosts && (
-              <Bar
-                dataKey="operationValue"
-                name="Operation Costs"
-                fill="#7C3AED"
-                radius={[4, 4, 0, 0]}
+              <YAxis
+                tickFormatter={(value) => `£${value}`}
+                label={{
+                  value: `Cost (${costUnit === 'per_ha' ? '£/ha' : '£'})`,
+                  angle: -90,
+                  position: 'insideLeft',
+                  style: { textAnchor: 'middle' }
+                }}
               />
-            )}
-          </BarChart>
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+              {showVariableCosts && (
+                <Bar
+                  dataKey="verifiedValue"
+                  name="Verified Costs"
+                  fill={CHART_COLORS.variable}
+                  radius={[4, 4, 0, 0]}
+                />
+              )}
+              {showOperationCosts && (
+                <Bar
+                  dataKey="operationValue"
+                  name="Operation Costs"
+                  fill={CHART_COLORS.operation}
+                  radius={[4, 4, 0, 0]}
+                />
+              )}
+            </BarChart>
+          ) : (
+            <PieChart margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <Pie
+                data={chartData
+                  .filter(item => (showVariableCosts && item.verifiedValue !== undefined) ||
+                                (showOperationCosts && item.operationValue !== undefined))
+                  .map(item => ({
+                    category: item.category,
+                    value: ((showVariableCosts ? item.verifiedValue : 0) || 0) +
+                           ((showOperationCosts ? item.operationValue : 0) || 0),
+                    verifiedValue: item.verifiedValue,
+                    operationValue: item.operationValue,
+                    benchmarkData: item.benchmarkData
+                  }))}
+                dataKey="value"
+                nameKey="category"
+                cx="50%"
+                cy="50%"
+                outerRadius="80%"
+                label={({ category, value }) =>
+                  `${category.charAt(0).toUpperCase() + category.slice(1)}: £${value.toFixed(2)}`
+                }
+              >
+                {chartData
+                  .filter(item => (showVariableCosts && item.verifiedValue !== undefined) ||
+                                (showOperationCosts && item.operationValue !== undefined))
+                  .map((entry, index) => {
+                    // If both types are shown and exist, use variable cost color
+                    // Otherwise use the color of whichever type exists
+                    const hasVariable = showVariableCosts && entry.verifiedValue !== undefined;
+                    const fill = hasVariable ? CHART_COLORS.variable : CHART_COLORS.operation;
+                    return <Cell key={`cell-${index}`} fill={fill} />;
+                  })}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+            </PieChart>
+          )}
         </ResponsiveContainer>
       </div>
     </div>
