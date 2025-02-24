@@ -313,16 +313,37 @@ export default function ExplorerCropDetails() {
                   average: metricsData.yield['Yearly avg'].perHectare,
                   current: metricsData.yield[selectedYear].perHectare
                 }}
-                width={200}
                 formatValue={(value: number) => `${value.toFixed(2)}t/ha`}
-                height={24}
-                className="mb-1"
+                className="w-[200px] h-6 mb-1"
               />
             </div>
             <div className="border-t border-gray-200 pt-3">
               <div className="text-sm text-gray-600">Production</div>
               <div className="text-xl font-bold">{metricsData.production[selectedYear].perHectare.toFixed(2)}t</div>
               <div className="text-sm text-gray-500">Sales: £1,012.37/t</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Area Card */}
+        <div className="bg-gray-50 rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-gray-600">Area Information</span>
+            <div className="relative group">
+              <HelpCircle size={16} className="text-gray-400 cursor-help" />
+              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
+                Field and area statistics
+              </div>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <div className="text-sm text-gray-600">Number of Fields</div>
+              <div className="text-xl font-bold">3</div>
+            </div>
+            <div className="border-t border-gray-200 pt-3">
+              <div className="text-sm text-gray-600">Harvested Area</div>
+              <div className="text-xl font-bold">{totalHectares} ha (100%)</div>
             </div>
           </div>
         </div>
@@ -371,29 +392,6 @@ export default function ExplorerCropDetails() {
           </div>
         </div>
 
-        {/* Area Card */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-gray-600">Area Information</span>
-            <div className="relative group">
-              <HelpCircle size={16} className="text-gray-400 cursor-help" />
-              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
-                Field and area statistics
-              </div>
-            </div>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <div className="text-sm text-gray-600">Number of Fields</div>
-              <div className="text-xl font-bold">3</div>
-            </div>
-            <div className="border-t border-gray-200 pt-3">
-              <div className="text-sm text-gray-600">Harvested Area</div>
-              <div className="text-xl font-bold">{totalHectares} ha (100%)</div>
-            </div>
-          </div>
-        </div>
-
         {/* Profitability Card */}
         <div className="bg-gray-50 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
@@ -422,8 +420,8 @@ export default function ExplorerCropDetails() {
                           average: 0,
                           current: 0
                         }}
-                        width={200}
                         formatValue={(value: number) => `£${value.toFixed(2)}/ha`}
+                        className="w-[200px]"
                       />
                     </>
                   );
@@ -444,8 +442,8 @@ export default function ExplorerCropDetails() {
                         average: grossMargin,
                         current: grossMargin
                       }}
-                      width={200}
                       formatValue={(value: number) => `£${value.toFixed(2)}/ha`}
+                      className="w-[200px]"
                     />
                   </>
                 );
