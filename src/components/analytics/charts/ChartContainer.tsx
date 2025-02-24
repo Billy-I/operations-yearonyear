@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BarChart2, TrendingUp } from 'lucide-react';
 import { ChartContainerProps, CostChartView } from './types/chart-types';
 import CostDistributionView from './views/CostDistributionView';
 import { FinancialImpactContainer } from './views/financial-impact';
@@ -56,22 +57,32 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
     <div className="bg-white rounded-lg p-6 flex flex-col h-full">
       {/* Header with view selection and unit toggle */}
       <div className="flex items-center justify-between mb-6 flex-shrink-0">
-        <div className="border-b border-gray-200 w-full">
-          <nav className="-mb-px flex space-x-8" aria-label="Chart views">
-            {viewOptions.map(option => (
-              <button
-                key={option.id}
-                onClick={() => onViewChange(option.id)}
-                className={`
-                  whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
-                  ${option.id === 'financial-impact' && isFinancialView || view === option.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
-                `}
-              >
-                {option.label}
-              </button>
-            ))}
+        <div className="inline-flex rounded-md shadow-sm" role="group">
+          <nav className="flex" aria-label="Chart views">
+            {viewOptions.map((option, index) => {
+              const isActive = (option.id === 'financial-impact' && isFinancialView) || view === option.id;
+              const icon = option.id === 'distribution' ? <BarChart2 size={16} /> : <TrendingUp size={16} />;
+              
+              return (
+                <button
+                  key={option.id}
+                  onClick={() => onViewChange(option.id)}
+                  className={`
+                    flex items-center gap-2 px-4 py-2 text-sm font-medium
+                    ${index === 0 ? 'rounded-l-md' : ''}
+                    ${index === viewOptions.length - 1 ? 'rounded-r-md' : ''}
+                    ${isActive
+                      ? 'bg-blue-50 text-blue-700 border-blue-300'
+                      : 'bg-white text-gray-500 hover:text-gray-700 border-gray-300'}
+                    border
+                    ${index !== 0 ? '-ml-px' : ''}
+                  `}
+                >
+                  {icon}
+                  {option.label}
+                </button>
+              );
+            })}
           </nav>
         </div>
 
