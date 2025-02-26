@@ -16,97 +16,74 @@ const CHEMICAL_COLORS = {
   adjuvant: '#9CA3AF'       // Light gray
 };
 
+interface CostFilters {
+  variable?: boolean;
+  operations?: boolean;
+}
+
 interface MultiYearGraphProps {
   selectedView: ViewType;
   selectedYears: string[];
   selectedUnit: UnitType;
   selectedTab?: TabType;
   selectedField?: string;
+  costFilters?: CostFilters;
 }
 
 const isBasicMetric = (metric: DataMetricType): metric is BasicMetricType => {
   return metric !== 'variableCosts' && metric !== 'operationsCosts' && metric !== 'totalCosts';
 };
 
-export function MultiYearGraph({ 
-  selectedView, 
-  selectedYears, 
+export function MultiYearGraph({
+  selectedView,
+  selectedYears,
   selectedUnit,
   selectedTab = 'comparison',
-  selectedField
+  selectedField,
+  costFilters = { variable: true, operations: true }
 }: MultiYearGraphProps) {
   const [selectedMetric, setSelectedMetric] = useState<DataMetricType>('costOfProduction');
 
   const getMetricOptions = (): { value: DataMetricType; label: string }[] => {
-    if (selectedTab === 'rotation') {
-      switch (selectedView) {
-        case 'Operations':
-          return [
-            { value: 'cultivating', label: 'Cultivating' },
-            { value: 'drilling', label: 'Drilling' },
-            { value: 'applications', label: 'Applications' },
-            { value: 'harvesting', label: 'Harvesting' },
-            { value: 'other', label: 'Other' },
-            { value: 'production', label: 'Production' },
-            { value: 'yield', label: 'Yield' }
-          ];
-        case 'Variable':
-          return [
-            { value: 'costOfProduction', label: 'Cost of Production' },
-            { value: 'seed', label: 'Seed' },
-            { value: 'fertiliser', label: 'Fertiliser' },
-            { value: 'chemicals', label: 'Chemicals' },
-            { value: 'production', label: 'Production' },
-            { value: 'grossMargin', label: 'Gross Margin' },
-            { value: 'yield', label: 'Yield' }
-          ];
-        case 'Total':
-          return [
-            { value: 'variableCosts', label: 'Variable Costs' },
-            { value: 'operationsCosts', label: 'Operations Costs' },
-            { value: 'totalCosts', label: 'Total Costs' },
-            { value: 'production', label: 'Production' },
-            { value: 'netMargin', label: 'Net Margin' },
-            { value: 'yield', label: 'Yield' }
-          ];
-        default:
-          return [];
-      }
-    }
+    // Base options that are always shown
+    const baseOptions: { value: DataMetricType; label: string }[] = [
+      { value: 'production', label: 'Production' },
+      { value: 'yield', label: 'Yield' }
+    ];
 
-    switch (selectedView) {
-      case 'Variable':
-        return [
-          { value: 'costOfProduction', label: 'Cost of Production' },
-          { value: 'seed', label: 'Seed' },
-          { value: 'fertiliser', label: 'Fertiliser' },
-          { value: 'chemicals', label: 'Chemicals' },
-          { value: 'production', label: 'Production' },
-          { value: 'grossMargin', label: 'Gross Margin' },
-          { value: 'yield', label: 'Yield' }
-        ];
-      case 'Operations':
-        return [
-          { value: 'cultivating', label: 'Cultivating' },
-          { value: 'drilling', label: 'Drilling' },
-          { value: 'applications', label: 'Applications' },
-          { value: 'harvesting', label: 'Harvesting' },
-          { value: 'other', label: 'Other' },
-          { value: 'production', label: 'Production' },
-          { value: 'yield', label: 'Yield' }
-        ];
-      case 'Total':
-        return [
-          { value: 'production', label: 'Production' },
-          { value: 'variableCosts', label: 'Variable Costs' },
-          { value: 'operationsCosts', label: 'Operations Costs' },
-          { value: 'totalCosts', label: 'Total Costs' },
-          { value: 'netMargin', label: 'Net Margin' },
-          { value: 'yield', label: 'Yield' }
-        ];
-      default:
-        return [];
-    }
+    // Options for Variable Costs
+    const variableOptions: { value: DataMetricType; label: string }[] = costFilters.variable ? [
+      { value: 'costOfProduction', label: 'Cost of Production' },
+      { value: 'seed', label: 'Seed' },
+      { value: 'fertiliser', label: 'Fertiliser' },
+      { value: 'chemicals', label: 'Chemicals' },
+      { value: 'variableCosts', label: 'Variable Costs' },
+      { value: 'grossMargin', label: 'Gross Margin' }
+    ] : [];
+
+    // Options for Operation Costs
+    const operationsOptions: { value: DataMetricType; label: string }[] = costFilters.operations ? [
+      { value: 'cultivating', label: 'Cultivating' },
+      { value: 'drilling', label: 'Drilling' },
+      { value: 'applications', label: 'Applications' },
+      { value: 'harvesting', label: 'Harvesting' },
+      { value: 'other', label: 'Other' },
+      { value: 'operationsCosts', label: 'Operations Costs' }
+    ] : [];
+
+    // Combined options that require both filters
+    const combinedOptions: { value: DataMetricType; label: string }[] = (costFilters.variable && costFilters.operations) ? [
+      { value: 'totalCosts', label: 'Total Costs' },
+      { value: 'netMargin', label: 'Net Margin' }
+    ] : [];
+
+    // Combine all options
+    return [
+      ...baseOptions,
+      ...variableOptions,
+      ...operationsOptions,
+      ...combinedOptions
+    ];
   };
 
   useEffect(() => {
@@ -120,15 +97,29 @@ export function MultiYearGraph({
   const getMetricValue = (metric: DataMetricType, year: Year, unit: UnitType): number => {
     switch (metric) {
       case 'variableCosts':
-        return getVariableCosts(year, unit);
+        return costFilters.variable ? getVariableCosts(year, unit) : 0;
       case 'operationsCosts':
-        return getOperationsCosts(year, unit);
+        return costFilters.operations ? getOperationsCosts(year, unit) : 0;
       case 'totalCosts':
-        return getTotalCosts(year, unit);
+        const variableCosts = costFilters.variable ? getVariableCosts(year, unit) : 0;
+        const operationsCosts = costFilters.operations ? getOperationsCosts(year, unit) : 0;
+        return variableCosts + operationsCosts;
       default:
         if (isBasicMetric(metric) && metric in metricsData) {
           const metricData = metricsData[metric];
-          return unit === '£/t' ? metricData[year].perTonne : metricData[year].perHectare;
+          // Check if this metric should be shown based on active filters
+          const isVariableMetric = ['costOfProduction', 'seed', 'fertiliser', 'chemicals', 'grossMargin'].includes(metric);
+          const isOperationsMetric = ['cultivating', 'drilling', 'applications', 'harvesting', 'other'].includes(metric);
+          const isCommonMetric = ['production', 'yield'].includes(metric);
+          const isNetMargin = metric === 'netMargin';
+
+          if ((isVariableMetric && costFilters.variable) ||
+              (isOperationsMetric && costFilters.operations) ||
+              (isNetMargin && costFilters.variable && costFilters.operations) ||
+              isCommonMetric) {
+            return unit === '£/t' ? metricData[year].perTonne : metricData[year].perHectare;
+          }
+          return 0;
         }
         return 0;
     }

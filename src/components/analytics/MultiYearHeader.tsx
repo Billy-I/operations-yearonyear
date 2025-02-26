@@ -10,6 +10,7 @@ interface MultiYearHeaderProps {
   setSelectedYears: (years: string[]) => void;
   selectedUnit: UnitType;
   setSelectedUnit?: (unit: UnitType) => void;
+  referrer?: string;
 }
 
 export const MultiYearHeader = ({
@@ -17,12 +18,13 @@ export const MultiYearHeader = ({
   setSelectedView,
   selectedYears,
   setSelectedYears,
-  selectedUnit
+  selectedUnit,
+  referrer = '/analytics/explorer'
 }: MultiYearHeaderProps) => {
   return (
     <div className="flex justify-between items-center mb-6">
       <div className="flex items-center space-x-4">
-        <Link to="/analytics/explorer" className="text-gray-600 hover:text-gray-900">
+        <Link to={referrer} className="text-gray-600 hover:text-gray-900">
           <ArrowLeft size={20} />
         </Link>
         <div>
@@ -34,17 +36,6 @@ export const MultiYearHeader = ({
         <Link to="/analytics/explorer" className="px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
           Explorer Overview
         </Link>
-        <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
-          <select
-            value={selectedView}
-            onChange={(e) => setSelectedView(e.target.value as ViewType)}
-            className="bg-transparent border-none focus:ring-0"
-          >
-            <option value="Variable">Variable</option>
-            <option value="Operations">Operations</option>
-            <option value="Total">Total</option>
-          </select>
-        </div>
         <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
           <div className="relative">
             <button

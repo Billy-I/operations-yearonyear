@@ -59,6 +59,7 @@ export default function Explorer() {
             <button className="bg-gray-50 px-3 py-2 rounded-md">
               <Link
                 to="/analytics/multi-year"
+                state={{ from: "/analytics/explorer" }}
                 className="text-gray-700 hover:text-gray-900"
               >
                 Multi year
@@ -153,7 +154,6 @@ export default function Explorer() {
                   <th className="px-4 py-3 text-left">
                     <div className="flex items-center space-x-1">
                       <span>Crop</span>
-                      <ChevronDown size={16} />
                     </div>
                   </th>
                   <th className="px-4 py-3 text-left">

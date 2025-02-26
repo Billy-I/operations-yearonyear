@@ -5,12 +5,18 @@ import { metricsData } from '../../data/metricsData';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 
+interface CostFilters {
+  variable?: boolean;
+  operations?: boolean;
+}
+
 interface FieldRotationTableProps {
   selectedView: ViewType;
   selectedYears: string[];
   selectedUnit: UnitType;
   setSelectedUnit?: (unit: UnitType) => void;
   selectedField: string;
+  costFilters?: CostFilters;
 }
 
 export const FieldRotationTable = ({
@@ -18,7 +24,8 @@ export const FieldRotationTable = ({
   selectedUnit,
   selectedField,
   selectedView,
-  setSelectedUnit
+  setSelectedUnit,
+  costFilters = { variable: true, operations: true }
 }: FieldRotationTableProps) => {
   const fieldData = fieldsData.find(field => field.id === selectedField);
   
@@ -85,9 +92,11 @@ export const FieldRotationTable = ({
   const renderContent = () => {
     if (!fieldData) return null;
 
-    switch (selectedView) {
-      case 'Variable':
-        return (
+    // Always show combined view, respecting costFilters
+    return (
+      <>
+        {/* Variable Costs Section */}
+        {costFilters.variable && (
           <>
             {renderMetricRow('Cost of Production', 'costOfProduction')}
             {renderMetricRow('Seed', 'seed')}
@@ -116,14 +125,11 @@ export const FieldRotationTable = ({
                 {formatValueWithUnit(getVariableCosts('Yearly avg', selectedUnit))}
               </td>
             </tr>
-            {/* Production Metrics */}
-            {renderMetricRow('Production', 'production')}
-            {renderMetricRow('Gross Margin', 'grossMargin')}
-            {renderMetricRow('Yield', 'yield')}
           </>
-        );
-      case 'Operations':
-        return (
+        )}
+
+        {/* Operations Costs Section */}
+        {costFilters.operations && (
           <>
             {renderMetricRow('Cultivating', 'cultivating')}
             {renderMetricRow('Drilling', 'drilling')}
@@ -150,82 +156,53 @@ export const FieldRotationTable = ({
                 {formatValueWithUnit(getOperationsCosts('Yearly avg', selectedUnit))}
               </td>
             </tr>
-            {/* Production Metrics */}
-            {renderMetricRow('Production', 'production')}
-            {renderMetricRow('Yield', 'yield')}
           </>
-        );
-      case 'Total':
-        return (
-          <>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                Variable Costs
-              </td>
-              {selectedYears.map((year) => {
-                const yearKey = year as Year;
-                const value = getVariableCosts(yearKey, selectedUnit);
-                return (
-                  <td
-                    key={year}
-                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
-                  >
-                    {formatValueWithUnit(value)}
-                  </td>
-                );
-              })}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getVariableCosts('Yearly avg', selectedUnit))}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                Operations Costs
-              </td>
-              {selectedYears.map((year) => {
-                const yearKey = year as Year;
-                const value = getOperationsCosts(yearKey, selectedUnit);
-                return (
-                  <td
-                    key={year}
-                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
-                  >
-                    {formatValueWithUnit(value)}
-                  </td>
-                );
-              })}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getOperationsCosts('Yearly avg', selectedUnit))}
-              </td>
-            </tr>
-            <tr className="bg-gray-100">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                Total Costs
-              </td>
-              {selectedYears.map((year) => {
-                const yearKey = year as Year;
-                const value = getTotalCosts(yearKey, selectedUnit);
-                return (
-                  <td
-                    key={year}
-                    className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                  >
-                    {formatValueWithUnit(value)}
-                  </td>
-                );
-              })}
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {formatValueWithUnit(getTotalCosts('Yearly avg', selectedUnit))}
-              </td>
-            </tr>
-            {renderMetricRow('Production', 'production')}
-            {renderMetricRow('Net Margin', 'netMargin')}
-            {renderMetricRow('Yield', 'yield')}
-          </>
-        );
-      default:
-        return null;
-    }
+        )}
+
+        {/* Total Costs Row (if both filters are active) */}
+        {(costFilters.variable && costFilters.operations) && (
+          <tr className="bg-gray-100">
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              Total Costs
+            </td>
+            {selectedYears.map((year) => {
+              const yearKey = year as Year;
+              // Calculate total based on active filters
+              const variableCosts = costFilters.variable ? getVariableCosts(yearKey, selectedUnit) : 0;
+              const operationsCosts = costFilters.operations ? getOperationsCosts(yearKey, selectedUnit) : 0;
+              const totalCosts = variableCosts + operationsCosts;
+              
+              return (
+                <td
+                  key={year}
+                  className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                >
+                  {formatValueWithUnit(totalCosts)}
+                </td>
+              );
+            })}
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              {formatValueWithUnit(
+                (costFilters.variable ? getVariableCosts('Yearly avg', selectedUnit) : 0) +
+                (costFilters.operations ? getOperationsCosts('Yearly avg', selectedUnit) : 0)
+              )}
+            </td>
+          </tr>
+        )}
+
+        {/* Production Metrics */}
+        {renderMetricRow('Production', 'production')}
+        
+        {/* Gross Margin (show only if variable costs are active) */}
+        {costFilters.variable && renderMetricRow('Gross Margin', 'grossMargin')}
+        
+        {/* Net Margin (show only if both variable and operations costs are active) */}
+        {(costFilters.variable && costFilters.operations) && renderMetricRow('Net Margin', 'netMargin')}
+        
+        {/* Yield is always shown */}
+        {renderMetricRow('Yield', 'yield')}
+      </>
+    );
   };
 
   return (

@@ -236,6 +236,7 @@ export default function ExplorerCropDetails() {
         <div className="flex items-center space-x-4">
           <Link
             to="/analytics/multi-year"
+            state={{ from: `/analytics/explorer/${encodeURIComponent(crop || '')}` }}
             className="bg-gray-50 px-3 py-2 rounded-md text-gray-700 hover:text-gray-900"
           >
             Multi year
@@ -434,17 +435,7 @@ export default function ExplorerCropDetails() {
                 const grossMargin = metricsData.yield[selectedYear].perHectare * 1012.37 - totalCosts;
                 return (
                   <>
-                    <div className="text-xl font-bold mb-2">£{grossMargin.toFixed(2)}/ha</div>
-                    <MarketRangeIndicator
-                      data={{
-                        min: grossMargin * 0.7,
-                        max: grossMargin * 1.3,
-                        average: grossMargin,
-                        current: grossMargin
-                      }}
-                      formatValue={(value: number) => `£${value.toFixed(2)}/ha`}
-                      className="w-[200px]"
-                    />
+                    <div className="text-xl font-bold">£{grossMargin.toFixed(2)}/ha</div>
                   </>
                 );
               })()}
@@ -499,6 +490,30 @@ export default function ExplorerCropDetails() {
         />
       </div>
 
+      {/* Performance Table */}
+      <div className="mb-6">
+        <div className="mb-4">
+          <select
+            value={groupBy}
+            onChange={(e) => setGroupBy(e.target.value as 'Variety' | 'Field' | 'Region')}
+            className="border border-gray-300 rounded-md px-2 py-1"
+          >
+            <option value="Variety">Variety</option>
+            <option value="Field">Field</option>
+            <option value="Region">Region</option>
+          </select>
+        </div>
+
+        <DetailedPerformanceTable
+          data={performanceData}
+          metricsData={metricsData}
+          selectedYear={selectedYear}
+          groupBy={groupBy}
+          showNetMargin={costFilters.operations}
+          visibleColumns={visibleColumns}
+        />
+      </div>
+
       {/* Cost Breakdowns */}
       <div className="space-y-6 mb-6">
         <ExpandableCostPanel
@@ -513,30 +528,6 @@ export default function ExplorerCropDetails() {
           categories={operationCostCategories}
           selectedYear={selectedYear}
           costFilters={{ operations: costFilters.operations }}
-        />
-      </div>
-
-      {/* Performance Table */}
-      <div>
-        <div className="mb-4">
-          <select
-            value={groupBy}
-            onChange={(e) => setGroupBy(e.target.value as 'Variety' | 'Field' | 'Region')}
-            className="border-gray-300 rounded-md"
-          >
-            <option value="Variety">Variety</option>
-            <option value="Field">Field</option>
-            <option value="Region">Region</option>
-          </select>
-        </div>
-
-        <DetailedPerformanceTable
-          data={performanceData}
-          metricsData={metricsData}
-          selectedYear={selectedYear}
-          groupBy={groupBy}
-          showNetMargin
-          visibleColumns={visibleColumns}
         />
       </div>
     </div>

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MultiYearHeader } from '../components/analytics/MultiYearHeader';
 import { MultiYearControls } from '../components/analytics/MultiYearControls';
 import { FieldRotationControls } from '../components/analytics/FieldRotationControls';
@@ -14,13 +15,19 @@ import { fieldsData } from '../data/fieldData';
 type AvailableCrop = typeof AVAILABLE_CROPS[number];
 
 export default function MultiYear() {
-  const [selectedView, setSelectedView] = useState<ViewType>('Variable');
+  const location = useLocation();
+  const referrer = location.state?.from || '/analytics/explorer';
+  const [selectedView, setSelectedView] = useState<ViewType>('Total');
   const [selectedYears, setSelectedYears] = useState<string[]>([...AVAILABLE_YEARS]);
   const [selectedUnit, setSelectedUnit] = useState<UnitType>('£/t');
   const [selectedCrop, setSelectedCrop] = useState<AvailableCrop>(AVAILABLE_CROPS[0]);
   const [selectedFilter, setSelectedFilter] = useState('None');
   const [selectedTab, setSelectedTab] = useState<TabType>('comparison');
   const [selectedField, setSelectedField] = useState(fieldsData[0].id);
+  const [costFilters, setCostFilters] = useState({
+    variable: true,
+    operations: true
+  });
 
   return (
     <div>
@@ -32,9 +39,41 @@ export default function MultiYear() {
             selectedYears={selectedYears}
             setSelectedYears={setSelectedYears}
             selectedUnit={selectedUnit}
+            referrer={referrer}
           />
 
-          <div className="mt-6">
+          {/* Cost Category Filters */}
+          <div className="mt-4 mb-2">
+            <div className="bg-white rounded-lg shadow p-4">
+              <div className="flex items-center space-x-4">
+                <span className="text-sm font-medium text-gray-700">Cost Categories:</span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setCostFilters(prev => ({ ...prev, variable: !prev.variable }))}
+                    className={`px-3 py-1 rounded-full text-sm ${
+                      costFilters.variable
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-gray-200 text-gray-600'
+                    }`}
+                  >
+                    Variable Costs
+                  </button>
+                  <button
+                    onClick={() => setCostFilters(prev => ({ ...prev, operations: !prev.operations }))}
+                    className={`px-3 py-1 rounded-full text-sm ${
+                      costFilters.operations
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-gray-200 text-gray-600'
+                    }`}
+                  >
+                    Operation Costs
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-2">
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex flex-col space-y-4">
                 <div className="non-printable">
@@ -64,6 +103,7 @@ export default function MultiYear() {
                       selectedYears={selectedYears}
                       selectedUnit={selectedUnit}
                       setSelectedUnit={setSelectedUnit}
+                      costFilters={costFilters}
                     />
                   ) : (
                     <FieldRotationTable
@@ -72,6 +112,7 @@ export default function MultiYear() {
                       selectedUnit={selectedUnit}
                       setSelectedUnit={setSelectedUnit}
                       selectedField={selectedField}
+                      costFilters={costFilters}
                     />
                   )}
                   
@@ -81,6 +122,7 @@ export default function MultiYear() {
                     selectedUnit={selectedUnit}
                     selectedTab={selectedTab}
                     selectedField={selectedField}
+                    costFilters={costFilters}
                   />
                 </div>
               </div>

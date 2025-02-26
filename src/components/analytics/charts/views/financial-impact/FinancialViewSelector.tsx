@@ -6,13 +6,9 @@ interface FinancialViewSelectorProps {
   onViewChange: (view: CostChartView) => void;
 }
 
+// Only showing Waterfall view as requested
 const views = [
-  { id: 'financial-impact', label: 'Waterfall', icon: '📊' },
-  { id: 'financial-impact-stacked', label: 'Stacked Bar', icon: '📈' },
-  { id: 'financial-impact-sunburst', label: 'Sunburst', icon: '🔆' },
-  { id: 'financial-impact-treemap', label: 'Tree Map', icon: '🔲' },
-  { id: 'financial-impact-gauge', label: 'Gauges', icon: '⏲️' },
-  { id: 'financial-impact-stepline', label: 'Step Line', icon: '📉' }
+  { id: 'financial-impact', label: 'Waterfall', icon: '📊' }
 ] as const;
 
 const FinancialViewSelector: React.FC<FinancialViewSelectorProps> = ({

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronDown, ChevronRight, ArrowUpDown, HelpCircle } from 'lucide-react';
+import { ArrowUpDown, HelpCircle } from 'lucide-react';
 import { MetricsData, Year } from '../../types/analytics';
 
 interface PerformanceData {
@@ -31,87 +31,6 @@ interface DetailedPerformanceTableProps {
   visibleColumns: ColumnVisibility;
 }
 
-interface ExpandedRowContentProps {
-  metricsData: MetricsData;
-  selectedYear: Year;
-}
-
-function ExpandedRowContent({ metricsData, selectedYear }: ExpandedRowContentProps) {
-  return (
-    <div className="px-4 py-3 bg-gray-50">
-      <div className="grid grid-cols-2 gap-6">
-        <div>
-          <h4 className="font-medium mb-2">Variable Costs</h4>
-          <table className="w-full text-sm">
-            <tbody>
-              <tr>
-                <td className="py-1">Seed</td>
-                <td className="text-right">£{metricsData.seed[selectedYear].perHectare.toFixed(2)}/ha</td>
-              </tr>
-              <tr>
-                <td className="py-1">Fertiliser</td>
-                <td className="text-right">£{metricsData.fertiliser[selectedYear].perHectare.toFixed(2)}/ha</td>
-              </tr>
-              <tr>
-                <td className="py-1">Chemicals</td>
-                <td className="text-right">£{metricsData.chemicals[selectedYear].perHectare.toFixed(2)}/ha</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <div>
-          <h4 className="font-medium mb-2">Operation Costs</h4>
-          <table className="w-full text-sm">
-            <tbody>
-              <tr>
-                <td className="py-1">Cultivating</td>
-                <td className="text-right">£{metricsData.cultivating[selectedYear].perHectare.toFixed(2)}/ha</td>
-              </tr>
-              <tr>
-                <td className="py-1">Drilling</td>
-                <td className="text-right">£{metricsData.drilling[selectedYear].perHectare.toFixed(2)}/ha</td>
-              </tr>
-              <tr>
-                <td className="py-1">Applications</td>
-                <td className="text-right">£{metricsData.applications[selectedYear].perHectare.toFixed(2)}/ha</td>
-              </tr>
-              <tr>
-                <td className="py-1">Harvesting</td>
-                <td className="text-right">£{metricsData.harvesting[selectedYear].perHectare.toFixed(2)}/ha</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      
-      <div className="mt-4">
-        <h4 className="font-medium mb-2">Chemical Breakdown</h4>
-        <table className="w-full text-sm">
-          <tbody>
-            <tr>
-              <td className="py-1">Herbicide</td>
-              <td className="text-right">£{metricsData.chemicalBreakdown.herbicide[selectedYear].perHectare.toFixed(2)}/ha</td>
-            </tr>
-            <tr>
-              <td className="py-1">Fungicide</td>
-              <td className="text-right">£{metricsData.chemicalBreakdown.fungicide[selectedYear].perHectare.toFixed(2)}/ha</td>
-            </tr>
-            <tr>
-              <td className="py-1">Adjuvant</td>
-              <td className="text-right">£{metricsData.chemicalBreakdown.adjuvant[selectedYear].perHectare.toFixed(2)}/ha</td>
-            </tr>
-            <tr>
-              <td className="py-1">Trace Element</td>
-              <td className="text-right">£{metricsData.chemicalBreakdown.traceElement[selectedYear].perHectare.toFixed(2)}/ha</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
 type SortField = 'name' | 'area' | 'costPerTonne' | 'performance' | 'yield' | 'costPerHa' | 'margin';
 type SortDirection = 'asc' | 'desc';
 
@@ -123,19 +42,8 @@ export default function DetailedPerformanceTable({
   showNetMargin = false,
   visibleColumns
 }: DetailedPerformanceTableProps) {
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-
-  const toggleRow = (name: string) => {
-    const newExpandedRows = new Set(expandedRows);
-    if (expandedRows.has(name)) {
-      newExpandedRows.delete(name);
-    } else {
-      newExpandedRows.add(name);
-    }
-    setExpandedRows(newExpandedRows);
-  };
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -316,71 +224,45 @@ export default function DetailedPerformanceTable({
           </thead>
           <tbody>
             {sortedData.map((item) => (
-              <React.Fragment key={item.name}>
-                <tr className="border-b border-gray-100">
-                  {/* Name column is always visible */}
+              <tr key={item.name} className="border-b border-gray-100">
+                {/* Name column is always visible */}
+                <td className="py-3 px-4">
+                  {item.name}
+                </td>
+                
+                {visibleColumns.area && (
+                  <td className="py-3 px-4">{item.area}</td>
+                )}
+                
+                {visibleColumns.costPerTonne && (
+                  <td className="py-3 px-4">{item.costPerTonne}</td>
+                )}
+                
+                {visibleColumns.performance && (
                   <td className="py-3 px-4">
-                    <div className="flex items-center">
-                      <button
-                        onClick={() => toggleRow(item.name)}
-                        className="mr-2 text-gray-500 hover:text-gray-700"
-                      >
-                        {expandedRows.has(item.name) ? (
-                          <ChevronDown size={16} />
-                        ) : (
-                          <ChevronRight size={16} />
-                        )}
-                      </button>
-                      {item.name}
+                    <div className="w-32 h-2 bg-gray-100 rounded-full mx-auto relative overflow-hidden">
+                      <div
+                        className="absolute top-0 left-0 h-full bg-gray-600 rounded-full"
+                        style={{ width: `${item.performance}%` }}
+                      ></div>
                     </div>
                   </td>
-                  
-                  {visibleColumns.area && (
-                    <td className="py-3 px-4">{item.area}</td>
-                  )}
-                  
-                  {visibleColumns.costPerTonne && (
-                    <td className="py-3 px-4">{item.costPerTonne}</td>
-                  )}
-                  
-                  {visibleColumns.performance && (
-                    <td className="py-3 px-4">
-                      <div className="w-32 h-2 bg-gray-100 rounded-full mx-auto relative overflow-hidden">
-                        <div
-                          className="absolute top-0 left-0 h-full bg-gray-600 rounded-full"
-                          style={{ width: `${item.performance}%` }}
-                        ></div>
-                      </div>
-                    </td>
-                  )}
-                  
-                  {visibleColumns.yield && (
-                    <td className="text-right py-3 px-4">{item.yield}</td>
-                  )}
-                  
-                  {visibleColumns.costPerHa && (
-                    <td className="text-right py-3 px-4">{item.costPerHa}</td>
-                  )}
-                  
-                  {visibleColumns.margin && (
-                    <td className="text-right py-3 px-4">
-                      {showNetMargin ? item.netMargin : item.grossMargin}
-                    </td>
-                  )}
-                </tr>
-                {expandedRows.has(item.name) && (
-                  <tr>
-                    <td colSpan={1 + // Name column
-                      Object.values(visibleColumns).filter(Boolean).length // Visible columns count
-                    }>
-                      <ExpandedRowContent
-                        metricsData={metricsData}
-                        selectedYear={selectedYear}
-                      />
-                    </td>
-                  </tr>
                 )}
-              </React.Fragment>
+                
+                {visibleColumns.yield && (
+                  <td className="text-right py-3 px-4">{item.yield}</td>
+                )}
+                
+                {visibleColumns.costPerHa && (
+                  <td className="text-right py-3 px-4">{item.costPerHa}</td>
+                )}
+                
+                {visibleColumns.margin && (
+                  <td className="text-right py-3 px-4">
+                    {showNetMargin ? item.netMargin : item.grossMargin}
+                  </td>
+                )}
+              </tr>
             ))}
           </tbody>
         </table>

@@ -27,11 +27,15 @@ interface ExpandableCostPanelProps {
 function CostRow({
   category,
   level = 0,
-  selectedYear
+  selectedYear,
+  panelTitle,
+  totalCost
 }: {
   category: CostCategory;
   level?: number;
   selectedYear: Year;
+  panelTitle: string;
+  totalCost: number;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasSubcategories = category.subcategories && category.subcategories.length > 0;
@@ -41,11 +45,15 @@ function CostRow({
   const marketMin = currentData.perHectare * 0.7;
   const marketMax = currentData.perHectare * 1.3;
   const position = ((currentData.perHectare - marketMin) / (marketMax - marketMin)) * 100;
+  
+  // For operations costs, calculate the allocation percentage
+  // This will be used only when the parent component has title "Operation Costs"
+  const allocationPercentage = totalCost > 0 ? (currentData.perHectare / totalCost) * 100 : 0;
 
   return (
     <>
       <tr className="border-b border-gray-100">
-        <td className="py-3">
+        <td className="py-3 w-1/4">
           <div className="flex items-center" style={{ paddingLeft: `${level * 1.5}rem` }}>
             {hasSubcategories && (
               <button
@@ -66,37 +74,45 @@ function CostRow({
             </span>
           </div>
         </td>
-        <td className="text-right py-3">
+        <td className="text-right py-3 w-1/4">
           <span>£{currentData.perTonne.toFixed(2)}/t</span>
         </td>
-        <td className="text-right py-3">
+        <td className="text-right py-3 w-1/4">
           <span>£{currentData.perHectare.toFixed(2)}/ha</span>
         </td>
-        <td className="py-3 px-4">
-          <div className="relative group">
-            <div className="w-48 h-2 bg-gray-100 rounded-full relative overflow-hidden mx-auto">
-              <div
-                className="absolute top-0 h-full bg-gray-600 rounded-full"
-                style={{
-                  left: '0%',
-                  width: '100%',
-                  opacity: 0.2
-                }}
-              />
-              <div
-                className="absolute top-0 h-full bg-blue-600 rounded-full w-2"
-                style={{
-                  left: `${position}%`,
-                  transform: 'translateX(-50%)'
-                }}
-              />
+        <td className="py-3 px-4 w-1/4 text-center">
+          {panelTitle === "Operation Costs" ? (
+            // Show only allocation percentage for operations costs
+            <div className="text-center">
+              <span className="font-medium">{allocationPercentage.toFixed(1)}%</span>
             </div>
-            <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-xs rounded p-2 w-48 left-1/2 -translate-x-1/2 mt-1">
-              Market range: £{marketMin.toFixed(0)} - £{marketMax.toFixed(0)}/ha
-              <br />
-              Your cost: £{currentData.perHectare.toFixed(0)}/ha
+          ) : (
+            // Show market range for variable costs
+            <div className="relative group">
+              <div className="w-48 h-2 bg-gray-100 rounded-full relative overflow-hidden mx-auto">
+                <div
+                  className="absolute top-0 h-full bg-gray-600 rounded-full"
+                  style={{
+                    left: '0%',
+                    width: '100%',
+                    opacity: 0.2
+                  }}
+                />
+                <div
+                  className="absolute top-0 h-full bg-blue-600 rounded-full w-2"
+                  style={{
+                    left: `${position}%`,
+                    transform: 'translateX(-50%)'
+                  }}
+                />
+              </div>
+              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-xs rounded p-2 w-48 left-1/2 -translate-x-1/2 mt-1">
+                Market range: £{marketMin.toFixed(0)} - £{marketMax.toFixed(0)}/ha
+                <br />
+                Your cost: £{currentData.perHectare.toFixed(0)}/ha
+              </div>
             </div>
-          </div>
+          )}
         </td>
       </tr>
       {isExpanded && category.subcategories?.map((subcategory) => (
@@ -105,6 +121,8 @@ function CostRow({
           category={subcategory}
           level={level + 1}
           selectedYear={selectedYear}
+          panelTitle={panelTitle}
+          totalCost={totalCost}
         />
       ))}
     </>
@@ -117,7 +135,7 @@ export default function ExpandableCostPanel({
   selectedYear,
   costFilters
 }: ExpandableCostPanelProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  // No longer need isExpanded state as tables are always shown
 
   // Filter categories based on the panel type (variable or operations)
   const filteredCategories = categories.filter(() => {
@@ -141,25 +159,17 @@ export default function ExpandableCostPanel({
 
   return (
     <div className="bg-white rounded-lg shadow">
-      <div
-        className="p-4 border-b border-gray-200 flex items-center justify-between cursor-pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-center space-x-4">
-          <h3 className="font-semibold">{title}</h3>
-          <div className="text-sm text-gray-500">
-            Total: £{totalCosts.perHectare.toFixed(2)}/ha
-          </div>
-        </div>
-        {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+      <div className="p-4 border-b border-gray-200 flex items-center">
+        <h3 className="font-semibold">{title}</h3>
       </div>
       
-      {isExpanded && (
+      {/* Tables are always expanded now */}
+      {(
         <div className="p-4">
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50">
-                <th className="text-left py-3 font-medium text-gray-600">
+                <th className="text-left py-3 font-medium text-gray-600 w-1/4">
                   <div className="flex items-center space-x-2">
                     <span>Category</span>
                     <div className="relative group">
@@ -170,7 +180,7 @@ export default function ExpandableCostPanel({
                     </div>
                   </div>
                 </th>
-                <th className="text-right py-3 font-medium text-gray-600">
+                <th className="text-right py-3 font-medium text-gray-600 w-1/4">
                   <div className="flex items-center justify-end space-x-2">
                     <span>Cost (£/t)</span>
                     <div className="relative group">
@@ -181,7 +191,7 @@ export default function ExpandableCostPanel({
                     </div>
                   </div>
                 </th>
-                <th className="text-right py-3 font-medium text-gray-600">
+                <th className="text-right py-3 font-medium text-gray-600 w-1/4">
                   <div className="flex items-center justify-end space-x-2">
                     <span>Cost (£/ha)</span>
                     <div className="relative group">
@@ -192,13 +202,15 @@ export default function ExpandableCostPanel({
                     </div>
                   </div>
                 </th>
-                <th className="text-center py-3 font-medium text-gray-600">
+                <th className="text-center py-3 font-medium text-gray-600 w-1/4">
                   <div className="flex items-center justify-center space-x-2">
-                    <span>Market Range</span>
+                    <span>{title === "Operation Costs" ? "Allocation" : "Market Range"}</span>
                     <div className="relative group">
                       <HelpCircle size={14} className="text-gray-400 cursor-help" />
                       <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-xs rounded p-2 w-48 right-0 mt-1">
-                        Your position within the market range for this cost category
+                        {title === "Operation Costs"
+                          ? "Percentage allocation of total operation costs"
+                          : "Your position within the market range for this cost category"}
                       </div>
                     </div>
                   </div>
@@ -217,13 +229,17 @@ export default function ExpandableCostPanel({
                       : category.subcategories
                   }}
                   selectedYear={selectedYear}
+                  panelTitle={title}
+                  totalCost={totalCosts.perHectare}
                 />
               ))}
               <tr className="border-t-2 border-gray-200 font-medium bg-gray-50">
-                <td className="py-3">Total {title}</td>
-                <td className="text-right py-3">£{totalCosts.perTonne.toFixed(2)}/t</td>
-                <td className="text-right py-3">£{totalCosts.perHectare.toFixed(2)}/ha</td>
-                <td></td>
+                <td className="py-3 w-1/4">Total {title}</td>
+                <td className="text-right py-3 w-1/4">£{totalCosts.perTonne.toFixed(2)}/t</td>
+                <td className="text-right py-3 w-1/4">£{totalCosts.perHectare.toFixed(2)}/ha</td>
+                <td className="text-center py-3 w-1/4">
+                  {title === "Operation Costs" ? "100%" : ""}
+                </td>
               </tr>
             </tbody>
           </table>
