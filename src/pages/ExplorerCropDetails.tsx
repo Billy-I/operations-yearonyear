@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { HelpCircle, ArrowLeft } from 'lucide-react';
+import { HelpCircle, ArrowLeft, Info } from 'lucide-react';
 import { ChartContainer, CostChartView } from '../components/analytics/charts';
 import ExpandableCostPanel from '../components/analytics/ExpandableCostPanel';
 import DetailedPerformanceTable from '../components/analytics/DetailedPerformanceTable';
 import MarketRangeIndicator from '../components/analytics/charts/common/MarketRangeIndicator';
 import { MetricsData, Year } from '../types/analytics';
 import { AVAILABLE_YEARS } from '../constants/analytics';
+import { HelpPanel, CropPerformanceHelpContent, FeatureNotification } from '../components/help';
 
 // Helper function to create yearly data with average
 const createYearlyData = (baseValue: number, yearlyIncrease: number = 2) => {
@@ -54,10 +55,7 @@ export default function ExplorerCropDetails() {
   const [chartView, setChartView] = useState<CostChartView>('distribution');
   
   // Chart configuration state
-  const [costFilters, setCostFilters] = useState({
-    variable: true,
-    operations: true
-  });
+  const [costType, setCostType] = useState<'input' | 'total'>('total');
   
   // Performance table column visibility
   const [visibleColumns, setVisibleColumns] = useState({
@@ -68,6 +66,10 @@ export default function ExplorerCropDetails() {
     costPerHa: true,
     margin: true
   });
+
+  // Help panel state
+  const [showHelpPanel, setShowHelpPanel] = useState(false);
+  const [showNotification, setShowNotification] = useState(true);
 
   // Calculate total hectares from the existing data
   const totalHectares = 607.04;
@@ -230,7 +232,16 @@ export default function ExplorerCropDetails() {
           </Link>
           <div>
             <div className="text-sm text-gray-600">Explorer / {crop}</div>
-            <h1 className="text-2xl font-bold">Crop Performance - {crop}</h1>
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold">Crop Performance - {crop}</h1>
+              <button 
+                onClick={() => setShowHelpPanel(true)}
+                className="ml-2 text-gray-400 hover:text-gray-600"
+                aria-label="Help"
+              >
+                <HelpCircle size={20} />
+              </button>
+            </div>
           </div>
         </div>
         <div className="flex items-center space-x-4">
@@ -260,33 +271,70 @@ export default function ExplorerCropDetails() {
         </div>
       </div>
 
+      {/* Feature Notification */}
+      {showNotification && (
+        <div className="mb-6">
+          <FeatureNotification
+            title="New Feature: Cost Categories Toggle"
+            message={
+              <>
+                <p className="mb-2">We've updated our cost filters to a simple toggle. Select 'Input Costs' to see only seed, fertilizer, and chemical costs. Select 'Total Costs' to see all costs including operations (cultivating, drilling, etc.). Total Costs is selected by default to show your complete financial picture.</p>
+                <div className="mt-3 flex items-center">
+                  <Link
+                    to="/data/operations"
+                    className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-800 bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded-md transition-colors"
+                  >
+                    <span className="mr-1">Go to Operations Center</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </Link>
+                  <span className="ml-2 text-xs text-gray-600">Customize your operations costs</span>
+                </div>
+              </>
+            }
+            onLearnMore={() => setShowHelpPanel(true)}
+            onDismiss={() => setShowNotification(false)}
+          />
+        </div>
+      )}
+
       {/* Filter Bar */}
       <div className="flex items-center mb-6 bg-gray-50 p-4 rounded-lg">
-        {/* Cost Category Filters */}
+        {/* Cost Category Toggle */}
         <div className="flex items-center space-x-4">
           <span className="text-sm font-medium text-gray-700">Cost Categories:</span>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setCostFilters(prev => ({ ...prev, variable: !prev.variable }))}
-              className={`px-3 py-1 rounded-full text-sm ${
-                costFilters.variable
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-gray-200 text-gray-600'
-              }`}
-            >
-              Variable Costs
-            </button>
-            <button
-              onClick={() => setCostFilters(prev => ({ ...prev, operations: !prev.operations }))}
-              className={`px-3 py-1 rounded-full text-sm ${
-                costFilters.operations
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-gray-200 text-gray-600'
-              }`}
-            >
-              Operation Costs
-            </button>
+          <div className="flex items-center">
+            <div className="flex items-center bg-gray-100 rounded-full p-1">
+              <button
+                onClick={() => setCostType('input')}
+                className={`px-4 py-1.5 rounded-full text-sm transition-colors ${
+                  costType === 'input'
+                    ? 'bg-blue-100 text-blue-800 shadow-sm'
+                    : 'bg-transparent text-gray-600'
+                }`}
+              >
+                Input Costs
+              </button>
+              <button
+                onClick={() => setCostType('total')}
+                className={`px-4 py-1.5 rounded-full text-sm transition-colors ${
+                  costType === 'total'
+                    ? 'bg-blue-100 text-blue-800 shadow-sm'
+                    : 'bg-transparent text-gray-600'
+                }`}
+              >
+                Total Costs
+              </button>
+            </div>
           </div>
+          <button
+            onClick={() => setShowHelpPanel(true)}
+            className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+          >
+            <Info size={16} className="mr-1" />
+            How do these affect my margins?
+          </button>
         </div>
       </div>
 
@@ -296,12 +344,12 @@ export default function ExplorerCropDetails() {
         <div className="bg-gray-50 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-gray-600">Yield & Production</span>
-            <div className="relative group">
-              <HelpCircle size={16} className="text-gray-400 cursor-help" />
-              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
-                Current yield and production metrics compared to market benchmarks
-              </div>
-            </div>
+            <button
+              onClick={() => setShowHelpPanel(true)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <HelpCircle size={16} className="cursor-help" />
+            </button>
           </div>
           <div className="space-y-4">
             <div>
@@ -330,12 +378,12 @@ export default function ExplorerCropDetails() {
         <div className="bg-gray-50 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-gray-600">Area Information</span>
-            <div className="relative group">
-              <HelpCircle size={16} className="text-gray-400 cursor-help" />
-              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
-                Field and area statistics
-              </div>
-            </div>
+            <button
+              onClick={() => setShowHelpPanel(true)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <HelpCircle size={16} className="cursor-help" />
+            </button>
           </div>
           <div className="space-y-3">
             <div>
@@ -353,20 +401,20 @@ export default function ExplorerCropDetails() {
         <div className="bg-gray-50 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-gray-600">Costs</span>
-            <div className="relative group">
-              <HelpCircle size={16} className="text-gray-400 cursor-help" />
-              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
-                Comprehensive cost metrics including per hectare, per tonne, and total costs
-              </div>
-            </div>
+            <button
+              onClick={() => setShowHelpPanel(true)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <HelpCircle size={16} className="cursor-help" />
+            </button>
           </div>
           <div className="space-y-3">
             <div>
               <div className="text-sm text-gray-600">Per hectare</div>
               <div className="text-xl font-bold">
                 £{(
-                  (costFilters.variable ? Object.values(chartData.variable).reduce((sum, cost) => sum + cost.current, 0) : 0) +
-                  (costFilters.operations ? Object.values(chartData.operations).reduce((sum, cost) => sum + cost, 0) : 0)
+                  (costType === 'input' || costType === 'total' ? Object.values(chartData.variable).reduce((sum, cost) => sum + cost.current, 0) : 0) +
+                  (costType === 'total' ? Object.values(chartData.operations).reduce((sum, cost) => sum + cost, 0) : 0)
                 ).toFixed(2)}/ha
               </div>
             </div>
@@ -374,8 +422,8 @@ export default function ExplorerCropDetails() {
               <div className="text-sm text-gray-600">Per tonne</div>
               <div className="text-xl font-bold">
                 £{(
-                  ((costFilters.variable ? Object.values(chartData.variable).reduce((sum, cost) => sum + cost.current, 0) : 0) +
-                  (costFilters.operations ? Object.values(chartData.operations).reduce((sum, cost) => sum + cost, 0) : 0)) /
+                  ((costType === 'input' || costType === 'total' ? Object.values(chartData.variable).reduce((sum, cost) => sum + cost.current, 0) : 0) +
+                  (costType === 'total' ? Object.values(chartData.operations).reduce((sum, cost) => sum + cost, 0) : 0)) /
                   metricsData.yield[selectedYear].perHectare
                 ).toFixed(2)}/t
               </div>
@@ -384,8 +432,8 @@ export default function ExplorerCropDetails() {
               <div className="text-sm text-gray-600">Total cost</div>
               <div className="text-xl font-bold">
                 £{(
-                  ((costFilters.variable ? Object.values(chartData.variable).reduce((sum, cost) => sum + cost.current, 0) : 0) +
-                  (costFilters.operations ? Object.values(chartData.operations).reduce((sum, cost) => sum + cost, 0) : 0)) *
+                  ((costType === 'input' || costType === 'total' ? Object.values(chartData.variable).reduce((sum, cost) => sum + cost.current, 0) : 0) +
+                  (costType === 'total' ? Object.values(chartData.operations).reduce((sum, cost) => sum + cost, 0) : 0)) *
                   totalHectares
                 ).toFixed(2)}
               </div>
@@ -397,20 +445,20 @@ export default function ExplorerCropDetails() {
         <div className="bg-gray-50 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-gray-600">Profitability</span>
-            <div className="relative group">
-              <HelpCircle size={16} className="text-gray-400 cursor-help" />
-              <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-sm rounded p-2 w-64 right-0 mt-1">
-                Gross and net margin analysis
-              </div>
-            </div>
+            <button
+              onClick={() => setShowHelpPanel(true)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <HelpCircle size={16} className="cursor-help" />
+            </button>
           </div>
           <div className="space-y-4">
             <div>
               <div className="text-sm text-gray-600">Gross Margin</div>
-              {/* Calculate gross margin based on active cost filters */}
+              {/* Calculate gross margin based on cost type */}
               {(() => {
-                // Only show gross margin when variable costs are active
-                if (!costFilters.variable) {
+                // Only show gross margin when input costs are active
+                if (costType !== 'input' && costType !== 'total') {
                   return (
                     <>
                       <div className="text-xl font-bold mb-2">£0.00/ha</div>
@@ -429,7 +477,7 @@ export default function ExplorerCropDetails() {
                 }
 
                 const variableCosts = Object.values(chartData.variable).reduce((sum, cost) => sum + cost.current, 0);
-                const operationCosts = costFilters.operations ?
+                const operationCosts = costType === 'total' ?
                   Object.values(chartData.operations).reduce((sum, cost) => sum + cost, 0) : 0;
                 const totalCosts = variableCosts + operationCosts;
                 const grossMargin = metricsData.yield[selectedYear].perHectare * 1012.37 - totalCosts;
@@ -442,10 +490,10 @@ export default function ExplorerCropDetails() {
             </div>
             <div className="border-t border-gray-200 pt-3">
               <div className="text-sm text-gray-600">Net Margin</div>
-              {/* Calculate net margin based on active cost filters */}
+              {/* Calculate net margin based on cost type */}
               {(() => {
-                // Only show net margin when both cost categories are active
-                if (!costFilters.variable || !costFilters.operations) {
+                // Only show net margin when total costs are active
+                if (costType !== 'total') {
                   return (
                     <div className="text-xl font-bold">£0.00/ha</div>
                   );
@@ -477,14 +525,17 @@ export default function ExplorerCropDetails() {
           revenue={metricsData.grossMargin[selectedYear].perHectare + metricsData.costOfProduction[selectedYear].perHectare}
           yield={metricsData.yield[selectedYear].perHectare}
           pricePerTonne={1012.37}
-          showVariableCosts={costFilters.variable}
-          showOperationCosts={costFilters.operations}
+          showVariableCosts={costType === 'input' || costType === 'total'}
+          showOperationCosts={costType === 'total'}
           onToggleLayer={(layer) => {
-            if (layer === 'variable') {
-              setCostFilters(prev => ({ ...prev, variable: !prev.variable }));
-            }
-            if (layer === 'operations') {
-              setCostFilters(prev => ({ ...prev, operations: !prev.operations }));
+            if (layer === 'variable' && costType === 'total') {
+              setCostType('input');
+            } else if (layer === 'variable' && costType === 'input') {
+              setCostType('total');
+            } else if (layer === 'operations' && costType === 'input') {
+              setCostType('total');
+            } else if (layer === 'operations' && costType === 'total') {
+              setCostType('input');
             }
           }}
         />
@@ -492,7 +543,7 @@ export default function ExplorerCropDetails() {
 
       {/* Performance Table */}
       <div className="mb-6">
-        <div className="mb-4">
+        <div className="mb-4 flex justify-between items-center">
           <select
             value={groupBy}
             onChange={(e) => setGroupBy(e.target.value as 'Variety' | 'Field' | 'Region')}
@@ -502,6 +553,14 @@ export default function ExplorerCropDetails() {
             <option value="Field">Field</option>
             <option value="Region">Region</option>
           </select>
+          
+          <button 
+            onClick={() => setShowHelpPanel(true)}
+            className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+          >
+            <Info size={16} className="mr-1" />
+            Understanding performance metrics
+          </button>
         </div>
 
         <DetailedPerformanceTable
@@ -509,7 +568,7 @@ export default function ExplorerCropDetails() {
           metricsData={metricsData}
           selectedYear={selectedYear}
           groupBy={groupBy}
-          showNetMargin={costFilters.operations}
+          showNetMargin={costType === 'total'}
           visibleColumns={visibleColumns}
         />
       </div>
@@ -520,16 +579,24 @@ export default function ExplorerCropDetails() {
           title="Variable Costs"
           categories={variableCostCategories}
           selectedYear={selectedYear}
-          costFilters={{ variable: costFilters.variable }}
+          costFilters={{ variable: costType === 'input' || costType === 'total' }}
         />
         
         <ExpandableCostPanel
           title="Operation Costs"
           categories={operationCostCategories}
           selectedYear={selectedYear}
-          costFilters={{ operations: costFilters.operations }}
+          costFilters={{ operations: costType === 'total' }}
         />
       </div>
+
+      {/* Help Panel */}
+      <HelpPanel
+        isOpen={showHelpPanel}
+        onClose={() => setShowHelpPanel(false)}
+        title={`${crop} Performance Help`}
+        content={<CropPerformanceHelpContent />}
+      />
     </div>
   );
 }
