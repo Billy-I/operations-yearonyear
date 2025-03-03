@@ -148,6 +148,15 @@ export default function MultiYear() {
                 </div>
 
                 <div className="printable-content" style={{ minHeight: '600px' }}>
+                  <MultiYearGraph
+                    selectedView={selectedView}
+                    selectedYears={selectedYears}
+                    selectedUnit={selectedUnit}
+                    selectedTab={selectedTab}
+                    selectedField={selectedField}
+                    costFilters={costFilters}
+                  />
+                  
                   {selectedTab === 'comparison' ? (
                     <MultiYearTable
                       selectedView={selectedView}
@@ -166,15 +175,6 @@ export default function MultiYear() {
                       costFilters={costFilters}
                     />
                   )}
-                  
-                  <MultiYearGraph
-                    selectedView={selectedView}
-                    selectedYears={selectedYears}
-                    selectedUnit={selectedUnit}
-                    selectedTab={selectedTab}
-                    selectedField={selectedField}
-                    costFilters={costFilters}
-                  />
                 </div>
               </div>
             </div>

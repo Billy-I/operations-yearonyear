@@ -185,7 +185,7 @@ export function MultiYearGraph({
 
   return (
     <div className="mt-6">
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-start mb-4">
         <select
           value={selectedMetric}
           onChange={(e) => setSelectedMetric(e.target.value as DataMetricType)}
