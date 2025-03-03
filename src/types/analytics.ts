@@ -35,3 +35,6 @@ export type UnitType = '£/t' | '£/ha';
 export type ViewType = 'Variable' | 'Operations' | 'Total';
 export type TabType = 'comparison' | 'rotation';
 export type MetricType = keyof MetricsData | 'variableCosts' | 'operationsCosts' | 'totalCosts';
+
+// New type for the view level in the progressive disclosure approach
+export type ViewLevel = 'farm' | 'crop' | 'field';

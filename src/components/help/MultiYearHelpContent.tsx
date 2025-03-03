@@ -42,13 +42,29 @@ const MultiYearHelpContent: React.FC = () => {
         You can select multiple years to compare or focus on specific time periods.
       </HelpTip>
 
-      <HelpSectionTitle>Analysis Tabs</HelpSectionTitle>
+      <HelpSectionTitle>View Levels</HelpSectionTitle>
       <HelpParagraph>
-        The Multi-Year Analysis page offers two different analysis views:
+        The Multi-Year Analysis page now offers three different view levels to help you analyze your data:
       </HelpParagraph>
       <ul className="list-disc pl-5 mb-4 text-sm text-gray-600">
-        <li><strong>Crop Comparison:</strong> Compare the performance of a specific crop across multiple years</li>
-        <li><strong>Field Rotation:</strong> Analyze how different crops have performed in the same field over time</li>
+        <li><strong>Farm Overview:</strong> See aggregated data across your entire farm, with expandable sections for enterprise and field breakdowns</li>
+        <li><strong>Crop Analysis:</strong> Focus on a specific crop's performance across multiple years</li>
+        <li><strong>Field Analysis:</strong> Analyze how different crops have performed in the same field over time</li>
+      </ul>
+
+      <HelpTip>
+        Use the View Level selector at the top of the page to switch between these different perspectives.
+        You can also click "View Details" on any enterprise or field card to quickly navigate to that specific view.
+      </HelpTip>
+
+      <HelpSectionTitle>Farm Overview Features</HelpSectionTitle>
+      <HelpParagraph>
+        The Farm Overview provides a comprehensive view of your entire operation with:
+      </HelpParagraph>
+      <ul className="list-disc pl-5 mb-4 text-sm text-gray-600">
+        <li><strong>Main Visualizations:</strong> Charts and tables showing farm-level metrics</li>
+        <li><strong>Enterprise Breakdown:</strong> Expandable section showing summary cards for each crop type</li>
+        <li><strong>Field Performance:</strong> Expandable section showing summary cards for each field</li>
       </ul>
 
       <HelpSectionTitle>Operations Costs in Multi-Year Analysis</HelpSectionTitle>
@@ -88,8 +104,7 @@ const MultiYearHelpContent: React.FC = () => {
       </ul>
 
       <HelpParagraph>
-        You can switch between different view types (Total, Per Hectare, Per Tonne) and units (£/ha, £/t) 
-        to analyze your data from different perspectives.
+        You can switch between different units (£/ha, £/t) to analyze your data from different perspectives.
       </HelpParagraph>
 
       <HelpSectionTitle>Exporting Your Analysis</HelpSectionTitle>
