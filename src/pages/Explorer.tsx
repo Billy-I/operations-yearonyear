@@ -102,7 +102,7 @@ export default function Explorer() {
             title="New Feature: Cost Categories Toggle"
             message={
               <>
-                <p className="mb-2">We've updated our cost filters to a simple toggle. Select 'Input Costs' to see only seed, fertilizer, and chemical costs. Select 'Total Costs' to see all costs including operations (cultivating, drilling, etc.). Total Costs is selected by default to show your complete financial picture.</p>
+                <p className="mb-2">We've updated our cost filters to a simple checkbox. When "Total costs" is checked, you'll see all costs including operations (cultivating, drilling, etc.). When unchecked, you'll only see input costs (seed, fertilizer, and chemicals). Total Costs is selected by default to show your complete financial picture.</p>
                 <div className="mt-3 flex items-center">
                   <Link
                     to="/data/operations"
@@ -128,28 +128,15 @@ export default function Explorer() {
         <div className="flex items-center space-x-4">
           <span className="text-sm font-medium text-gray-700">Cost Categories:</span>
           <div className="flex items-center">
-            <div className="flex items-center bg-gray-100 rounded-full p-1">
-              <button
-                onClick={() => setCostType('input')}
-                className={`px-4 py-1.5 rounded-full text-sm transition-colors ${
-                  costType === 'input'
-                    ? 'bg-blue-100 text-blue-800 shadow-sm'
-                    : 'bg-transparent text-gray-600'
-                }`}
-              >
-                Input Costs
-              </button>
-              <button
-                onClick={() => setCostType('total')}
-                className={`px-4 py-1.5 rounded-full text-sm transition-colors ${
-                  costType === 'total'
-                    ? 'bg-blue-100 text-blue-800 shadow-sm'
-                    : 'bg-transparent text-gray-600'
-                }`}
-              >
-                Total Costs
-              </button>
-            </div>
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                checked={costType === 'total'}
+                onChange={(e) => setCostType(e.target.checked ? 'total' : 'input')}
+                className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Total costs</span>
+            </label>
           </div>
           <button
             onClick={() => setShowHelpPanel(true)}
@@ -210,14 +197,12 @@ export default function Explorer() {
                       <ChevronDown size={16} />
                     </div>
                   </th>
-                  {costType === 'input' && (
-                    <th className="px-4 py-3 overflow-hidden">
-                      <div className="flex items-center justify-center space-x-1">
-                        <span>Market Range</span>
-                        <HelpCircle size={16} className="text-gray-400" />
-                      </div>
-                    </th>
-                  )}
+                  <th className="px-4 py-3 overflow-hidden">
+                    <div className="flex items-center justify-center space-x-1">
+                      <span>Variable Market Range</span>
+                      <HelpCircle size={16} className="text-gray-400" />
+                    </div>
+                  </th>
                   <th className="px-4 py-3">
                     <div className="flex items-center justify-end space-x-1">
                       <span>CoP</span>
@@ -275,19 +260,17 @@ export default function Explorer() {
                         </Link>
                       </td>
                       <td className="px-4 py-4">{crop.area}</td>
-                      {costType === 'input' && (
-                        <td className="px-4 py-4 overflow-hidden">
-                          <MarketRangeIndicator
-                            data={{
-                              min: crop.marketRange.min,
-                              max: crop.marketRange.max,
-                              average: (crop.marketRange.min + crop.marketRange.max) / 2,
-                              current: crop.marketRange.current
-                            }}
-                            formatValue={(value) => `£${value.toFixed(2)}/t`}
-                          />
-                        </td>
-                      )}
+                      <td className="px-4 py-4 overflow-hidden">
+                        <MarketRangeIndicator
+                          data={{
+                            min: crop.marketRange.min,
+                            max: crop.marketRange.max,
+                            average: (crop.marketRange.min + crop.marketRange.max) / 2,
+                            current: crop.marketRange.current
+                          }}
+                          formatValue={(value) => `£${value.toFixed(2)}/t`}
+                        />
+                      </td>
                       <td className="px-4 py-4 text-right">
                         <span className={crop.cop.hasWarning ? 'text-gray-700 font-medium' : ''}>
                           £{crop.cop.value.toFixed(2)}/t

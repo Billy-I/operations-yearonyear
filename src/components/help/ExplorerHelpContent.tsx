@@ -35,23 +35,23 @@ const ExplorerHelpContent: React.FC = () => {
       </HelpParagraph>
 
       <HelpTip>
-        Use the Cost Categories toggle to switch between "Input Costs" and "Total Costs" views.
-        When "Input Costs" is selected, you'll see Gross Margin calculations.
-        When "Total Costs" is selected, you'll see Net Margin calculations that include both input and operation costs.
+        Use the "Total costs" checkbox to control which costs are displayed.
+        When checked, you'll see Net Margin calculations that include both input and operation costs.
+        When unchecked, you'll see Gross Margin calculations based only on input costs.
       </HelpTip>
 
       <HelpSectionTitle>Cost Categories</HelpSectionTitle>
       <HelpParagraph>
-        The "Cost Categories" toggle allows you to switch between two cost views:
+        The "Total costs" checkbox allows you to control which costs are displayed:
       </HelpParagraph>
       <ul className="list-disc pl-5 mb-4 text-sm text-gray-600">
-        <li><strong>Input Costs:</strong> Includes only seed, fertilizer, and chemicals (60% of total costs). When this option is selected, you'll see Gross Margin calculations.</li>
-        <li><strong>Total Costs:</strong> Includes both input costs AND operation costs (cultivating, drilling, applications, and harvesting). When this option is selected, you'll see Net Margin calculations that reflect your complete cost structure.</li>
+        <li><strong>Checkbox unchecked:</strong> Shows only input costs (seed, fertilizer, and chemicals), which represent about 60% of total costs. When in this mode, you'll see Gross Margin calculations.</li>
+        <li><strong>Checkbox checked:</strong> Shows total costs, including both input costs AND operation costs (cultivating, drilling, applications, and harvesting). When in this mode, you'll see Net Margin calculations that reflect your complete cost structure.</li>
       </ul>
 
       <HelpParagraph>
-        By default, the toggle is set to "Total Costs" to show your complete cost picture and true net margins.
-        Switch to "Input Costs" when you want to focus specifically on your input expenses without operations.
+        By default, the checkbox is checked to show your complete cost picture and true net margins.
+        Uncheck it when you want to focus specifically on your input expenses without operations.
       </HelpParagraph>
 
       <HelpSectionTitle>Farm Overview</HelpSectionTitle>
