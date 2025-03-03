@@ -242,23 +242,7 @@ export const FieldRotationTable = ({
         <thead>
           <tr>
             <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <div className="flex items-center space-x-4">
-                <span>Metrics</span>
-                <div className="flex items-center space-x-2">
-                  <button
-                    className={`px-2 py-1 text-xs rounded ${selectedUnit === '£/t' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-                    onClick={() => setSelectedUnit?.('£/t')}
-                  >
-                    £/t
-                  </button>
-                  <button
-                    className={`px-2 py-1 text-xs rounded ${selectedUnit === '£/ha' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-                    onClick={() => setSelectedUnit?.('£/ha')}
-                  >
-                    £/ha
-                  </button>
-                </div>
-              </div>
+              Metrics
             </th>
             {selectedYears.map((year) => (
               <th key={year} className="px-6 py-3 bg-gray-50">

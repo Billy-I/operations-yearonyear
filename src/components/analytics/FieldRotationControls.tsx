@@ -1,5 +1,5 @@
 import { MapPin } from 'lucide-react';
-import { TabType } from '../../types/analytics';
+import { TabType, UnitType } from '../../types/analytics';
 import { fieldsData } from '../../data/fieldData';
 
 interface FieldRotationControlsProps {
@@ -7,13 +7,17 @@ interface FieldRotationControlsProps {
   setSelectedField: (field: string) => void;
   selectedTab: TabType;
   setSelectedTab: (tab: TabType) => void;
+  selectedUnit: UnitType;
+  setSelectedUnit: (unit: UnitType) => void;
 }
 
 export const FieldRotationControls = ({
   selectedField,
   setSelectedField,
   selectedTab,
-  setSelectedTab
+  setSelectedTab,
+  selectedUnit,
+  setSelectedUnit
 }: FieldRotationControlsProps) => {
   return (
     <div className="flex justify-between items-center">
@@ -32,6 +36,27 @@ export const FieldRotationControls = ({
                 <option key={field.id} value={field.id}>{field.name}</option>
               ))}
             </select>
+          </div>
+        </div>
+        
+        {/* Unit Toggle */}
+        <div>
+          <div className="text-sm text-gray-600 mb-2">Display Units</div>
+          <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
+            <div className="flex items-center space-x-2">
+              <button
+                className={`px-2 py-1 text-xs rounded ${selectedUnit === '£/t' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+                onClick={() => setSelectedUnit('£/t')}
+              >
+                £/t
+              </button>
+              <button
+                className={`px-2 py-1 text-xs rounded ${selectedUnit === '£/ha' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+                onClick={() => setSelectedUnit('£/ha')}
+              >
+                £/ha
+              </button>
+            </div>
           </div>
         </div>
       </div>

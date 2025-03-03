@@ -132,6 +132,8 @@ export default function MultiYear() {
                       setSelectedFilter={setSelectedFilter}
                       selectedTab={selectedTab}
                       setSelectedTab={setSelectedTab}
+                      selectedUnit={selectedUnit}
+                      setSelectedUnit={setSelectedUnit}
                     />
                   ) : (
                     <FieldRotationControls
@@ -139,6 +141,8 @@ export default function MultiYear() {
                       setSelectedField={setSelectedField}
                       selectedTab={selectedTab}
                       setSelectedTab={setSelectedTab}
+                      selectedUnit={selectedUnit}
+                      setSelectedUnit={setSelectedUnit}
                     />
                   )}
                 </div>
