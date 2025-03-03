@@ -278,7 +278,7 @@ export default function ExplorerCropDetails() {
             title="New Feature: Cost Categories Toggle"
             message={
               <>
-                <p className="mb-2">We've updated our cost filters to a simple toggle. Select 'Input Costs' to see only seed, fertilizer, and chemical costs. Select 'Total Costs' to see all costs including operations (cultivating, drilling, etc.). Total Costs is selected by default to show your complete financial picture.</p>
+                <p className="mb-2">We've updated our cost filters to a simple checkbox. When "Total costs" is checked, you'll see all costs including operations (cultivating, drilling, etc.). When unchecked, you'll only see input costs (seed, fertilizer, and chemicals). Total Costs is selected by default to show your complete financial picture.</p>
                 <div className="mt-3 flex items-center">
                   <Link
                     to="/data/operations"
@@ -305,28 +305,15 @@ export default function ExplorerCropDetails() {
         <div className="flex items-center space-x-4">
           <span className="text-sm font-medium text-gray-700">Cost Categories:</span>
           <div className="flex items-center">
-            <div className="flex items-center bg-gray-100 rounded-full p-1">
-              <button
-                onClick={() => setCostType('input')}
-                className={`px-4 py-1.5 rounded-full text-sm transition-colors ${
-                  costType === 'input'
-                    ? 'bg-blue-100 text-blue-800 shadow-sm'
-                    : 'bg-transparent text-gray-600'
-                }`}
-              >
-                Input Costs
-              </button>
-              <button
-                onClick={() => setCostType('total')}
-                className={`px-4 py-1.5 rounded-full text-sm transition-colors ${
-                  costType === 'total'
-                    ? 'bg-blue-100 text-blue-800 shadow-sm'
-                    : 'bg-transparent text-gray-600'
-                }`}
-              >
-                Total Costs
-              </button>
-            </div>
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                checked={costType === 'total'}
+                onChange={(e) => setCostType(e.target.checked ? 'total' : 'input')}
+                className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Total costs</span>
+            </label>
           </div>
           <button
             onClick={() => setShowHelpPanel(true)}
@@ -484,6 +471,7 @@ export default function ExplorerCropDetails() {
                 return (
                   <>
                     <div className="text-xl font-bold">£{grossMargin.toFixed(2)}/ha</div>
+                    <div className="text-sm text-gray-500">Total: £{(grossMargin * totalHectares).toLocaleString('en-GB', { maximumFractionDigits: 2 })}</div>
                   </>
                 );
               })()}
@@ -504,7 +492,10 @@ export default function ExplorerCropDetails() {
                 const grossMargin = metricsData.yield[selectedYear].perHectare * 1012.37 - totalCosts;
                 const netMargin = grossMargin * 0.535; // Using 53.5% of gross margin as net margin for this example
                 return (
-                  <div className="text-xl font-bold">£{netMargin.toFixed(2)}/ha</div>
+                  <>
+                    <div className="text-xl font-bold">£{netMargin.toFixed(2)}/ha</div>
+                    <div className="text-sm text-gray-500">Total: £{(netMargin * totalHectares).toLocaleString('en-GB', { maximumFractionDigits: 2 })}</div>
+                  </>
                 );
               })()}
             </div>
