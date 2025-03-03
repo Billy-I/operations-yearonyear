@@ -23,7 +23,10 @@ export const MultiYearTable = ({
   setSelectedUnit,
   costFilters = { variable: true, operations: true }
 }: MultiYearTableProps) => {
+  // State for collapsible sections
   const [isChemicalsOpen, setIsChemicalsOpen] = useState(false);
+  const [isVariableCostsOpen, setIsVariableCostsOpen] = useState(false); // Renamed to Input Costs in UI but keeping variable name
+  const [isOperationsCostsOpen, setIsOperationsCostsOpen] = useState(false);
 
   const formatValueWithUnit = (value: number): string => {
     return `£${value.toFixed(2)} ${selectedUnit === '£/t' ? '/t' : '/ha'}`;
@@ -154,7 +157,7 @@ export const MultiYearTable = ({
         </>
       )}
       <tr className="bg-gray-50">
-        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Variable Costs</td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Input Costs</td>
         {selectedYears.map((year) => (
           <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
             {formatValueWithUnit(getVariableCosts(year, selectedUnit))}
@@ -309,210 +312,240 @@ export const MultiYearTable = ({
 
     return (
       <>
-        {/* Variable Costs Section with detailed breakdown */}
+        {/* Input Costs Section with collapsible details */}
         {costFilters.variable && (
           <>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Cost of production</td>
-              {selectedYears.map((year) => (
-                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatValueWithUnit(getValue('costOfProduction', year, selectedUnit))}
-                </td>
-              ))}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getValue('costOfProduction', 'Yearly avg', selectedUnit))}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Seed</td>
-              {selectedYears.map((year) => (
-                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatValueWithUnit(getValue('seed', year, selectedUnit))}
-                </td>
-              ))}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getValue('seed', 'Yearly avg', selectedUnit))}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Fertiliser</td>
-              {selectedYears.map((year) => (
-                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatValueWithUnit(getValue('fertiliser', year, selectedUnit))}
-                </td>
-              ))}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getValue('fertiliser', 'Yearly avg', selectedUnit))}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 cursor-pointer"
-                  onClick={() => setIsChemicalsOpen(!isChemicalsOpen)}>
+            {/* Total Input Costs row (collapsible header) */}
+            <tr className="bg-gray-50">
+              <td
+                className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer"
+                onClick={() => setIsVariableCostsOpen(!isVariableCostsOpen)}
+              >
                 <div className="flex items-center space-x-2">
-                  <span>{isChemicalsOpen ? '▼' : '▶'}</span>
-                  <span>Chemicals</span>
+                  <span>{isVariableCostsOpen ? '▼' : '▶'}</span>
+                  <span>Total Input Costs</span>
                 </div>
               </td>
               {selectedYears.map((year) => (
-                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatValueWithUnit(getValue('chemicals', year, selectedUnit))}
+                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {formatValueWithUnit(getVariableCosts(year, selectedUnit))}
                 </td>
               ))}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getValue('chemicals', 'Yearly avg', selectedUnit))}
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                {formatValueWithUnit(getVariableCosts('Yearly avg', selectedUnit))}
               </td>
             </tr>
-            {isChemicalsOpen && (
+
+            {/* Input costs details (shown when expanded) */}
+            {isVariableCostsOpen && (
               <>
-                <tr className="bg-gray-50">
-                  <td className="pl-12 py-2 whitespace-nowrap text-sm text-gray-900">
-                    Trace Element
-                  </td>
-                  {selectedYears.map((year) => {
-                    const yearKey = year as Year;
-                    return (
-                      <td key={year} className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {formatValueWithUnit(metricsData.chemicalBreakdown.traceElement[yearKey][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
-                      </td>
-                    );
-                  })}
-                  <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                    {formatValueWithUnit(metricsData.chemicalBreakdown.traceElement['Yearly avg'][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                <tr>
+                  <td className="pl-10 py-4 whitespace-nowrap text-sm text-gray-900">Cost of production</td>
+                  {selectedYears.map((year) => (
+                    <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatValueWithUnit(getValue('costOfProduction', year, selectedUnit))}
+                    </td>
+                  ))}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatValueWithUnit(getValue('costOfProduction', 'Yearly avg', selectedUnit))}
                   </td>
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="pl-12 py-2 whitespace-nowrap text-sm text-gray-900">
-                    Herbicide
-                  </td>
-                  {selectedYears.map((year) => {
-                    const yearKey = year as Year;
-                    return (
-                      <td key={year} className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {formatValueWithUnit(metricsData.chemicalBreakdown.herbicide[yearKey][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
-                      </td>
-                    );
-                  })}
-                  <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                    {formatValueWithUnit(metricsData.chemicalBreakdown.herbicide['Yearly avg'][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                <tr>
+                  <td className="pl-10 py-4 whitespace-nowrap text-sm text-gray-900">Seed</td>
+                  {selectedYears.map((year) => (
+                    <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatValueWithUnit(getValue('seed', year, selectedUnit))}
+                    </td>
+                  ))}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatValueWithUnit(getValue('seed', 'Yearly avg', selectedUnit))}
                   </td>
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="pl-12 py-2 whitespace-nowrap text-sm text-gray-900">
-                    Fungicide
-                  </td>
-                  {selectedYears.map((year) => {
-                    const yearKey = year as Year;
-                    return (
-                      <td key={year} className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {formatValueWithUnit(metricsData.chemicalBreakdown.fungicide[yearKey][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
-                      </td>
-                    );
-                  })}
-                  <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                    {formatValueWithUnit(metricsData.chemicalBreakdown.fungicide['Yearly avg'][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                <tr>
+                  <td className="pl-10 py-4 whitespace-nowrap text-sm text-gray-900">Fertiliser</td>
+                  {selectedYears.map((year) => (
+                    <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatValueWithUnit(getValue('fertiliser', year, selectedUnit))}
+                    </td>
+                  ))}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatValueWithUnit(getValue('fertiliser', 'Yearly avg', selectedUnit))}
                   </td>
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="pl-12 py-2 whitespace-nowrap text-sm text-gray-900">
-                    Adjuvant
+                <tr>
+                  <td className="pl-10 py-4 whitespace-nowrap text-sm text-gray-900 cursor-pointer"
+                      onClick={() => setIsChemicalsOpen(!isChemicalsOpen)}>
+                    <div className="flex items-center space-x-2">
+                      <span>{isChemicalsOpen ? '▼' : '▶'}</span>
+                      <span>Chemicals</span>
+                    </div>
                   </td>
-                  {selectedYears.map((year) => {
-                    const yearKey = year as Year;
-                    return (
-                      <td key={year} className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {formatValueWithUnit(metricsData.chemicalBreakdown.adjuvant[yearKey][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                  {selectedYears.map((year) => (
+                    <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatValueWithUnit(getValue('chemicals', year, selectedUnit))}
+                    </td>
+                  ))}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatValueWithUnit(getValue('chemicals', 'Yearly avg', selectedUnit))}
+                  </td>
+                </tr>
+                {isChemicalsOpen && (
+                  <>
+                    <tr className="bg-gray-50">
+                      <td className="pl-16 py-2 whitespace-nowrap text-sm text-gray-900">
+                        Trace Element
                       </td>
-                    );
-                  })}
-                  <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                    {formatValueWithUnit(metricsData.chemicalBreakdown.adjuvant['Yearly avg'][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                      {selectedYears.map((year) => {
+                        const yearKey = year as Year;
+                        return (
+                          <td key={year} className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {formatValueWithUnit(metricsData.chemicalBreakdown.traceElement[yearKey][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                          </td>
+                        );
+                      })}
+                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                        {formatValueWithUnit(metricsData.chemicalBreakdown.traceElement['Yearly avg'][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                      </td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="pl-16 py-2 whitespace-nowrap text-sm text-gray-900">
+                        Herbicide
+                      </td>
+                      {selectedYears.map((year) => {
+                        const yearKey = year as Year;
+                        return (
+                          <td key={year} className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {formatValueWithUnit(metricsData.chemicalBreakdown.herbicide[yearKey][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                          </td>
+                        );
+                      })}
+                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                        {formatValueWithUnit(metricsData.chemicalBreakdown.herbicide['Yearly avg'][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                      </td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="pl-16 py-2 whitespace-nowrap text-sm text-gray-900">
+                        Fungicide
+                      </td>
+                      {selectedYears.map((year) => {
+                        const yearKey = year as Year;
+                        return (
+                          <td key={year} className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {formatValueWithUnit(metricsData.chemicalBreakdown.fungicide[yearKey][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                          </td>
+                        );
+                      })}
+                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                        {formatValueWithUnit(metricsData.chemicalBreakdown.fungicide['Yearly avg'][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                      </td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="pl-16 py-2 whitespace-nowrap text-sm text-gray-900">
+                        Adjuvant
+                      </td>
+                      {selectedYears.map((year) => {
+                        const yearKey = year as Year;
+                        return (
+                          <td key={year} className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {formatValueWithUnit(metricsData.chemicalBreakdown.adjuvant[yearKey][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                          </td>
+                        );
+                      })}
+                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
+                        {formatValueWithUnit(metricsData.chemicalBreakdown.adjuvant['Yearly avg'][selectedUnit === '£/t' ? 'perTonne' : 'perHectare'])}
+                      </td>
+                    </tr>
+                  </>
+                )}
+              </>
+            )}
+          </>
+        )}
+        
+        {/* Operations Costs Section with collapsible details */}
+        {costFilters.operations && (
+          <>
+            {/* Total Operations Costs row (collapsible header) */}
+            <tr className="bg-gray-50">
+              <td
+                className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer"
+                onClick={() => setIsOperationsCostsOpen(!isOperationsCostsOpen)}
+              >
+                <div className="flex items-center space-x-2">
+                  <span>{isOperationsCostsOpen ? '▼' : '▶'}</span>
+                  <span>Total Operations Costs</span>
+                </div>
+              </td>
+              {selectedYears.map((year) => (
+                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {formatValueWithUnit(getOperationsCosts(year, selectedUnit))}
+                </td>
+              ))}
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                {formatValueWithUnit(getOperationsCosts('Yearly avg', selectedUnit))}
+              </td>
+            </tr>
+
+            {/* Operations costs details (shown when expanded) */}
+            {isOperationsCostsOpen && (
+              <>
+                <tr>
+                  <td className="pl-10 py-4 whitespace-nowrap text-sm text-gray-900">Cultivating</td>
+                  {selectedYears.map((year) => (
+                    <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatValueWithUnit(getValue('cultivating', year, selectedUnit))}
+                    </td>
+                  ))}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatValueWithUnit(getValue('cultivating', 'Yearly avg', selectedUnit))}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="pl-10 py-4 whitespace-nowrap text-sm text-gray-900">Drilling</td>
+                  {selectedYears.map((year) => (
+                    <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatValueWithUnit(getValue('drilling', year, selectedUnit))}
+                    </td>
+                  ))}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatValueWithUnit(getValue('drilling', 'Yearly avg', selectedUnit))}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="pl-10 py-4 whitespace-nowrap text-sm text-gray-900">Applications</td>
+                  {selectedYears.map((year) => (
+                    <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatValueWithUnit(getValue('applications', year, selectedUnit))}
+                    </td>
+                  ))}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatValueWithUnit(getValue('applications', 'Yearly avg', selectedUnit))}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="pl-10 py-4 whitespace-nowrap text-sm text-gray-900">Harvesting</td>
+                  {selectedYears.map((year) => (
+                    <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatValueWithUnit(getValue('harvesting', year, selectedUnit))}
+                    </td>
+                  ))}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatValueWithUnit(getValue('harvesting', 'Yearly avg', selectedUnit))}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="pl-10 py-4 whitespace-nowrap text-sm text-gray-900">Other</td>
+                  {selectedYears.map((year) => (
+                    <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatValueWithUnit(getValue('other', year, selectedUnit))}
+                    </td>
+                  ))}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatValueWithUnit(getValue('other', 'Yearly avg', selectedUnit))}
                   </td>
                 </tr>
               </>
             )}
-            <tr className="bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Variable Costs</td>
-              {selectedYears.map((year) => (
-                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatValueWithUnit(getVariableCosts(year, selectedUnit))}
-                </td>
-              ))}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getVariableCosts('Yearly avg', selectedUnit))}
-              </td>
-            </tr>
-          </>
-        )}
-        
-        {/* Operations Costs Section with detailed breakdown */}
-        {costFilters.operations && (
-          <>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Cultivating</td>
-              {selectedYears.map((year) => (
-                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatValueWithUnit(getValue('cultivating', year, selectedUnit))}
-                </td>
-              ))}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getValue('cultivating', 'Yearly avg', selectedUnit))}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Drilling</td>
-              {selectedYears.map((year) => (
-                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatValueWithUnit(getValue('drilling', year, selectedUnit))}
-                </td>
-              ))}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getValue('drilling', 'Yearly avg', selectedUnit))}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Applications</td>
-              {selectedYears.map((year) => (
-                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatValueWithUnit(getValue('applications', year, selectedUnit))}
-                </td>
-              ))}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getValue('applications', 'Yearly avg', selectedUnit))}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Harvesting</td>
-              {selectedYears.map((year) => (
-                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatValueWithUnit(getValue('harvesting', year, selectedUnit))}
-                </td>
-              ))}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getValue('harvesting', 'Yearly avg', selectedUnit))}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Other</td>
-              {selectedYears.map((year) => (
-                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatValueWithUnit(getValue('other', year, selectedUnit))}
-                </td>
-              ))}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getValue('other', 'Yearly avg', selectedUnit))}
-              </td>
-            </tr>
-            <tr className="bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Operations Costs</td>
-              {selectedYears.map((year) => (
-                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatValueWithUnit(getOperationsCosts(year, selectedUnit))}
-                </td>
-              ))}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatValueWithUnit(getOperationsCosts('Yearly avg', selectedUnit))}
-              </td>
-            </tr>
           </>
         )}
         
@@ -544,7 +577,7 @@ export const MultiYearTable = ({
           </td>
         </tr>
         
-        {/* Show Gross Margin only if variable costs are active */}
+        {/* Show Gross Margin only if input costs are active */}
         {costFilters.variable && (
           <tr>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Gross Margin</td>

@@ -44,20 +44,20 @@ export function MultiYearGraph({
 }: MultiYearGraphProps) {
   const [selectedMetric, setSelectedMetric] = useState<DataMetricType>('costOfProduction');
 
-  const getMetricOptions = (): { value: DataMetricType; label: string }[] => {
+  const getMetricOptions = () => {
     // Base options that are always shown
     const baseOptions: { value: DataMetricType; label: string }[] = [
       { value: 'production', label: 'Production' },
       { value: 'yield', label: 'Yield' }
     ];
 
-    // Options for Variable Costs
+    // Options for Input Costs (formerly Variable Costs)
     const variableOptions: { value: DataMetricType; label: string }[] = costFilters.variable ? [
       { value: 'costOfProduction', label: 'Cost of Production' },
       { value: 'seed', label: 'Seed' },
       { value: 'fertiliser', label: 'Fertiliser' },
       { value: 'chemicals', label: 'Chemicals' },
-      { value: 'variableCosts', label: 'Variable Costs' },
+      { value: 'variableCosts', label: 'Input Costs' },
       { value: 'grossMargin', label: 'Gross Margin' }
     ] : [];
 
@@ -77,20 +77,26 @@ export function MultiYearGraph({
       { value: 'netMargin', label: 'Net Margin' }
     ] : [];
 
-    // Combine all options
-    return [
-      ...baseOptions,
-      ...variableOptions,
-      ...operationsOptions,
-      ...combinedOptions
-    ];
+    // Return categorized options
+    return {
+      baseOptions,
+      variableOptions,
+      operationsOptions,
+      combinedOptions
+    };
   };
 
   useEffect(() => {
     // Reset to first metric when view changes
     const options = getMetricOptions();
-    if (options.length > 0 && !options.some(opt => opt.value === selectedMetric)) {
-      setSelectedMetric(options[0].value);
+    const allOptions = [
+      ...options.baseOptions,
+      ...options.variableOptions,
+      ...options.operationsOptions,
+      ...options.combinedOptions
+    ];
+    if (allOptions.length > 0 && !allOptions.some(opt => opt.value === selectedMetric)) {
+      setSelectedMetric(allOptions[0].value);
     }
   }, [selectedView, selectedTab]);
 
@@ -170,6 +176,12 @@ export function MultiYearGraph({
   };
 
   const metricOptions = getMetricOptions();
+  const allOptions = [
+    ...metricOptions.baseOptions,
+    ...metricOptions.variableOptions,
+    ...metricOptions.operationsOptions,
+    ...metricOptions.combinedOptions
+  ];
 
   return (
     <div className="mt-6">
@@ -179,11 +191,45 @@ export function MultiYearGraph({
           onChange={(e) => setSelectedMetric(e.target.value as DataMetricType)}
           className="block w-48 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
         >
-          {metricOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
+          {metricOptions.baseOptions.length > 0 && (
+            <optgroup label="General">
+              {metricOptions.baseOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          
+          {metricOptions.variableOptions.length > 0 && (
+            <optgroup label="Input Costs">
+              {metricOptions.variableOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          
+          {metricOptions.operationsOptions.length > 0 && (
+            <optgroup label="Operations Costs">
+              {metricOptions.operationsOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          
+          {metricOptions.combinedOptions.length > 0 && (
+            <optgroup label="Combined">
+              {metricOptions.combinedOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
       </div>
 
@@ -241,7 +287,7 @@ export function MultiYearGraph({
             ) : (
               <Bar
                 dataKey="value"
-                name={`${metricOptions.find(opt => opt.value === selectedMetric)?.label} (${selectedUnit})`}
+                name={`${allOptions.find(opt => opt.value === selectedMetric)?.label} (${selectedUnit})`}
                 fill="#6B7280"
                 radius={[4, 4, 0, 0]}
               />

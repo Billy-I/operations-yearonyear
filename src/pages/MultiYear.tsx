@@ -24,10 +24,11 @@ export default function MultiYear() {
   const [selectedFilter, setSelectedFilter] = useState('None');
   const [selectedTab, setSelectedTab] = useState<TabType>('comparison');
   const [selectedField, setSelectedField] = useState(fieldsData[0].id);
-  const [costFilters, setCostFilters] = useState({
+  // Always show both variable and operations costs
+  const costFilters = {
     variable: true,
     operations: true
-  });
+  };
 
   return (
     <div>
@@ -41,37 +42,6 @@ export default function MultiYear() {
             selectedUnit={selectedUnit}
             referrer={referrer}
           />
-
-          {/* Cost Category Filters */}
-          <div className="mt-4 mb-2">
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="flex items-center space-x-4">
-                <span className="text-sm font-medium text-gray-700">Cost Categories:</span>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setCostFilters(prev => ({ ...prev, variable: !prev.variable }))}
-                    className={`px-3 py-1 rounded-full text-sm ${
-                      costFilters.variable
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-gray-200 text-gray-600'
-                    }`}
-                  >
-                    Variable Costs
-                  </button>
-                  <button
-                    onClick={() => setCostFilters(prev => ({ ...prev, operations: !prev.operations }))}
-                    className={`px-3 py-1 rounded-full text-sm ${
-                      costFilters.operations
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-gray-200 text-gray-600'
-                    }`}
-                  >
-                    Operation Costs
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <div className="mt-2">
             <div className="bg-white rounded-lg shadow p-6">

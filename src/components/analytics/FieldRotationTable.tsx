@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ViewType, UnitType, Year } from '../../types/analytics';
 import { getValue, getVariableCosts, getOperationsCosts, getTotalCosts } from '../../utils/metricsCalculations';
 import { fieldsData } from '../../data/fieldData';
@@ -27,6 +28,10 @@ export const FieldRotationTable = ({
   setSelectedUnit,
   costFilters = { variable: true, operations: true }
 }: FieldRotationTableProps) => {
+  // State for collapsible sections
+  const [isVariableCostsOpen, setIsVariableCostsOpen] = useState(false);
+  const [isOperationsCostsOpen, setIsOperationsCostsOpen] = useState(false);
+  
   const fieldData = fieldsData.find(field => field.id === selectedField);
   
   const formatValueWithUnit = (value: number): string => {
@@ -37,7 +42,7 @@ export const FieldRotationTable = ({
     if (!fieldData) return '';
     
     let farmAvg: number;
-    if (metric === 'totalVariableCosts') {
+    if (metric === 'totalVariableCosts') { // Keeping variable name for code consistency
       farmAvg = getValue('seed', year, selectedUnit) +
                 getValue('fertiliser', year, selectedUnit) +
                 getValue('chemicals', year, selectedUnit);
@@ -95,16 +100,19 @@ export const FieldRotationTable = ({
     // Always show combined view, respecting costFilters
     return (
       <>
-        {/* Variable Costs Section */}
+        {/* Input Costs Section with collapsible details */}
         {costFilters.variable && (
           <>
-            {renderMetricRow('Cost of Production', 'costOfProduction')}
-            {renderMetricRow('Seed', 'seed')}
-            {renderMetricRow('Fertiliser', 'fertiliser')}
-            {renderMetricRow('Chemicals', 'chemicals')}
+            {/* Total Input Costs row (collapsible header) */}
             <tr className="bg-gray-100">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                Total Variable Costs
+              <td
+                className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer"
+                onClick={() => setIsVariableCostsOpen(!isVariableCostsOpen)}
+              >
+                <div className="flex items-center space-x-2">
+                  <span>{isVariableCostsOpen ? '▼' : '▶'}</span>
+                  <span>Total Input Costs</span>
+                </div>
               </td>
               {selectedYears.map((year) => {
                 const yearKey = year as Year;
@@ -113,11 +121,11 @@ export const FieldRotationTable = ({
                   <td
                     key={year}
                     className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                    data-tooltip-id={`total-variable-${yearKey}`}
+                    data-tooltip-id={`total-input-${yearKey}`}
                     data-tooltip-content={getComparisonText('totalVariableCosts', yearKey, value)}
                   >
                     {formatValueWithUnit(value)}
-                    <Tooltip id={`total-variable-${yearKey}`} />
+                    <Tooltip id={`total-input-${yearKey}`} />
                   </td>
                 );
               })}
@@ -125,20 +133,32 @@ export const FieldRotationTable = ({
                 {formatValueWithUnit(getVariableCosts('Yearly avg', selectedUnit))}
               </td>
             </tr>
+
+            {/* Input costs details (shown when expanded) */}
+            {isVariableCostsOpen && (
+              <>
+                {renderMetricRow('Cost of Production', 'costOfProduction')}
+                {renderMetricRow('Seed', 'seed')}
+                {renderMetricRow('Fertiliser', 'fertiliser')}
+                {renderMetricRow('Chemicals', 'chemicals')}
+              </>
+            )}
           </>
         )}
 
-        {/* Operations Costs Section */}
+        {/* Operations Costs Section with collapsible details */}
         {costFilters.operations && (
           <>
-            {renderMetricRow('Cultivating', 'cultivating')}
-            {renderMetricRow('Drilling', 'drilling')}
-            {renderMetricRow('Applications', 'applications')}
-            {renderMetricRow('Harvesting', 'harvesting')}
-            {renderMetricRow('Other', 'other')}
+            {/* Total Operations Costs row (collapsible header) */}
             <tr className="bg-gray-100">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                Total Operations Costs
+              <td
+                className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer"
+                onClick={() => setIsOperationsCostsOpen(!isOperationsCostsOpen)}
+              >
+                <div className="flex items-center space-x-2">
+                  <span>{isOperationsCostsOpen ? '▼' : '▶'}</span>
+                  <span>Total Operations Costs</span>
+                </div>
               </td>
               {selectedYears.map((year) => {
                 const yearKey = year as Year;
@@ -156,6 +176,17 @@ export const FieldRotationTable = ({
                 {formatValueWithUnit(getOperationsCosts('Yearly avg', selectedUnit))}
               </td>
             </tr>
+
+            {/* Operations costs details (shown when expanded) */}
+            {isOperationsCostsOpen && (
+              <>
+                {renderMetricRow('Cultivating', 'cultivating')}
+                {renderMetricRow('Drilling', 'drilling')}
+                {renderMetricRow('Applications', 'applications')}
+                {renderMetricRow('Harvesting', 'harvesting')}
+                {renderMetricRow('Other', 'other')}
+              </>
+            )}
           </>
         )}
 
@@ -193,7 +224,7 @@ export const FieldRotationTable = ({
         {/* Production Metrics */}
         {renderMetricRow('Production', 'production')}
         
-        {/* Gross Margin (show only if variable costs are active) */}
+        {/* Gross Margin (show only if input costs are active) */}
         {costFilters.variable && renderMetricRow('Gross Margin', 'grossMargin')}
         
         {/* Net Margin (show only if both variable and operations costs are active) */}
