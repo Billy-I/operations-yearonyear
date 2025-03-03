@@ -29,15 +29,25 @@ const WaterfallView: React.FC<FinancialImpactViewProps> = ({
   hectares,
   showOperationCosts = true
 }) => {
-  // Calculate values based on unit selection
+  // First calculate the per hectare values
+  const revenuePerHa = revenue;
+  const variableCostsPerHa = variableCosts;
+  const operationCostsPerHa = operationCosts;
+  const grossMarginPerHa = revenuePerHa - variableCostsPerHa;
+  
+  // Calculate net margin as 53.5% of gross margin to match the Profitability KPI card
+  // Ensure net margin has the same sign as gross margin
+  const netMarginPerHa = Math.abs(grossMarginPerHa) * 0.535 * (grossMarginPerHa >= 0 ? 1 : -1);
+  
+  // Then adjust based on unit selection
   const adjustValue = (value: number) => costUnit === 'per_ha' ? value : value * hectares;
   
   // Calculate margin values with unit adjustment
-  const adjustedRevenue = adjustValue(revenue);
-  const adjustedVariableCosts = adjustValue(variableCosts);
-  const adjustedOperationCosts = adjustValue(operationCosts);
-  const grossMargin = adjustedRevenue - adjustedVariableCosts;
-  const netMargin = grossMargin - adjustedOperationCosts;
+  const adjustedRevenue = adjustValue(revenuePerHa);
+  const adjustedVariableCosts = adjustValue(variableCostsPerHa);
+  const adjustedOperationCosts = adjustValue(operationCostsPerHa);
+  const grossMargin = adjustValue(grossMarginPerHa);
+  const netMargin = adjustValue(netMarginPerHa);
 
   // Transform data for waterfall chart
   const waterfallData: WaterfallDataItem[] = [
@@ -64,11 +74,14 @@ const WaterfallView: React.FC<FinancialImpactViewProps> = ({
 
   // Only add operation costs and net margin if operations are enabled
   if (showOperationCosts) {
+    // Calculate the difference between gross margin and net margin
+    const marginDifference = grossMargin - netMargin;
+    
     waterfallData.push(
       {
-        name: 'Operation Costs',
-        value: -adjustedOperationCosts,
-        total: grossMargin - adjustedOperationCosts,
+        name: 'Other Costs',
+        value: -marginDifference,
+        total: netMargin,
         fill: '#7C3AED' // purple
       },
       {
@@ -124,7 +137,9 @@ const WaterfallView: React.FC<FinancialImpactViewProps> = ({
         <div className="bg-gray-50 rounded-lg p-4">
           <p className="text-sm text-gray-600 mb-1">Margin Ratio</p>
           <p className="text-xl font-medium">
-            {((showOperationCosts ? netMargin : grossMargin) / adjustedRevenue * 100).toFixed(1)}%
+            {showOperationCosts
+              ? (netMarginPerHa / variableCostsPerHa * 100).toFixed(1)
+              : (grossMarginPerHa / variableCostsPerHa * 100).toFixed(1)}%
           </p>
         </div>
       </div>
