@@ -233,22 +233,64 @@ export default function MultiYear() {
                           </div>
                         </div>
                         
-                        {/* Performance by Selector */}
-                        <div>
-                          <label className="text-sm text-gray-600 mb-2 block">Performance by</label>
-                          <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
-                            <Filter className="w-5 h-5 text-gray-500" />
+                        {/* Performance by Selector - only shown for single crop selection */}
+                        {selectedCrops.length === 1 && (
+                          <div>
+                            <label className="text-sm text-gray-600 mb-2 block">Performance by</label>
+                            <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
+                              <Filter className="w-5 h-5 text-gray-500" />
+                              <select
+                                value={selectedFilter}
+                                onChange={(e) => setSelectedFilter(e.target.value)}
+                                className="bg-transparent border-none focus:ring-0"
+                              >
+                                {AVAILABLE_FILTERS.map((filter) => (
+                                  <option key={filter} value={filter}>{filter}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Metrics Selector - shown for multiple crop selection */}
+                        {selectedCrops.length > 1 && (
+                          <div>
+                            <label className="text-sm text-gray-600 mb-2 block">Metrics</label>
                             <select
-                              value={selectedFilter}
-                              onChange={(e) => setSelectedFilter(e.target.value)}
-                              className="bg-transparent border-none focus:ring-0"
+                              value={selectedComparisonMetric}
+                              onChange={(e) => setSelectedComparisonMetric(e.target.value as DataMetricType)}
+                              className="bg-gray-50 px-3 py-2 rounded-md"
                             >
-                              {AVAILABLE_FILTERS.map((filter) => (
-                                <option key={filter} value={filter}>{filter}</option>
-                              ))}
+                              <optgroup label="General">
+                                <option value="production">Production</option>
+                                <option value="yield">Yield</option>
+                              </optgroup>
+                              
+                              <optgroup label="Input Costs">
+                                <option value="costOfProduction">Cost of Production</option>
+                                <option value="seed">Seed</option>
+                                <option value="fertiliser">Fertiliser</option>
+                                <option value="chemicals">Chemicals</option>
+                                <option value="variableCosts">Input Costs</option>
+                                <option value="grossMargin">Gross Margin</option>
+                              </optgroup>
+                              
+                              <optgroup label="Operations Costs">
+                                <option value="cultivating">Cultivating</option>
+                                <option value="drilling">Drilling</option>
+                                <option value="applications">Applications</option>
+                                <option value="harvesting">Harvesting</option>
+                                <option value="other">Other</option>
+                                <option value="operationsCosts">Operations Costs</option>
+                              </optgroup>
+                              
+                              <optgroup label="Combined">
+                                <option value="totalCosts">Total Costs</option>
+                                <option value="netMargin">Net Margin</option>
+                              </optgroup>
                             </select>
                           </div>
-                        </div>
+                        )}
                       </>
                     )}
                     
