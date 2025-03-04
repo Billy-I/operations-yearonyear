@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { HelpCircle, ArrowLeft, Leaf, Filter } from 'lucide-react';
+import { HelpCircle, ArrowLeft, Leaf, Filter, X, Check } from 'lucide-react';
 import { MultiYearHeader } from '../components/analytics/MultiYearHeader';
 import { MultiYearControls } from '../components/analytics/MultiYearControls';
 import { FieldRotationControls } from '../components/analytics/FieldRotationControls';
@@ -25,11 +25,13 @@ export default function MultiYear() {
   const [selectedYears, setSelectedYears] = useState<string[]>([...AVAILABLE_YEARS]);
   const [selectedUnit, setSelectedUnit] = useState<UnitType>('£/t');
   const [selectedCrop, setSelectedCrop] = useState<AvailableCrop>(AVAILABLE_CROPS[0]);
+  const [selectedCrops, setSelectedCrops] = useState<AvailableCrop[]>([AVAILABLE_CROPS[0]]);
   const [selectedFilter, setSelectedFilter] = useState('None');
   const [selectedTab, setSelectedTab] = useState<TabType>('comparison');
   const [selectedField, setSelectedField] = useState(fieldsData[0].id);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [showNotification, setShowNotification] = useState(true);
+  const [showCropDropdown, setShowCropDropdown] = useState(false);
   
   // New state for the progressive disclosure approach
   const [viewLevel, setViewLevel] = useState<ViewLevel>('farm');
@@ -46,7 +48,10 @@ export default function MultiYear() {
     if (viewLevel === 'crop') {
       setSelectedTab('comparison');
       if (selectedEntity) {
+        // For backward compatibility
         setSelectedCrop(selectedEntity as AvailableCrop);
+        // Initialize selectedCrops with the single selected crop
+        setSelectedCrops([selectedEntity as AvailableCrop]);
       }
     } else if (viewLevel === 'field') {
       setSelectedTab('rotation');
@@ -169,20 +174,56 @@ export default function MultiYear() {
                     {/* Entity selector - shown only when in crop view */}
                     {viewLevel === 'crop' && (
                       <>
-                        {/* Crop selector */}
+                        {/* Multi-select Crop selector */}
                         <div>
-                          <label className="text-sm text-gray-600 mb-2 block">Crop</label>
-                          <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
-                            <Leaf className="w-5 h-5 text-gray-500" />
-                            <select 
-                              value={selectedEntity || selectedCrop}
-                              onChange={(e) => setSelectedEntity(e.target.value)}
-                              className="bg-transparent border-none focus:ring-0"
+                          <label className="text-sm text-gray-600 mb-2 block">Crop(s)</label>
+                          <div className="relative">
+                            <div
+                              className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md cursor-pointer"
+                              onClick={() => setShowCropDropdown(!showCropDropdown)}
                             >
-                              {AVAILABLE_CROPS.map(crop => (
-                                <option key={crop} value={crop}>{crop}</option>
-                              ))}
-                            </select>
+                              <Leaf className="w-5 h-5 text-gray-500" />
+                              <div className="flex-1 min-w-[200px]">
+                                {selectedCrops.length === 1 ? (
+                                  <span>{selectedCrops[0]}</span>
+                                ) : (
+                                  <span>{selectedCrops.length} crops selected</span>
+                                )}
+                              </div>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                            
+                            {showCropDropdown && (
+                              <div className="absolute top-full left-0 mt-1 bg-white border rounded-md shadow-lg z-50 w-full">
+                                {AVAILABLE_CROPS.map(crop => (
+                                  <label key={crop} className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedCrops.includes(crop)}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedCrops([...selectedCrops, crop]);
+                                          // For backward compatibility
+                                          setSelectedCrop(crop);
+                                        } else {
+                                          // Don't allow deselecting all crops
+                                          if (selectedCrops.length > 1) {
+                                            const newSelectedCrops = selectedCrops.filter(c => c !== crop);
+                                            setSelectedCrops(newSelectedCrops);
+                                            // For backward compatibility
+                                            setSelectedCrop(newSelectedCrops[0]);
+                                          }
+                                        }
+                                      }}
+                                      className="mr-2"
+                                    />
+                                    {crop}
+                                  </label>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                         
@@ -252,6 +293,8 @@ export default function MultiYear() {
                     selectedUnit={selectedUnit}
                     selectedTab={viewLevel === 'field' ? 'rotation' : 'comparison'}
                     selectedField={viewLevel === 'field' ? (selectedEntity || selectedField) : undefined}
+                    selectedCrop={selectedCrop}
+                    selectedCrops={selectedCrops}
                     costFilters={costFilters}
                   />
                   
@@ -270,47 +313,15 @@ export default function MultiYear() {
                       selectedYears={selectedYears}
                       selectedUnit={selectedUnit}
                       setSelectedUnit={setSelectedUnit}
+                      selectedCrop={selectedCrop}
+                      selectedCrops={selectedCrops}
                       costFilters={costFilters}
                     />
                   )}
                 </div>
 
-                {/* Progressive disclosure sections - only shown in farm view */}
-                {viewLevel === 'farm' && (
-                  <>
-                    <ExpandableSection title="Enterprise Breakdown" defaultExpanded={true}>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        {AVAILABLE_CROPS.map(crop => (
-                          <CropSummaryCard
-                            key={crop}
-                            crop={crop}
-                            selectedUnit={selectedUnit}
-                            onViewDetails={() => {
-                              setViewLevel('crop');
-                              setSelectedEntity(crop);
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </ExpandableSection>
-                    
-                    <ExpandableSection title="Field Performance" defaultExpanded={true}>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        {fieldsData.map(field => (
-                          <FieldSummaryCard
-                            key={field.id}
-                            field={field}
-                            selectedUnit={selectedUnit}
-                            onViewDetails={() => {
-                              setViewLevel('field');
-                              setSelectedEntity(field.id);
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </ExpandableSection>
-                  </>
-                )}
+                {/* Progressive disclosure sections removed as requested */}
+
               </div>
             </div>
           </div>

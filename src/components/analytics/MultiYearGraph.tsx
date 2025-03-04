@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  BarChart, Bar, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer, ZAxis, Cell
+} from 'recharts';
 import { ViewType, UnitType, Year, ChemicalBreakdown, TabType, MetricsData } from '../../types/analytics';
 import { metricsData } from '../../data/metricsData';
 import { fieldsData } from '../../data/fieldData';
 import { getValue, getVariableCosts, getOperationsCosts, getTotalCosts } from '../../utils/metricsCalculations';
+import { AVAILABLE_CROPS } from '../../constants/analytics';
 
 type BasicMetricType = Exclude<keyof MetricsData, 'chemicalBreakdown'>;
 type CompositeMetricType = 'variableCosts' | 'operationsCosts' | 'totalCosts';
@@ -21,12 +25,24 @@ interface CostFilters {
   operations?: boolean;
 }
 
+// Year colors for scatter chart
+const YEAR_COLORS = {
+  '2019': '#15803d', // Green
+  '2020': '#65a30d', // Light green
+  '2021': '#ea580c', // Orange
+  '2022': '#ca8a04', // Yellow
+  '2023': '#0ea5e9', // Blue
+  'Yearly avg': '#6b7280', // Gray
+};
+
 interface MultiYearGraphProps {
   selectedView: ViewType;
   selectedYears: string[];
   selectedUnit: UnitType;
   selectedTab?: TabType;
   selectedField?: string;
+  selectedCrop?: typeof AVAILABLE_CROPS[number];
+  selectedCrops: (typeof AVAILABLE_CROPS[number])[];
   costFilters?: CostFilters;
 }
 
@@ -40,6 +56,8 @@ export function MultiYearGraph({
   selectedUnit,
   selectedTab = 'comparison',
   selectedField,
+  selectedCrop,
+  selectedCrops,
   costFilters = { variable: true, operations: true }
 }: MultiYearGraphProps) {
   const [selectedMetric, setSelectedMetric] = useState<DataMetricType>('costOfProduction');
@@ -137,6 +155,7 @@ export function MultiYearGraph({
         (Number(year) >= 2019 && Number(year) <= 2024 && !isNaN(Number(year)));
     });
 
+    // Field rotation view
     if (selectedTab === 'rotation' && selectedField) {
       const fieldData = fieldsData.find(field => field.id === selectedField);
       if (!fieldData) return [];
@@ -154,7 +173,8 @@ export function MultiYearGraph({
       });
     }
 
-    if (selectedMetric === 'chemicals') {
+    // Chemicals breakdown view
+    if (selectedMetric === 'chemicals' && selectedCrops.length === 1) {
       return validYears.map(year => {
         const chemicalTypes = Object.keys(metricsData.chemicalBreakdown) as Array<keyof ChemicalBreakdown>;
         const yearData: { [key: string]: any } = { year };
@@ -169,6 +189,31 @@ export function MultiYearGraph({
       });
     }
 
+    // Multi-crop view (scatter chart)
+    if (selectedCrops.length > 1) {
+      // For scatter chart, we need data in format: { x: cropIndex, y: value, crop: cropName, year: year }
+      const scatterData: Array<{ x: number, y: number, crop: string, year: string }> = [];
+      
+      selectedCrops.forEach((crop, cropIndex) => {
+        validYears.forEach(year => {
+          const yearKey = year as Year;
+          // Mock data - in a real app, you would fetch actual data for each crop
+          // This would need to be replaced with actual data fetching logic
+          const value = Math.random() * 5000 + 500; // Random value between 500 and 5500
+          
+          scatterData.push({
+            x: cropIndex,
+            y: value,
+            crop,
+            year
+          });
+        });
+      });
+      
+      return scatterData;
+    }
+
+    // Single crop view (bar chart)
     return validYears.map(year => ({
       year,
       value: getMetricValue(selectedMetric, year, selectedUnit)
@@ -235,64 +280,113 @@ export function MultiYearGraph({
 
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={getData()} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            {(selectedTab === 'rotation' && (selectedView === 'Variable' || selectedView === 'Operations' || selectedView === 'Total')) ? (
-              <>
+          {selectedCrops.length > 1 ? (
+            // Scatter chart for multiple crops
+            <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                type="number"
+                dataKey="x"
+                name="crop"
+                tickFormatter={(value) => selectedCrops[value] || ''}
+                domain={[0, selectedCrops.length - 1]}
+                ticks={Array.from({ length: selectedCrops.length }, (_, i) => i)}
+              />
+              <YAxis
+                type="number"
+                dataKey="y"
+                name={`${allOptions.find(opt => opt.value === selectedMetric)?.label}`}
+                unit={selectedUnit === '£/t' ? ' £/t' : ' £/ha'}
+              />
+              <ZAxis range={[60, 60]} />
+              <Tooltip
+                cursor={{ strokeDasharray: '3 3' }}
+                formatter={(value: any, name: string) => {
+                  if (name === 'y') return [`${value} ${selectedUnit}`, `${allOptions.find(opt => opt.value === selectedMetric)?.label}`];
+                  return [value, 'Crop'];
+                }}
+                labelFormatter={() => ''}
+              />
+              <Legend
+                formatter={(value, entry, index) => {
+                  // Return year for the legend
+                  return value;
+                }}
+              />
+              {selectedYears.map((year, index) => (
+                <Scatter
+                  key={year}
+                  name={year}
+                  data={getData().filter(item => item.year === year)}
+                  fill={YEAR_COLORS[year as keyof typeof YEAR_COLORS] || '#000000'}
+                >
+                  {getData().filter(item => item.year === year).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={YEAR_COLORS[year as keyof typeof YEAR_COLORS] || '#000000'} />
+                  ))}
+                </Scatter>
+              ))}
+            </ScatterChart>
+          ) : (
+            // Bar chart for single crop
+            <BarChart data={getData()} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="year" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              {(selectedTab === 'rotation' && (selectedView === 'Variable' || selectedView === 'Operations' || selectedView === 'Total')) ? (
+                <>
+                  <Bar
+                    dataKey="Field Value"
+                    name={`Field Value (${selectedUnit})`}
+                    fill="#6B7280"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="Farm Average"
+                    name={`Farm Average (${selectedUnit})`}
+                    fill="#9CA3AF"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </>
+              ) : selectedMetric === 'chemicals' ? (
+                <>
+                  <Bar
+                    dataKey="traceElement"
+                    name={`Trace Element (${selectedUnit})`}
+                    fill={CHEMICAL_COLORS.traceElement}
+                    stackId="chemicals"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="herbicide"
+                    name={`Herbicide (${selectedUnit})`}
+                    fill={CHEMICAL_COLORS.herbicide}
+                    stackId="chemicals"
+                  />
+                  <Bar
+                    dataKey="fungicide"
+                    name={`Fungicide (${selectedUnit})`}
+                    fill={CHEMICAL_COLORS.fungicide}
+                    stackId="chemicals"
+                  />
+                  <Bar
+                    dataKey="adjuvant"
+                    name={`Adjuvant (${selectedUnit})`}
+                    fill={CHEMICAL_COLORS.adjuvant}
+                    stackId="chemicals"
+                  />
+                </>
+              ) : (
                 <Bar
-                  dataKey="Field Value"
-                  name={`Field Value (${selectedUnit})`}
+                  dataKey="value"
+                  name={`${allOptions.find(opt => opt.value === selectedMetric)?.label} (${selectedUnit})`}
                   fill="#6B7280"
                   radius={[4, 4, 0, 0]}
                 />
-                <Bar
-                  dataKey="Farm Average"
-                  name={`Farm Average (${selectedUnit})`}
-                  fill="#9CA3AF"
-                  radius={[4, 4, 0, 0]}
-                />
-              </>
-            ) : selectedMetric === 'chemicals' ? (
-              <>
-                <Bar
-                  dataKey="traceElement"
-                  name={`Trace Element (${selectedUnit})`}
-                  fill={CHEMICAL_COLORS.traceElement}
-                  stackId="chemicals"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="herbicide"
-                  name={`Herbicide (${selectedUnit})`}
-                  fill={CHEMICAL_COLORS.herbicide}
-                  stackId="chemicals"
-                />
-                <Bar
-                  dataKey="fungicide"
-                  name={`Fungicide (${selectedUnit})`}
-                  fill={CHEMICAL_COLORS.fungicide}
-                  stackId="chemicals"
-                />
-                <Bar
-                  dataKey="adjuvant"
-                  name={`Adjuvant (${selectedUnit})`}
-                  fill={CHEMICAL_COLORS.adjuvant}
-                  stackId="chemicals"
-                />
-              </>
-            ) : (
-              <Bar
-                dataKey="value"
-                name={`${allOptions.find(opt => opt.value === selectedMetric)?.label} (${selectedUnit})`}
-                fill="#6B7280"
-                radius={[4, 4, 0, 0]}
-              />
-            )}
-          </BarChart>
+              )}
+            </BarChart>
+          )}
         </ResponsiveContainer>
       </div>
     </div>

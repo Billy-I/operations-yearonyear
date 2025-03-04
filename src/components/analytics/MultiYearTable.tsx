@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ViewType, UnitType, Year } from '../../types/analytics';
 import { getValue, getVariableCosts, getOperationsCosts, getTotalCosts } from '../../utils/metricsCalculations';
 import { metricsData } from '../../data/metricsData';
+import { AVAILABLE_CROPS } from '../../constants/analytics';
 
 interface CostFilters {
   variable?: boolean;
@@ -13,6 +14,8 @@ interface MultiYearTableProps {
   selectedYears: string[];
   selectedUnit: UnitType;
   setSelectedUnit?: (unit: UnitType) => void;
+  selectedCrop?: typeof AVAILABLE_CROPS[number];
+  selectedCrops: (typeof AVAILABLE_CROPS[number])[];
   costFilters?: CostFilters;
 }
 
@@ -21,12 +24,16 @@ export const MultiYearTable = ({
   selectedYears,
   selectedUnit,
   setSelectedUnit,
+  selectedCrop,
+  selectedCrops,
   costFilters = { variable: true, operations: true }
 }: MultiYearTableProps) => {
   // State for collapsible sections
   const [isChemicalsOpen, setIsChemicalsOpen] = useState(false);
   const [isVariableCostsOpen, setIsVariableCostsOpen] = useState(false); // Renamed to Input Costs in UI but keeping variable name
   const [isOperationsCostsOpen, setIsOperationsCostsOpen] = useState(false);
+  // State for selected metric in Multi Crop comparison table
+  const [selectedComparisonMetric, setSelectedComparisonMetric] = useState<string>('grossMargin');
 
   const formatValueWithUnit = (value: number): string => {
     return `£${value.toFixed(2)} ${selectedUnit === '£/t' ? '/t' : '/ha'}`;
@@ -295,6 +302,113 @@ export const MultiYearTable = ({
       </tr>
     </>
   );
+
+  // Function to get metric label from metric value
+  const getMetricLabel = (metricValue: string): string => {
+    switch (metricValue) {
+      case 'costOfProduction': return 'Cost of Production';
+      case 'seed': return 'Seed';
+      case 'fertiliser': return 'Fertiliser';
+      case 'chemicals': return 'Chemicals';
+      case 'variableCosts': return 'Input Costs';
+      case 'grossMargin': return 'Gross Margin';
+      case 'cultivating': return 'Cultivating';
+      case 'drilling': return 'Drilling';
+      case 'applications': return 'Applications';
+      case 'harvesting': return 'Harvesting';
+      case 'other': return 'Other';
+      case 'operationsCosts': return 'Operations Costs';
+      case 'totalCosts': return 'Total Costs';
+      case 'netMargin': return 'Net Margin';
+      case 'production': return 'Production';
+      case 'yield': return 'Yield';
+      default: return 'Unknown Metric';
+    }
+  };
+
+  // New function to render multi-crop comparison table
+  const renderMultiCropComparisonTable = () => {
+    // Use the selected comparison metric from state
+    const metricLabel = getMetricLabel(selectedComparisonMetric);
+    
+    return (
+      <>
+        {/* Header row with metric name */}
+        <tr className="bg-gray-50">
+          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            {metricLabel} {selectedUnit}
+          </td>
+          {selectedYears.map((year) => (
+            <td key={year} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
+              {year}
+            </td>
+          ))}
+          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-center">
+            Yearly avg
+          </td>
+        </tr>
+        
+        {/* Rows for each crop */}
+        {selectedCrops.map((crop, index) => (
+          <tr key={crop} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              {crop}
+            </td>
+            {selectedYears.map((year) => {
+              // In a real app, you would fetch actual data for each crop and metric
+              // For now, we'll use the mock data with some variations based on the selected metric
+              let value: number;
+              
+              // Special cases for specific crop/year combinations
+              if (year === '2021' && crop === 'Barley (Winter)') {
+                return <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">6660.09</td>;
+              } else if (year === '2022' && crop === 'Barley (Winter)') {
+                return <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">-</td>;
+              } else if (year === '2020' && crop === 'Linseed') {
+                return <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">-</td>;
+              } else if (year === '2021' && crop === 'Wheat (Winter)') {
+                return <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">-</td>;
+              }
+              
+              // Generate different value ranges based on the selected metric
+              switch (selectedComparisonMetric) {
+                case 'yield':
+                  value = Math.random() * 10 + 5; // Lower values for yield (5-15)
+                  break;
+                case 'grossMargin':
+                  value = Math.random() * 2000 + 1000; // Higher values for gross margin (1000-3000)
+                  break;
+                case 'netMargin':
+                  value = Math.random() * 1500 + 500; // Medium values for net margin (500-2000)
+                  break;
+                case 'totalCosts':
+                  value = Math.random() * 3000 + 2000; // Higher values for costs (2000-5000)
+                  break;
+                default:
+                  value = Math.random() * 5000 + 500; // Default range (500-5500)
+              }
+              
+              return (
+                <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                  {formatValueWithUnit(value)}
+                </td>
+              );
+            })}
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+              {formatValueWithUnit(
+                // Generate yearly average based on the selected metric
+                selectedComparisonMetric === 'yield' ? Math.random() * 10 + 5 :
+                selectedComparisonMetric === 'grossMargin' ? Math.random() * 2000 + 1000 :
+                selectedComparisonMetric === 'netMargin' ? Math.random() * 1500 + 500 :
+                selectedComparisonMetric === 'totalCosts' ? Math.random() * 3000 + 2000 :
+                Math.random() * 5000 + 500
+              )}
+            </td>
+          </tr>
+        ))}
+      </>
+    );
+  };
 
   const renderTotalView = () => {
     // Calculate costs based on active filters
@@ -625,26 +739,90 @@ export const MultiYearTable = ({
 
   return (
     <div className="mt-6 overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 border">
-        <thead>
-          <tr>
-            <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Metrics
-            </th>
-            {selectedYears.map((year) => (
-              <th key={year} className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {year}
+      {selectedCrops.length > 1 ? (
+        // Multi-crop comparison table
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center space-x-4">
+              <h3 className="text-lg font-medium">Multi Crop comparison</h3>
+              <div>
+                <select
+                  value={selectedComparisonMetric}
+                  onChange={(e) => setSelectedComparisonMetric(e.target.value)}
+                  className="block rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                >
+                  <optgroup label="General">
+                    <option value="production">Production</option>
+                    <option value="yield">Yield</option>
+                  </optgroup>
+                  
+                  {costFilters.variable && (
+                    <optgroup label="Input Costs">
+                      <option value="costOfProduction">Cost of Production</option>
+                      <option value="seed">Seed</option>
+                      <option value="fertiliser">Fertiliser</option>
+                      <option value="chemicals">Chemicals</option>
+                      <option value="variableCosts">Input Costs</option>
+                      <option value="grossMargin">Gross Margin</option>
+                    </optgroup>
+                  )}
+                  
+                  {costFilters.operations && (
+                    <optgroup label="Operations Costs">
+                      <option value="cultivating">Cultivating</option>
+                      <option value="drilling">Drilling</option>
+                      <option value="applications">Applications</option>
+                      <option value="harvesting">Harvesting</option>
+                      <option value="other">Other</option>
+                      <option value="operationsCosts">Operations Costs</option>
+                    </optgroup>
+                  )}
+                  
+                  {costFilters.variable && costFilters.operations && (
+                    <optgroup label="Combined">
+                      <option value="totalCosts">Total Costs</option>
+                      <option value="netMargin">Net Margin</option>
+                    </optgroup>
+                  )}
+                </select>
+              </div>
+            </div>
+            <button
+              className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm"
+              onClick={() => {/* Export functionality would go here */}}
+            >
+              Export: csv excel
+            </button>
+          </div>
+          <table className="min-w-full divide-y divide-gray-200 border">
+            <tbody className="bg-white divide-y divide-gray-200">
+              {renderMultiCropComparisonTable()}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        // Single crop table
+        <table className="min-w-full divide-y divide-gray-200 border">
+          <thead>
+            <tr>
+              <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Metrics
               </th>
-            ))}
-            <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Yearly avg
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {renderTotalView()}
-        </tbody>
-      </table>
+              {selectedYears.map((year) => (
+                <th key={year} className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {year}
+                </th>
+              ))}
+              <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Yearly avg
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {renderTotalView()}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };
