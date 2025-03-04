@@ -136,7 +136,7 @@ export default function Explorer() {
                 className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
               />
               <span className="ml-2 text-sm text-gray-700">Total costs</span>
-              <CostCategoryIndicator className="ml-1" size={14} />
+              <CostCategoryIndicator className="ml-1" size={14} showIcon={false} />
             </label>
           </div>
           <button
@@ -160,7 +160,7 @@ export default function Explorer() {
             <div>
               <div className="text-sm text-gray-600 mb-1 flex items-center">
                 {getMarginLabel()} (£)
-                <CostCategoryIndicator className="ml-1" size={14} />
+                <CostCategoryIndicator className="ml-1" size={14} showIcon={false} />
               </div>
               <div className="text-2xl font-bold">£{margin.toLocaleString('en-GB', { maximumFractionDigits: 2 })}</div>
             </div>
@@ -229,7 +229,7 @@ export default function Explorer() {
                     <div className="flex items-center justify-end space-x-1">
                       <div className="flex items-center">
                         <span>{costType === 'total' ? 'Net Margin' : 'GM'}</span>
-                        <CostCategoryIndicator className="mx-1" size={14} />
+                        <CostCategoryIndicator className="mx-1" size={14} showIcon={false} />
                         <HelpCircle size={16} className="text-gray-400" />
                       </div>
                     </div>
