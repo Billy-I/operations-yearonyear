@@ -199,7 +199,7 @@ export default function Explorer() {
                   </th>
                   <th className="px-4 py-3 overflow-hidden">
                     <div className="flex items-center justify-center space-x-1">
-                      <span>Variable Market Range</span>
+                      <span>Inputs Marker Range</span>
                       <HelpCircle size={16} className="text-gray-400" />
                     </div>
                   </th>
