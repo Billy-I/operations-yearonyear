@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { cropData } from '../data/cropData';
 import MarketRangeIndicator from '../components/analytics/charts/common/MarketRangeIndicator';
-import { HelpPanel, ExplorerHelpContent, FeatureNotification } from '../components/help';
+import { HelpPanel, ExplorerHelpContent, FeatureNotification, CostCategoryIndicator } from '../components/help';
 
 export default function Explorer() {
   const [selectedYear, setSelectedYear] = useState('2024');
@@ -136,6 +136,7 @@ export default function Explorer() {
                 className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
               />
               <span className="ml-2 text-sm text-gray-700">Total costs</span>
+              <CostCategoryIndicator className="ml-1" size={14} />
             </label>
           </div>
           <button
@@ -157,7 +158,10 @@ export default function Explorer() {
               <div className="text-2xl font-bold">160</div>
             </div>
             <div>
-              <div className="text-sm text-gray-600 mb-1">{getMarginLabel()} (£)</div>
+              <div className="text-sm text-gray-600 mb-1 flex items-center">
+                {getMarginLabel()} (£)
+                <CostCategoryIndicator className="ml-1" size={14} />
+              </div>
               <div className="text-2xl font-bold">£{margin.toLocaleString('en-GB', { maximumFractionDigits: 2 })}</div>
             </div>
             <div>
@@ -223,8 +227,11 @@ export default function Explorer() {
                   </th>
                   <th className="px-4 py-3">
                     <div className="flex items-center justify-end space-x-1">
-                      <span>{costType === 'total' ? 'Net Margin' : 'GM'}</span>
-                      <HelpCircle size={16} className="text-gray-400" />
+                      <div className="flex items-center">
+                        <span>{costType === 'total' ? 'Net Margin' : 'GM'}</span>
+                        <CostCategoryIndicator className="mx-1" size={14} />
+                        <HelpCircle size={16} className="text-gray-400" />
+                      </div>
                     </div>
                   </th>
                 </tr>

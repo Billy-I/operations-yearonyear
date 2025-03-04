@@ -7,7 +7,7 @@ import DetailedPerformanceTable from '../components/analytics/DetailedPerformanc
 import MarketRangeIndicator from '../components/analytics/charts/common/MarketRangeIndicator';
 import { MetricsData, Year } from '../types/analytics';
 import { AVAILABLE_YEARS } from '../constants/analytics';
-import { HelpPanel, CropPerformanceHelpContent, FeatureNotification } from '../components/help';
+import { HelpPanel, CropPerformanceHelpContent, FeatureNotification, CostCategoryIndicator } from '../components/help';
 
 // Helper function to create yearly data with average
 const createYearlyData = (baseValue: number, yearlyIncrease: number = 2) => {
@@ -313,6 +313,7 @@ export default function ExplorerCropDetails() {
                 className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
               />
               <span className="ml-2 text-sm text-gray-700">Total costs</span>
+              <CostCategoryIndicator className="ml-1" size={14} />
             </label>
           </div>
           <button
@@ -387,7 +388,10 @@ export default function ExplorerCropDetails() {
         {/* Costs Card */}
         <div className="bg-gray-50 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-gray-600">Costs</span>
+            <div className="flex items-center">
+              <span className="text-sm text-gray-600">Costs</span>
+              <CostCategoryIndicator className="ml-1" size={14} />
+            </div>
             <button
               onClick={() => setShowHelpPanel(true)}
               className="text-gray-400 hover:text-gray-600"
@@ -545,7 +549,7 @@ export default function ExplorerCropDetails() {
             <option value="Region">Region</option>
           </select>
           
-          <button 
+          <button
             onClick={() => setShowHelpPanel(true)}
             className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
           >
@@ -566,19 +570,29 @@ export default function ExplorerCropDetails() {
 
       {/* Cost Breakdowns */}
       <div className="space-y-6 mb-6">
-        <ExpandableCostPanel
-          title="Variable Costs"
-          categories={variableCostCategories}
-          selectedYear={selectedYear}
-          costFilters={{ variable: costType === 'input' || costType === 'total' }}
-        />
+        <div className="flex items-center">
+          <CostCategoryIndicator className="mr-2" size={14} />
+          <div className="flex-grow">
+            <ExpandableCostPanel
+              title="Variable Costs"
+              categories={variableCostCategories}
+              selectedYear={selectedYear}
+              costFilters={{ variable: costType === 'input' || costType === 'total' }}
+            />
+          </div>
+        </div>
         
-        <ExpandableCostPanel
-          title="Operation Costs"
-          categories={operationCostCategories}
-          selectedYear={selectedYear}
-          costFilters={{ operations: costType === 'total' }}
-        />
+        <div className="flex items-center">
+          <CostCategoryIndicator className="mr-2" size={14} />
+          <div className="flex-grow">
+            <ExpandableCostPanel
+              title="Operation Costs"
+              categories={operationCostCategories}
+              selectedYear={selectedYear}
+              costFilters={{ operations: costType === 'total' }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Help Panel */}
