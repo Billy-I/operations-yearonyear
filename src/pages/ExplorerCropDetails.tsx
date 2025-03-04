@@ -313,7 +313,7 @@ export default function ExplorerCropDetails() {
                 className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
               />
               <span className="ml-2 text-sm text-gray-700">Total costs</span>
-              <CostCategoryIndicator className="ml-1" size={14} />
+              <CostCategoryIndicator className="ml-1" size={14} isTotalCostsCheckbox={true} />
             </label>
           </div>
           <button

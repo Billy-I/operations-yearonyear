@@ -5,6 +5,7 @@ type CostCategoryIndicatorProps = {
   className?: string;
   size?: number;
   showIcon?: boolean;
+  isTotalCostsCheckbox?: boolean;
 };
 
 /**
@@ -13,8 +14,13 @@ type CostCategoryIndicatorProps = {
 const CostCategoryIndicator: React.FC<CostCategoryIndicatorProps> = ({
   className = "",
   size = 16,
-  showIcon = true
+  showIcon = true,
+  isTotalCostsCheckbox = false
 }) => {
+  const tooltipText = isTotalCostsCheckbox
+    ? "Enabling or disabling this checkbox will affect the values of Costs KPI card and the Performance by table"
+    : "This section is affected by the cost categories checkbox selection";
+
   return (
     <div className="relative group inline-flex items-center">
       {showIcon && (
@@ -22,11 +28,11 @@ const CostCategoryIndicator: React.FC<CostCategoryIndicatorProps> = ({
           size={size}
           className={`text-blue-500 animate-pulse-once ${className} cursor-help`}
           data-testid="cost-category-indicator"
-          aria-label="This section is affected by cost category selection"
+          aria-label={tooltipText}
         />
       )}
       <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-xs rounded p-2 w-48 left-0 mt-1 top-full">
-        This section is affected by the cost categories checkbox selection
+        {tooltipText}
       </div>
     </div>
   );
