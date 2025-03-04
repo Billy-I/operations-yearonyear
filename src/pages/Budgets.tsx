@@ -264,6 +264,17 @@ const Budgets: React.FC = () => {
                 {variableCosts.map((cost, index) => (
                   <CropRow key={index} {...cost} />
                 ))}
+                <tr className="border-t-2 border-gray-300 bg-gray-50 font-medium">
+                  <td className="py-3 px-4 text-gray-900">Total Variable Costs</td>
+                  <td className="py-3 px-4 text-gray-900">{variableCosts.reduce((total, cost) => total + parseFloat(cost.area.split(' ')[0]), 0).toFixed(2)} ha</td>
+                  <td className="py-3 px-4 text-gray-900">£{variableCosts.reduce((total, cost) => total + parseFloat(cost.seed.split('£')[1].split(' ')[0]) * parseFloat(cost.area.split(' ')[0]), 0).toFixed(2)}</td>
+                  <td className="py-3 px-4 text-gray-900">£{variableCosts.reduce((total, cost) => total + parseFloat(cost.fertiliser.split('£')[1].split(' ')[0]) * parseFloat(cost.area.split(' ')[0]), 0).toFixed(2)}</td>
+                  <td className="py-3 px-4 text-gray-900">£{variableCosts.reduce((total, cost) => total + parseFloat(cost.chemical.split('£')[1].split(' ')[0]) * parseFloat(cost.area.split(' ')[0]), 0).toFixed(2)}</td>
+                  <td className="py-3 px-4 text-gray-900">{variableCosts.reduce((total, cost) => total + parseFloat(cost.yield.split(' ')[0]) * parseFloat(cost.area.split(' ')[0]), 0).toFixed(2)} t</td>
+                  <td className="py-3 px-4 text-gray-900">-</td>
+                  <td className="py-3 px-4 text-gray-900">£{variableCosts.reduce((total, cost) => total + parseFloat(cost.gm.split('£')[1].split(' ')[0]) * parseFloat(cost.area.split(' ')[0]), 0).toFixed(2)}</td>
+                  <td className="py-3 px-4"></td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -292,13 +303,43 @@ const Budgets: React.FC = () => {
                 {operationsCosts.map((cost, index) => (
                   <OperationsRow key={index} {...cost} />
                 ))}
+                <tr className="border-t-2 border-gray-300 bg-gray-50 font-medium">
+                  <td className="py-3 px-4 text-gray-900">Total Operations Costs</td>
+                  <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.cultivation.split('£')[1]), 0).toFixed(2)}</td>
+                  <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.drilling.split('£')[1]), 0).toFixed(2)}</td>
+                  <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.application.split('£')[1]), 0).toFixed(2)}</td>
+                  <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.harvesting.split('£')[1]), 0).toFixed(2)}</td>
+                  <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.other.split('£')[1]), 0).toFixed(2)}</td>
+                  <td className="py-3 px-4"></td>
+                </tr>
+                <tr className="border-t-2 border-gray-300 bg-gray-100 font-semibold">
+                  <td colSpan={2} className="py-3 px-4 text-gray-900">Total (Variable + Operations)</td>
+                  <td colSpan={4} className="py-3 px-4 text-gray-900">£{(
+                    variableCosts.reduce((total, cost) => {
+                      const area = parseFloat(cost.area.split(' ')[0]);
+                      const seed = parseFloat(cost.seed.split('£')[1].split(' ')[0]);
+                      const fertiliser = parseFloat(cost.fertiliser.split('£')[1].split(' ')[0]);
+                      const chemical = parseFloat(cost.chemical.split('£')[1].split(' ')[0]);
+                      return total + (seed + fertiliser + chemical) * area;
+                    }, 0) +
+                    operationsCosts.reduce((total, cost) => {
+                      return total +
+                        parseFloat(cost.cultivation.split('£')[1]) +
+                        parseFloat(cost.drilling.split('£')[1]) +
+                        parseFloat(cost.application.split('£')[1]) +
+                        parseFloat(cost.harvesting.split('£')[1]) +
+                        parseFloat(cost.other.split('£')[1]);
+                    }, 0)
+                  ).toFixed(2)}</td>
+                  <td className="py-3 px-4"></td>
+                </tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <AddBudgetPanel 
+      <AddBudgetPanel
         isOpen={isPanelOpen}
         onClose={() => setIsPanelOpen(false)}
         onAdd={handleAddBudget}
