@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { BarChart2, TrendingUp } from 'lucide-react';
+import { BarChart2, TrendingUp, BarChart } from 'lucide-react';
 import { ChartContainerProps, CostChartView } from './types/chart-types';
 import CostDistributionView from './views/CostDistributionView';
 import { FinancialImpactContainer } from './views/financial-impact';
+import MultiYearPreviewView from './views/MultiYearPreviewView';
 const ChartContainer: React.FC<ChartContainerProps> = ({
   costBreakdown,
   view,
@@ -21,7 +22,8 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   // View options for the tab navigation
   const viewOptions: { id: CostChartView; label: string }[] = [
     { id: 'distribution', label: 'Cost Distribution' },
-    { id: 'financial-impact', label: 'Financial Impact' }
+    { id: 'financial-impact', label: 'Financial Impact' },
+    { id: 'multi-year-preview', label: 'Multi-Year Analysis' }
   ];
 
   // Use props for visibility controls if provided, otherwise use local state
@@ -69,7 +71,14 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
           <nav className="flex" aria-label="Chart views">
             {viewOptions.map((option, index) => {
               const isActive = (option.id === 'financial-impact' && isFinancialView) || view === option.id;
-              const icon = option.id === 'distribution' ? <BarChart2 size={16} /> : <TrendingUp size={16} />;
+              let icon;
+              if (option.id === 'distribution') {
+                icon = <BarChart2 size={16} />;
+              } else if (option.id === 'multi-year-preview') {
+                icon = <BarChart size={16} />;
+              } else {
+                icon = <TrendingUp size={16} />;
+              }
               
               return (
                 <button
@@ -147,6 +156,17 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
             onUnitChange={onUnitChange}
             view={view}
             onViewChange={onViewChange}
+            showOperationCosts={showOperationCosts}
+          />
+        )}
+
+        {view === 'multi-year-preview' && (
+          <MultiYearPreviewView
+            year={year}
+            costUnit={costUnit}
+            hectares={hectares}
+            onUnitChange={onUnitChange}
+            showVariableCosts={showVariableCosts}
             showOperationCosts={showOperationCosts}
           />
         )}

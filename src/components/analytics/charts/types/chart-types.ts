@@ -47,7 +47,8 @@ export type CostChartView =
   | 'financial-impact-sunburst'
   | 'financial-impact-treemap'
   | 'financial-impact-gauge'
-  | 'financial-impact-stepline';
+  | 'financial-impact-stepline'
+  | 'multi-year-preview';
 
 /**
  * Common props for all chart views
