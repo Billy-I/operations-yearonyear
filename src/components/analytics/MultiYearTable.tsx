@@ -17,6 +17,8 @@ interface MultiYearTableProps {
   selectedCrop?: typeof AVAILABLE_CROPS[number];
   selectedCrops: (typeof AVAILABLE_CROPS[number])[];
   costFilters?: CostFilters;
+  selectedComparisonMetric?: any;
+  setSelectedComparisonMetric?: (metric: any) => void;
 }
 
 export const MultiYearTable = ({
@@ -26,14 +28,20 @@ export const MultiYearTable = ({
   setSelectedUnit,
   selectedCrop,
   selectedCrops,
-  costFilters = { variable: true, operations: true }
+  costFilters = { variable: true, operations: true },
+  selectedComparisonMetric: propSelectedComparisonMetric,
+  setSelectedComparisonMetric: propSetSelectedComparisonMetric
 }: MultiYearTableProps) => {
   // State for collapsible sections
   const [isChemicalsOpen, setIsChemicalsOpen] = useState(false);
   const [isVariableCostsOpen, setIsVariableCostsOpen] = useState(false); // Renamed to Input Costs in UI but keeping variable name
   const [isOperationsCostsOpen, setIsOperationsCostsOpen] = useState(false);
   // State for selected metric in Multi Crop comparison table
-  const [selectedComparisonMetric, setSelectedComparisonMetric] = useState<string>('grossMargin');
+  const [stateSelectedComparisonMetric, setStateSelectedComparisonMetric] = useState<string>('grossMargin');
+  
+  // Use prop values if provided, otherwise use state values
+  const selectedComparisonMetric = propSelectedComparisonMetric || stateSelectedComparisonMetric;
+  const setSelectedComparisonMetric = propSetSelectedComparisonMetric || setStateSelectedComparisonMetric;
 
   const formatValueWithUnit = (value: number): string => {
     return `£${value.toFixed(2)} ${selectedUnit === '£/t' ? '/t' : '/ha'}`;
@@ -743,50 +751,7 @@ export const MultiYearTable = ({
         // Multi-crop comparison table
         <div>
           <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center space-x-4">
-              <h3 className="text-lg font-medium">Multi Crop comparison</h3>
-              <div>
-                <select
-                  value={selectedComparisonMetric}
-                  onChange={(e) => setSelectedComparisonMetric(e.target.value)}
-                  className="block rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                >
-                  <optgroup label="General">
-                    <option value="production">Production</option>
-                    <option value="yield">Yield</option>
-                  </optgroup>
-                  
-                  {costFilters.variable && (
-                    <optgroup label="Input Costs">
-                      <option value="costOfProduction">Cost of Production</option>
-                      <option value="seed">Seed</option>
-                      <option value="fertiliser">Fertiliser</option>
-                      <option value="chemicals">Chemicals</option>
-                      <option value="variableCosts">Input Costs</option>
-                      <option value="grossMargin">Gross Margin</option>
-                    </optgroup>
-                  )}
-                  
-                  {costFilters.operations && (
-                    <optgroup label="Operations Costs">
-                      <option value="cultivating">Cultivating</option>
-                      <option value="drilling">Drilling</option>
-                      <option value="applications">Applications</option>
-                      <option value="harvesting">Harvesting</option>
-                      <option value="other">Other</option>
-                      <option value="operationsCosts">Operations Costs</option>
-                    </optgroup>
-                  )}
-                  
-                  {costFilters.variable && costFilters.operations && (
-                    <optgroup label="Combined">
-                      <option value="totalCosts">Total Costs</option>
-                      <option value="netMargin">Net Margin</option>
-                    </optgroup>
-                  )}
-                </select>
-              </div>
-            </div>
+            <h3 className="text-lg font-medium">Multi Crop comparison</h3>
             <button
               className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm"
               onClick={() => {/* Export functionality would go here */}}

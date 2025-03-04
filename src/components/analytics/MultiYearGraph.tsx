@@ -44,6 +44,7 @@ interface MultiYearGraphProps {
   selectedCrop?: typeof AVAILABLE_CROPS[number];
   selectedCrops: (typeof AVAILABLE_CROPS[number])[];
   costFilters?: CostFilters;
+  selectedMetric?: DataMetricType;
 }
 
 const isBasicMetric = (metric: DataMetricType): metric is BasicMetricType => {
@@ -58,9 +59,12 @@ export function MultiYearGraph({
   selectedField,
   selectedCrop,
   selectedCrops,
-  costFilters = { variable: true, operations: true }
+  costFilters = { variable: true, operations: true },
+  selectedMetric: propSelectedMetric
 }: MultiYearGraphProps) {
-  const [selectedMetric, setSelectedMetric] = useState<DataMetricType>('costOfProduction');
+  const [stateSelectedMetric, setStateSelectedMetric] = useState<DataMetricType>('costOfProduction');
+  // Use the prop value if provided, otherwise use the state value
+  const selectedMetric = propSelectedMetric || stateSelectedMetric;
 
   const getMetricOptions = () => {
     // Base options that are always shown
@@ -114,7 +118,7 @@ export function MultiYearGraph({
       ...options.combinedOptions
     ];
     if (allOptions.length > 0 && !allOptions.some(opt => opt.value === selectedMetric)) {
-      setSelectedMetric(allOptions[0].value);
+      setStateSelectedMetric(allOptions[0].value);
     }
   }, [selectedView, selectedTab]);
 
@@ -230,53 +234,6 @@ export function MultiYearGraph({
 
   return (
     <div className="mt-6">
-      <div className="flex justify-start mb-4">
-        <select
-          value={selectedMetric}
-          onChange={(e) => setSelectedMetric(e.target.value as DataMetricType)}
-          className="block w-48 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
-        >
-          {metricOptions.baseOptions.length > 0 && (
-            <optgroup label="General">
-              {metricOptions.baseOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </optgroup>
-          )}
-          
-          {metricOptions.variableOptions.length > 0 && (
-            <optgroup label="Input Costs">
-              {metricOptions.variableOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </optgroup>
-          )}
-          
-          {metricOptions.operationsOptions.length > 0 && (
-            <optgroup label="Operations Costs">
-              {metricOptions.operationsOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </optgroup>
-          )}
-          
-          {metricOptions.combinedOptions.length > 0 && (
-            <optgroup label="Combined">
-              {metricOptions.combinedOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </optgroup>
-          )}
-        </select>
-      </div>
 
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
