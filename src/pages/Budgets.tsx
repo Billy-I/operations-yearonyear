@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AddBudgetPanel from '../components/AddBudgetPanel';
 
 interface SummaryCardProps {
@@ -57,6 +57,7 @@ interface OperationsRowProps {
   application: string;
   harvesting: string;
   other: string;
+  netMargin?: string;
 }
 
 const OperationsRow: React.FC<OperationsRowProps> = ({ 
@@ -65,7 +66,8 @@ const OperationsRow: React.FC<OperationsRowProps> = ({
   drilling,
   application,
   harvesting,
-  other
+  other,
+  netMargin
 }) => (
   <tr className="border-b border-gray-200 hover:bg-gray-50">
     <td className="py-3 px-4 text-gray-900">{crop}</td>
@@ -74,6 +76,7 @@ const OperationsRow: React.FC<OperationsRowProps> = ({
     <td className="py-3 px-4 text-gray-600">{application}</td>
     <td className="py-3 px-4 text-gray-600">{harvesting}</td>
     <td className="py-3 px-4 text-gray-600">{other}</td>
+    <td className="py-3 px-4 text-gray-600">{netMargin}</td>
     <td className="py-3 px-4">
       <button className="text-gray-600 hover:text-gray-900">
         ✏️
@@ -117,24 +120,97 @@ const Budgets: React.FC = () => {
     }
   ]);
 
-  const [operationsCosts, setOperationsCosts] = useState<OperationsRowProps[]>([
-    {
-      crop: "Wheat (Winter)",
-      cultivation: "£6,500.00",
-      drilling: "£3,900.00",
-      application: "£2,600.00",
-      harvesting: "£5,200.00",
-      other: "£1,300.00"
-    },
-    {
-      crop: "Triticale (Spring)",
-      cultivation: "£9,100.00",
-      drilling: "£5,460.00",
-      application: "£3,640.00",
-      harvesting: "£7,280.00",
-      other: "£1,820.00"
-    }
-  ]);
+  const [operationsCosts, setOperationsCosts] = useState<OperationsRowProps[]>([]);
+
+  // Initialize operations costs with calculated net margins
+  useEffect(() => {
+    // Calculate net margin for a crop
+    const calculateNetMargin = (cropName: string) => {
+      // Find the matching variable cost entry
+      const variableCost = variableCosts.find(vc => vc.crop === cropName);
+      
+      if (!variableCost) return "£0.00";
+      
+      // Parse the gross margin from the variable costs
+      const grossMargin = parseFloat(variableCost.gm.replace('£', '').replace(',', '').split(' ')[0]);
+      
+      // Calculate total operations costs for this crop
+      const operationCost = initialOperationsCosts.find(oc => oc.crop === cropName);
+      
+      if (!operationCost) return "£0.00";
+      
+      const totalOperationsCost = 
+        parseFloat(operationCost.cultivation.replace('£', '').replace(',', '')) +
+        parseFloat(operationCost.drilling.replace('£', '').replace(',', '')) +
+        parseFloat(operationCost.application.replace('£', '').replace(',', '')) +
+        parseFloat(operationCost.harvesting.replace('£', '').replace(',', '')) +
+        parseFloat(operationCost.other.replace('£', '').replace(',', ''));
+      
+      // Calculate net margin (gross margin - operations costs)
+      const netMargin = grossMargin - totalOperationsCost;
+      
+      // Format with commas for thousands
+      return netMargin >= 0 
+        ? `£${netMargin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : `-£${Math.abs(netMargin).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+
+    const initialOperationsCosts: OperationsRowProps[] = [
+      {
+        crop: "Wheat (Winter)",
+        cultivation: "£6,500.00",
+        drilling: "£3,900.00",
+        application: "£2,600.00",
+        harvesting: "£5,200.00",
+        other: "£1,300.00"
+      },
+      {
+        crop: "Triticale (Spring)",
+        cultivation: "£9,100.00",
+        drilling: "£5,460.00",
+        application: "£3,640.00",
+        harvesting: "£7,280.00",
+        other: "£1,820.00"
+      }
+    ];
+
+    // Calculate and add net margin for each operations cost
+    const operationsWithNetMargin = initialOperationsCosts.map(cost => ({
+      ...cost,
+      netMargin: calculateNetMargin(cost.crop)
+    }));
+
+    setOperationsCosts(operationsWithNetMargin);
+  }, [variableCosts]); // Recalculate when variable costs change
+
+  // Calculate net margin for a crop - used for new operations costs
+  const calculateNetMargin = (cropName: string) => {
+    // Find the matching variable cost entry
+    const variableCost = variableCosts.find(vc => vc.crop === cropName);
+    // Find the matching operations cost entry
+    const operationCost = operationsCosts.find(oc => oc.crop === cropName);
+    
+    if (!variableCost || !operationCost) return "£0.00";
+    
+    // Parse the gross margin from the variable costs
+    const grossMargin = parseFloat(variableCost.gm.replace('£', '').replace(',', '').split(' ')[0]);
+    
+    // Calculate total operations costs
+    const totalOperationsCost = 
+      parseFloat(operationCost.cultivation.replace('£', '').replace(',', '')) +
+      parseFloat(operationCost.drilling.replace('£', '').replace(',', '')) +
+      parseFloat(operationCost.application.replace('£', '').replace(',', '')) +
+      parseFloat(operationCost.harvesting.replace('£', '').replace(',', '')) +
+      parseFloat(operationCost.other.replace('£', '').replace(',', ''));
+    
+    // Calculate net margin (gross margin - operations costs)
+    const netMargin = grossMargin - totalOperationsCost;
+    
+    // Format with commas for thousands
+    return netMargin >= 0 
+      ? `£${netMargin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : `-£${Math.abs(netMargin).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
   const handleAddBudget = (data: any) => {
     // For Variable costs, calculate GM if yield and price are provided
@@ -168,28 +244,42 @@ const Budgets: React.FC = () => {
     }
 
     // For Operations costs
-    if (data.type === 'operations') {
+    else if (data.type === 'operations') {
+      // First add the new operation cost without net margin
       const newOperationsCost: OperationsRowProps = {
         crop: data.crop,
-        cultivation: data.cultivation ? `£${data.cultivation}` : '£0.00',
-        drilling: data.drilling ? `£${data.drilling}` : '£0.00',
-        application: data.application ? `£${data.application}` : '£0.00',
-        harvesting: data.harvesting ? `£${data.harvesting}` : '£0.00',
-        other: data.other ? `£${data.other}` : '£0.00'
+        cultivation: data.cultivation ? `£${parseFloat(data.cultivation).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '£0.00',
+        drilling: data.drilling ? `£${parseFloat(data.drilling).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '£0.00',
+        application: data.application ? `£${parseFloat(data.application).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '£0.00',
+        harvesting: data.harvesting ? `£${parseFloat(data.harvesting).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '£0.00',
+        other: data.other ? `£${parseFloat(data.other).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '£0.00'
       };
 
-      // Check if the crop already exists in operations costs
-      const existingIndex = operationsCosts.findIndex(cost => cost.crop === data.crop);
-      if (existingIndex >= 0) {
-        // Update existing entry
-        const updatedCosts = [...operationsCosts];
-        updatedCosts[existingIndex] = newOperationsCost;
-        setOperationsCosts(updatedCosts);
+      // Then calculate the net margin based on the variable costs
+      const variableCost = variableCosts.find(vc => vc.crop === data.crop);
+      if (variableCost) {
+        const grossMargin = parseFloat(variableCost.gm.replace('£', '').replace(',', '').split(' ')[0]);
+        const totalOperationsCost = 
+          (data.cultivation ? parseFloat(data.cultivation) : 0) +
+          (data.drilling ? parseFloat(data.drilling) : 0) +
+          (data.application ? parseFloat(data.application) : 0) +
+          (data.harvesting ? parseFloat(data.harvesting) : 0) +
+          (data.other ? parseFloat(data.other) : 0);
+        
+        const netMargin = grossMargin - totalOperationsCost;
+        
+        // Format with commas for thousands
+        newOperationsCost.netMargin = netMargin >= 0 
+          ? `£${netMargin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : `-£${Math.abs(netMargin).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       } else {
-        // Add new entry
-        setOperationsCosts([...operationsCosts, newOperationsCost]);
+        newOperationsCost.netMargin = '£0.00';
       }
+
+      setOperationsCosts([...operationsCosts, newOperationsCost]);
     }
+
+    setIsPanelOpen(false);
   };
 
   return (
@@ -296,6 +386,7 @@ const Budgets: React.FC = () => {
                   <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Application</th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Harvesting</th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Other</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Net Margin</th>
                   <th className="py-3 px-4"></th>
                 </tr>
               </thead>
@@ -310,11 +401,30 @@ const Budgets: React.FC = () => {
                   <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.application.split('£')[1]), 0).toFixed(2)}</td>
                   <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.harvesting.split('£')[1]), 0).toFixed(2)}</td>
                   <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.other.split('£')[1]), 0).toFixed(2)}</td>
+                  <td className="py-3 px-4 text-gray-900">
+                    {(() => {
+                      const totalNetMargin = operationsCosts.reduce((total, cost) => {
+                        if (!cost.netMargin) return total;
+                        
+                        // Handle both positive and negative values
+                        const isNegative = cost.netMargin.startsWith('-');
+                        const valueStr = isNegative ? cost.netMargin.substring(2) : cost.netMargin.substring(1);
+                        const value = parseFloat(valueStr.replace(',', ''));
+                        
+                        return total + (isNegative ? -value : value);
+                      }, 0);
+                      
+                      // Format with commas for thousands
+                      return totalNetMargin >= 0 
+                        ? `£${totalNetMargin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : `-£${Math.abs(totalNetMargin).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    })()}
+                  </td>
                   <td className="py-3 px-4"></td>
                 </tr>
                 <tr className="border-t-2 border-gray-300 bg-gray-100 font-semibold">
-                  <td colSpan={2} className="py-3 px-4 text-gray-900">Total (Variable + Operations)</td>
-                  <td colSpan={4} className="py-3 px-4 text-gray-900">£{(
+                  <td className="py-3 px-4 text-gray-900">Total (Variable + Operations)</td>
+                  <td className="py-3 px-4 text-gray-900">£{(
                     variableCosts.reduce((total, cost) => {
                       const area = parseFloat(cost.area.split(' ')[0]);
                       const seed = parseFloat(cost.seed.split('£')[1].split(' ')[0]);
@@ -324,14 +434,14 @@ const Budgets: React.FC = () => {
                     }, 0) +
                     operationsCosts.reduce((total, cost) => {
                       return total +
-                        parseFloat(cost.cultivation.split('£')[1]) +
-                        parseFloat(cost.drilling.split('£')[1]) +
-                        parseFloat(cost.application.split('£')[1]) +
-                        parseFloat(cost.harvesting.split('£')[1]) +
-                        parseFloat(cost.other.split('£')[1]);
+                        parseFloat(cost.cultivation.replace('£', '').replace(',', '')) +
+                        parseFloat(cost.drilling.replace('£', '').replace(',', '')) +
+                        parseFloat(cost.application.replace('£', '').replace(',', '')) +
+                        parseFloat(cost.harvesting.replace('£', '').replace(',', '')) +
+                        parseFloat(cost.other.replace('£', '').replace(',', ''));
                     }, 0)
-                  ).toFixed(2)}</td>
-                  <td className="py-3 px-4"></td>
+                  ).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td colSpan={6} className="py-3 px-4"></td>
                 </tr>
               </tbody>
             </table>
