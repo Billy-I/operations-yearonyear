@@ -253,14 +253,21 @@ export function MultiYearGraph({
                 type="number"
                 dataKey="y"
                 name={`${allOptions.find(opt => opt.value === selectedMetric)?.label}`}
-                unit={selectedUnit === '£/t' ? ' £/t' : selectedUnit === '£/ha' ? ' £/ha' : ' £'}
+                unit={
+                  (selectedMetric === 'yield' || selectedMetric === 'production')
+                    ? ' t' // Always display in tonnes
+                    : (selectedUnit === '£/t' ? ' £/t' : selectedUnit === '£/ha' ? ' £/ha' : ' £')
+                }
               />
               <ZAxis range={[60, 60]} />
               <Tooltip
                 cursor={{ strokeDasharray: '3 3' }}
                 formatter={(value: any, name: string) => {
                   if (name === 'y') {
-                    const unitDisplay = selectedUnit === '£' ? '£' : selectedUnit;
+                    const isYieldOrProduction = selectedMetric === 'yield' || selectedMetric === 'production';
+                    const unitDisplay = isYieldOrProduction
+                      ? 't' // Always display in tonnes
+                      : (selectedUnit === '£' ? '£' : selectedUnit);
                     return [`${value} ${unitDisplay}`, `${allOptions.find(opt => opt.value === selectedMetric)?.label}`];
                   }
                   return [value, 'Crop'];
@@ -291,8 +298,24 @@ export function MultiYearGraph({
             <BarChart data={getData()} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="year" />
-              <YAxis />
-              <Tooltip />
+              <YAxis
+                label={{
+                  value: selectedMetric === 'yield' || selectedMetric === 'production'
+                    ? 't' // Always display in tonnes
+                    : (selectedUnit === '£' ? '£' : selectedUnit),
+                  angle: -90,
+                  position: 'insideLeft'
+                }}
+              />
+              <Tooltip
+                formatter={(value: any, name: string) => {
+                  const isYieldOrProduction = selectedMetric === 'yield' || selectedMetric === 'production';
+                  const unitDisplay = isYieldOrProduction
+                    ? 't' // Always display in tonnes
+                    : (selectedUnit === '£' ? '£' : selectedUnit);
+                  return [`${value} ${unitDisplay}`, name];
+                }}
+              />
               <Legend />
               {(selectedTab === 'rotation' && (selectedView === 'Variable' || selectedView === 'Operations' || selectedView === 'Total')) ? (
                 <>
@@ -340,7 +363,11 @@ export function MultiYearGraph({
               ) : (
                 <Bar
                   dataKey="value"
-                  name={`${allOptions.find(opt => opt.value === selectedMetric)?.label} (${selectedUnit})`}
+                  name={`${allOptions.find(opt => opt.value === selectedMetric)?.label} (${
+                    (selectedMetric === 'yield' || selectedMetric === 'production')
+                      ? 't' // Always display in tonnes
+                      : selectedUnit
+                  })`}
                   fill="#6B7280"
                   radius={[4, 4, 0, 0]}
                 />

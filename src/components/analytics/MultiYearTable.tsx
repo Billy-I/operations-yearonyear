@@ -43,7 +43,14 @@ export const MultiYearTable = ({
   const selectedComparisonMetric = propSelectedComparisonMetric || stateSelectedComparisonMetric;
   const setSelectedComparisonMetric = propSetSelectedComparisonMetric || setStateSelectedComparisonMetric;
 
-  const formatValueWithUnit = (value: number): string => {
+  const formatValueWithUnit = (value: number, metric?: string): string => {
+    // Handle Yield and Production differently
+    if (metric === 'yield' || metric === 'production') {
+      // Always display Yield and Production in tonnes regardless of selected unit
+      return `${value.toFixed(2)} t`;
+    }
+    
+    // For financial metrics, use currency symbol
     if (selectedUnit === '£') {
       return `£${value.toFixed(2)}`;
     }
@@ -189,11 +196,11 @@ export const MultiYearTable = ({
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Production</td>
         {selectedYears.map((year) => (
           <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            {formatValueWithUnit(getValue('production', year, selectedUnit))}
+            {formatValueWithUnit(getValue('production', year, selectedUnit), 'production')}
           </td>
         ))}
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-          {formatValueWithUnit(getValue('production', 'Yearly avg', selectedUnit))}
+          {formatValueWithUnit(getValue('production', 'Yearly avg', selectedUnit), 'production')}
         </td>
       </tr>
       <tr>
@@ -211,11 +218,11 @@ export const MultiYearTable = ({
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Yield</td>
         {selectedYears.map((year) => (
           <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            {formatValueWithUnit(getValue('yield', year, selectedUnit))}
+            {formatValueWithUnit(getValue('yield', year, selectedUnit), 'yield')}
           </td>
         ))}
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-          {formatValueWithUnit(getValue('yield', 'Yearly avg', selectedUnit))}
+          {formatValueWithUnit(getValue('yield', 'Yearly avg', selectedUnit), 'yield')}
         </td>
       </tr>
     </>
@@ -293,22 +300,22 @@ export const MultiYearTable = ({
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Production</td>
         {selectedYears.map((year) => (
           <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            {formatValueWithUnit(getValue('production', year, selectedUnit))}
+            {formatValueWithUnit(getValue('production', year, selectedUnit), 'production')}
           </td>
         ))}
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-          {formatValueWithUnit(getValue('production', 'Yearly avg', selectedUnit))}
+          {formatValueWithUnit(getValue('production', 'Yearly avg', selectedUnit), 'production')}
         </td>
       </tr>
       <tr>
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Yield</td>
         {selectedYears.map((year) => (
           <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            {formatValueWithUnit(getValue('yield', year, selectedUnit))}
+            {formatValueWithUnit(getValue('yield', year, selectedUnit), 'yield')}
           </td>
         ))}
         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-          {formatValueWithUnit(getValue('yield', 'Yearly avg', selectedUnit))}
+          {formatValueWithUnit(getValue('yield', 'Yearly avg', selectedUnit), 'yield')}
         </td>
       </tr>
     </>
@@ -694,11 +701,11 @@ export const MultiYearTable = ({
           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Production</td>
           {selectedYears.map((year) => (
             <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {formatValueWithUnit(getValue('production', year, selectedUnit))}
+              {formatValueWithUnit(getValue('production', year, selectedUnit), 'production')}
             </td>
           ))}
           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            {formatValueWithUnit(getValue('production', 'Yearly avg', selectedUnit))}
+            {formatValueWithUnit(getValue('production', 'Yearly avg', selectedUnit), 'production')}
           </td>
         </tr>
         
@@ -737,11 +744,11 @@ export const MultiYearTable = ({
           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Yield</td>
           {selectedYears.map((year) => (
             <td key={year} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {formatValueWithUnit(getValue('yield', year, selectedUnit))}
+              {formatValueWithUnit(getValue('yield', year, selectedUnit), 'yield')}
             </td>
           ))}
           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            {formatValueWithUnit(getValue('yield', 'Yearly avg', selectedUnit))}
+            {formatValueWithUnit(getValue('yield', 'Yearly avg', selectedUnit), 'yield')}
           </td>
         </tr>
       </>

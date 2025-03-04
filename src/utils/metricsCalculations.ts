@@ -17,6 +17,13 @@ export const getValue = (metric: keyof MetricsData, year: string, unit: UnitType
     const data = (metricsData[metric] as any)[year] as MetricData;
     if (!data) return 0;
     
+    // For Yield and Production, always return the same value in tonnes regardless of unit selection
+    if (metric === 'yield' || metric === 'production') {
+      // For yield and production, we always want to show the value in tonnes
+      // The perTonne field actually contains the total tonnes value
+      return data.perTonne;
+    }
+    
     if (unit === '£') {
       // For total numbers in £, multiply the per hectare value by the number of hectares
       const hectares = crop ? getHectares(crop) : 1;
