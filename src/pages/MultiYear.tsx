@@ -298,7 +298,7 @@ export default function MultiYear() {
                     {viewLevel === 'field' && (
                       <div>
                         <label className="text-sm text-gray-600 mb-2 block">Field</label>
-                        <select 
+                        <select
                           value={selectedEntity || selectedField}
                           onChange={(e) => setSelectedEntity(e.target.value)}
                           className="bg-gray-50 px-3 py-2 rounded-md"
@@ -328,13 +328,19 @@ export default function MultiYear() {
                         >
                           £/ha
                         </button>
+                        <button
+                          className={`px-2 py-1 text-xs rounded ${selectedUnit === '£' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+                          onClick={() => setSelectedUnit('£')}
+                        >
+                          Total (£)
+                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Main visualization components */}
-                {viewLevel === 'crop' && selectedCrops.length === 1 && (
+                {(viewLevel === 'crop' && selectedCrops.length === 1) || viewLevel === 'field' ? (
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-end space-x-4">
                       {/* Metrics Selector */}
@@ -376,7 +382,7 @@ export default function MultiYear() {
                       </div>
                     </div>
                   </div>
-                )}
+                ) : null}
 
                 <div className="printable-content" style={{ minHeight: '600px' }}>
                   <MultiYearGraph

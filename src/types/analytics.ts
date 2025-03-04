@@ -31,7 +31,7 @@ export interface MetricsData {
   netMargin: { [key in Year]: MetricData };
 }
 
-export type UnitType = '£/t' | '£/ha';
+export type UnitType = '£/t' | '£/ha' | '£';
 export type ViewType = 'Variable' | 'Operations' | 'Total';
 export type TabType = 'comparison' | 'rotation';
 export type MetricType = keyof MetricsData | 'variableCosts' | 'operationsCosts' | 'totalCosts';

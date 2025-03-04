@@ -44,6 +44,9 @@ export const MultiYearTable = ({
   const setSelectedComparisonMetric = propSetSelectedComparisonMetric || setStateSelectedComparisonMetric;
 
   const formatValueWithUnit = (value: number): string => {
+    if (selectedUnit === '£') {
+      return `£${value.toFixed(2)}`;
+    }
     return `£${value.toFixed(2)} ${selectedUnit === '£/t' ? '/t' : '/ha'}`;
   };
 

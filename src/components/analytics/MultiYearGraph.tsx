@@ -253,13 +253,16 @@ export function MultiYearGraph({
                 type="number"
                 dataKey="y"
                 name={`${allOptions.find(opt => opt.value === selectedMetric)?.label}`}
-                unit={selectedUnit === '£/t' ? ' £/t' : ' £/ha'}
+                unit={selectedUnit === '£/t' ? ' £/t' : selectedUnit === '£/ha' ? ' £/ha' : ' £'}
               />
               <ZAxis range={[60, 60]} />
               <Tooltip
                 cursor={{ strokeDasharray: '3 3' }}
                 formatter={(value: any, name: string) => {
-                  if (name === 'y') return [`${value} ${selectedUnit}`, `${allOptions.find(opt => opt.value === selectedMetric)?.label}`];
+                  if (name === 'y') {
+                    const unitDisplay = selectedUnit === '£' ? '£' : selectedUnit;
+                    return [`${value} ${unitDisplay}`, `${allOptions.find(opt => opt.value === selectedMetric)?.label}`];
+                  }
                   return [value, 'Crop'];
                 }}
                 labelFormatter={() => ''}

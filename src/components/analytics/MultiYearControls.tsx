@@ -78,6 +78,12 @@ export const MultiYearControls = ({
               >
                 £/ha
               </button>
+              <button
+                className={`px-2 py-1 text-xs rounded ${selectedUnit === '£' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+                onClick={() => setSelectedUnit('£')}
+              >
+                Total (£)
+              </button>
             </div>
           </div>
         </div>

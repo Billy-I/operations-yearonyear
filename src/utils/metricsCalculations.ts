@@ -1,26 +1,64 @@
-import { Year, MetricsData } from '../types/analytics';
+import { Year, MetricsData, UnitType, MetricData } from '../types/analytics';
 import { metricsData } from '../data/metricsData';
+import { cropData } from '../data/cropData';
 
-export const getValue = (metric: keyof MetricsData, year: string, unit: '£/t' | '£/ha'): number => {
-  const data = metricsData[metric][year as Year];
-  if (!data) return 0;
-  return unit === '£/t' ? data.perTonne : data.perHectare;
+// Helper function to get hectares for a crop
+const getHectares = (crop: string): number => {
+  const cropInfo = cropData.find(c => c.name === crop);
+  if (!cropInfo) return 1; // Default to 1 if crop not found
+  const areaStr = cropInfo.area;
+  const hectares = parseFloat(areaStr.split(' ')[0]);
+  return isNaN(hectares) ? 1 : hectares;
 };
 
-export const getVariableCosts = (year: string, unit: '£/t' | '£/ha'): number => {
-  return getValue('seed', year, unit) + 
-         getValue('fertiliser', year, unit) + 
-         getValue('chemicals', year, unit);
+export const getValue = (metric: keyof MetricsData, year: string, unit: UnitType, crop?: string): number => {
+  try {
+    // Cast to any to bypass TypeScript's type checking
+    const data = (metricsData[metric] as any)[year] as MetricData;
+    if (!data) return 0;
+    
+    if (unit === '£') {
+      // For total numbers in £, multiply the per hectare value by the number of hectares
+      const hectares = crop ? getHectares(crop) : 1;
+      return data.perHectare * hectares;
+    }
+    
+    return unit === '£/t' ? data.perTonne : data.perHectare;
+  } catch (error) {
+    console.error(`Error getting value for ${metric} in ${year}:`, error);
+    return 0;
+  }
 };
 
-export const getOperationsCosts = (year: string, unit: '£/t' | '£/ha'): number => {
-  return getValue('cultivating', year, unit) + 
-         getValue('drilling', year, unit) + 
-         getValue('applications', year, unit) + 
-         getValue('harvesting', year, unit) + 
-         getValue('other', year, unit);
+export const getVariableCosts = (year: string, unit: UnitType, crop?: string): number => {
+  try {
+    return getValue('seed', year, unit, crop) +
+           getValue('fertiliser', year, unit, crop) +
+           getValue('chemicals', year, unit, crop);
+  } catch (error) {
+    console.error(`Error calculating variable costs for ${year}:`, error);
+    return 0;
+  }
 };
 
-export const getTotalCosts = (year: string, unit: '£/t' | '£/ha'): number => {
-  return getVariableCosts(year, unit) + getOperationsCosts(year, unit);
+export const getOperationsCosts = (year: string, unit: UnitType, crop?: string): number => {
+  try {
+    return getValue('cultivating', year, unit, crop) +
+           getValue('drilling', year, unit, crop) +
+           getValue('applications', year, unit, crop) +
+           getValue('harvesting', year, unit, crop) +
+           getValue('other', year, unit, crop);
+  } catch (error) {
+    console.error(`Error calculating operations costs for ${year}:`, error);
+    return 0;
+  }
+};
+
+export const getTotalCosts = (year: string, unit: UnitType, crop?: string): number => {
+  try {
+    return getVariableCosts(year, unit, crop) + getOperationsCosts(year, unit, crop);
+  } catch (error) {
+    console.error(`Error calculating total costs for ${year}:`, error);
+    return 0;
+  }
 };

@@ -35,6 +35,9 @@ export const FieldRotationTable = ({
   const fieldData = fieldsData.find(field => field.id === selectedField);
   
   const formatValueWithUnit = (value: number): string => {
+    if (selectedUnit === '£') {
+      return `£${value.toFixed(2)}`;
+    }
     return `£${value.toFixed(2)} ${selectedUnit === '£/t' ? '/t' : '/ha'}`;
   };
 
