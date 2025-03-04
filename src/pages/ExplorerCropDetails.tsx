@@ -570,28 +570,22 @@ export default function ExplorerCropDetails() {
 
       {/* Cost Breakdowns */}
       <div className="space-y-6 mb-6">
-        <div className="flex items-center">
-          <CostCategoryIndicator className="mr-2" size={14} />
-          <div className="flex-grow">
-            <ExpandableCostPanel
-              title="Variable Costs"
-              categories={variableCostCategories}
-              selectedYear={selectedYear}
-              costFilters={{ variable: costType === 'input' || costType === 'total' }}
-            />
-          </div>
+        <div className="flex-grow">
+          <ExpandableCostPanel
+            title="Variable Costs"
+            categories={variableCostCategories}
+            selectedYear={selectedYear}
+            costFilters={{ variable: costType === 'input' || costType === 'total' }}
+          />
         </div>
         
-        <div className="flex items-center">
-          <CostCategoryIndicator className="mr-2" size={14} />
-          <div className="flex-grow">
-            <ExpandableCostPanel
-              title="Operation Costs"
-              categories={operationCostCategories}
-              selectedYear={selectedYear}
-              costFilters={{ operations: costType === 'total' }}
-            />
-          </div>
+        <div className="flex-grow">
+          <ExpandableCostPanel
+            title="Operation Costs"
+            categories={operationCostCategories}
+            selectedYear={selectedYear}
+            costFilters={{ operations: costType === 'total' }}
+          />
         </div>
       </div>
 
