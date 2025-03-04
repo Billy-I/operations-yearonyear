@@ -46,13 +46,18 @@ const CostDistributionView: React.FC<CostDistributionViewProps> = ({
   // Transform the data for the chart
   const chartData = useMemo(() => {
     const data: ChartData[] = [];
+    let totalInputCosts = 0;
+    let totalOperationCosts = 0;
 
     // Add variable costs
     if (showVariableCosts) {
       Object.entries(costBreakdown.variable).forEach(([category, cost]) => {
+        const costValue = costUnit === 'per_ha' ? cost.current : cost.current * hectares;
+        totalInputCosts += costValue;
+        
         data.push({
           category,
-          verifiedValue: costUnit === 'per_ha' ? cost.current : cost.current * hectares,
+          verifiedValue: costValue,
           benchmarkData: {
             min: costUnit === 'per_ha' ? cost.min : cost.min * hectares,
             max: costUnit === 'per_ha' ? cost.max : cost.max * hectares,
@@ -67,6 +72,8 @@ const CostDistributionView: React.FC<CostDistributionViewProps> = ({
     if (showOperationCosts) {
       Object.entries(costBreakdown.operations).forEach(([category, cost]) => {
         const value = costUnit === 'per_ha' ? cost : cost * hectares;
+        totalOperationCosts += value;
+        
         const existingEntry = data.find(d => d.category === category);
         
         if (existingEntry) {
@@ -77,6 +84,24 @@ const CostDistributionView: React.FC<CostDistributionViewProps> = ({
             operationValue: value
           });
         }
+      });
+    }
+
+    // Find the index of the "chemicals" category to insert the total input costs after it
+    const chemicalsIndex = data.findIndex(item => item.category.toLowerCase() === 'chemicals');
+    if (chemicalsIndex !== -1 && showVariableCosts) {
+      data.splice(chemicalsIndex + 1, 0, {
+        category: 'Total Input Costs',
+        verifiedValue: totalInputCosts
+      });
+    }
+
+    // Find the index of the "harvesting" category to insert the total operation costs after it
+    const harvestingIndex = data.findIndex(item => item.category.toLowerCase() === 'harvesting');
+    if (harvestingIndex !== -1 && showOperationCosts) {
+      data.splice(harvestingIndex + 1, 0, {
+        category: 'Total Operation Costs',
+        operationValue: totalOperationCosts
       });
     }
 
@@ -113,7 +138,7 @@ const CostDistributionView: React.FC<CostDistributionViewProps> = ({
             <p className="text-xs text-gray-500 mb-2">Market Range</p>
             <MarketRangeIndicator
               data={data.benchmarkData}
-              width={180}
+              className="w-[180px]"
               formatValue={formatValue}
             />
           </div>
