@@ -52,17 +52,35 @@ const CostDistributionView: React.FC<CostDistributionViewProps> = ({
     // Add variable costs
     if (showVariableCosts) {
       Object.entries(costBreakdown.variable).forEach(([category, cost]) => {
-        const costValue = costUnit === 'per_ha' ? cost.current : cost.current * hectares;
+        let costValue;
+        if (costUnit === 'per_ha') {
+          costValue = cost.current;
+        } else if (costUnit === 'per_tonne') {
+          // Assuming yield is 8.3 tonnes per hectare (average from the data)
+          costValue = cost.current / 8.3;
+        } else {
+          // total
+          costValue = cost.current * hectares;
+        }
+        
         totalInputCosts += costValue;
         
         data.push({
           category,
           verifiedValue: costValue,
           benchmarkData: {
-            min: costUnit === 'per_ha' ? cost.min : cost.min * hectares,
-            max: costUnit === 'per_ha' ? cost.max : cost.max * hectares,
-            average: costUnit === 'per_ha' ? cost.average : cost.average * hectares,
-            current: costUnit === 'per_ha' ? cost.current : cost.current * hectares
+            min: costUnit === 'per_ha' ? cost.min :
+                 costUnit === 'per_tonne' ? cost.min / 8.3 :
+                 cost.min * hectares,
+            max: costUnit === 'per_ha' ? cost.max :
+                 costUnit === 'per_tonne' ? cost.max / 8.3 :
+                 cost.max * hectares,
+            average: costUnit === 'per_ha' ? cost.average :
+                     costUnit === 'per_tonne' ? cost.average / 8.3 :
+                     cost.average * hectares,
+            current: costUnit === 'per_ha' ? cost.current :
+                     costUnit === 'per_tonne' ? cost.current / 8.3 :
+                     cost.current * hectares
           }
         });
       });
@@ -71,7 +89,17 @@ const CostDistributionView: React.FC<CostDistributionViewProps> = ({
     // Add operation costs
     if (showOperationCosts) {
       Object.entries(costBreakdown.operations).forEach(([category, cost]) => {
-        const value = costUnit === 'per_ha' ? cost : cost * hectares;
+        let value;
+        if (costUnit === 'per_ha') {
+          value = cost;
+        } else if (costUnit === 'per_tonne') {
+          // Assuming yield is 8.3 tonnes per hectare (average from the data)
+          value = cost / 8.3;
+        } else {
+          // total
+          value = cost * hectares;
+        }
+        
         totalOperationCosts += value;
         
         const existingEntry = data.find(d => d.category === category);
@@ -112,8 +140,11 @@ const CostDistributionView: React.FC<CostDistributionViewProps> = ({
     if (!active || !payload?.length) return null;
 
     const data = payload[0].payload as ChartData;
-    const formatValue = (val: number) => 
-      `£${val.toFixed(2)}${costUnit === 'per_ha' ? '/ha' : ''}`;
+    const formatValue = (val: number) => {
+      if (costUnit === 'per_ha') return `£${val.toFixed(2)}/ha`;
+      if (costUnit === 'per_tonne') return `£${val.toFixed(2)}/t`;
+      return `£${val.toFixed(2)}`;
+    };
 
     return (
       <div className="bg-white border border-gray-200 shadow-sm rounded-md p-3">
@@ -191,7 +222,7 @@ const CostDistributionView: React.FC<CostDistributionViewProps> = ({
               <YAxis
                 tickFormatter={(value) => `£${value}`}
                 label={{
-                  value: `Cost (${costUnit === 'per_ha' ? '£/ha' : '£'})`,
+                  value: `Cost (${costUnit === 'per_ha' ? '£/ha' : costUnit === 'per_tonne' ? '£/t' : '£'})`,
                   angle: -90,
                   position: 'insideLeft',
                   style: { textAnchor: 'middle' }

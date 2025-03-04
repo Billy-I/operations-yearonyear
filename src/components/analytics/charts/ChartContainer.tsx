@@ -45,10 +45,18 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
 
   // Calculate total variable and operation costs
   const totalVariableCosts = Object.values(costBreakdown.variable)
-    .reduce((sum, cost) => sum + (costUnit === 'per_ha' ? cost.current : cost.current * hectares), 0);
+    .reduce((sum, cost) => {
+      if (costUnit === 'per_ha') return sum + cost.current;
+      if (costUnit === 'per_tonne') return sum + cost.current / 8.3; // Assuming 8.3 tonnes per hectare
+      return sum + cost.current * hectares; // total
+    }, 0);
 
   const totalOperationCosts = Object.values(costBreakdown.operations)
-    .reduce((sum, cost) => sum + (costUnit === 'per_ha' ? cost : cost * hectares), 0);
+    .reduce((sum, cost) => {
+      if (costUnit === 'per_ha') return sum + cost;
+      if (costUnit === 'per_tonne') return sum + cost / 8.3; // Assuming 8.3 tonnes per hectare
+      return sum + cost * hectares; // total
+    }, 0);
 
   // Check if current view is a financial impact view
   const isFinancialView = view.startsWith('financial-impact');
@@ -86,15 +94,28 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
           </nav>
         </div>
 
-        <div className="flex items-center space-x-4 ml-4">
-          <select
-            value={costUnit}
-            onChange={(e) => onUnitChange(e.target.value as 'per_ha' | 'total')}
-            className="border border-gray-300 rounded-md text-sm py-1 px-2"
-          >
-            <option value="per_ha">£/ha</option>
-            <option value="total">Total £</option>
-          </select>
+        <div className="flex items-center ml-4">
+          <div className="text-sm text-gray-600 mr-2">Display Units:</div>
+          <div className="flex items-center space-x-2">
+            <button
+              className={`px-2 py-1 text-xs rounded ${costUnit === 'per_tonne' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+              onClick={() => onUnitChange('per_tonne')}
+            >
+              £/t
+            </button>
+            <button
+              className={`px-2 py-1 text-xs rounded ${costUnit === 'per_ha' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+              onClick={() => onUnitChange('per_ha')}
+            >
+              £/ha
+            </button>
+            <button
+              className={`px-2 py-1 text-xs rounded ${costUnit === 'total' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+              onClick={() => onUnitChange('total')}
+            >
+              Total (£)
+            </button>
+          </div>
         </div>
       </div>
 

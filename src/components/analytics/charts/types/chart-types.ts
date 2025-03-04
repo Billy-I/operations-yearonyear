@@ -54,9 +54,9 @@ export type CostChartView =
  */
 export interface BaseChartProps {
   year: Year;
-  costUnit: 'per_ha' | 'total';
+  costUnit: 'per_ha' | 'per_tonne' | 'total';
   hectares: number; // Used for converting between per hectare and total values
-  onUnitChange: (unit: 'per_ha' | 'total') => void;
+  onUnitChange: (unit: 'per_ha' | 'per_tonne' | 'total') => void;
 }
 
 /**

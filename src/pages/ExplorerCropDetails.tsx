@@ -51,7 +51,7 @@ export default function ExplorerCropDetails() {
   // Year selection and metrics state
   const [selectedYear, setSelectedYear] = useState<Year>('2024');
   const [groupBy, setGroupBy] = useState<'Variety' | 'Field' | 'Region'>('Variety');
-  const [costUnit, setCostUnit] = useState<'per_ha' | 'total'>('per_ha');
+  const [costUnit, setCostUnit] = useState<'per_ha' | 'per_tonne' | 'total'>('per_ha');
   const [chartView, setChartView] = useState<CostChartView>('distribution');
   
   // Chart configuration state
