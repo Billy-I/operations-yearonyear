@@ -38,7 +38,7 @@ const FeatureNotification: React.FC<FeatureNotificationProps> = ({
         <div className="ml-3 flex-1">
           <h3 className="text-sm font-medium text-gray-800">{title}</h3>
           <div className="mt-1 text-sm text-gray-700">
-            <p>{message}</p>
+            {message}
           </div>
           {onLearnMore && (
             <div className="mt-2">

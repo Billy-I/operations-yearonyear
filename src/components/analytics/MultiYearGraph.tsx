@@ -6,7 +6,7 @@ import {
 import { ViewType, UnitType, Year, ChemicalBreakdown, TabType, MetricType, ViewLevel } from '../../types/analytics';
 import { metricsData } from '../../data/metricsData';
 import { fieldsData } from '../../data/fieldData';
-import { getVariableCosts, getOperationsCosts } from '../../utils/metricsCalculations';
+import { getVariableCosts, getOperationsCosts, getValue, getTotalCosts } from '../../utils/metricsCalculations';
 import { AVAILABLE_CROPS } from '../../constants/analytics';
 import { FarmOverviewCharts } from './FarmOverviewCharts';
 
@@ -62,18 +62,6 @@ export function MultiYearGraph({
   const [stateSelectedMetric, setStateSelectedMetric] = useState<MetricType>('costOfProduction');
   const selectedMetric = propSelectedMetric || stateSelectedMetric;
 
-  // If we're in farm view, render the FarmOverviewCharts component
-  if (viewLevel === 'farm') {
-    return (
-      <FarmOverviewCharts
-        selectedYears={selectedYears}
-        selectedUnit={selectedUnit}
-        selectedMetric={selectedMetric}
-        costFilters={costFilters}
-      />
-    );
-  }
-
   const getMetricOptions = () => {
     // Base options that are always shown
     const baseOptions: { value: MetricType; label: string }[] = [
@@ -116,7 +104,7 @@ export function MultiYearGraph({
   };
 
   useEffect(() => {
-    // Reset to first metric when view changes
+    // Reset to appropriate default metric based on view level
     const options = getMetricOptions();
     const allOptions = [
       ...options.baseOptions,
@@ -124,10 +112,45 @@ export function MultiYearGraph({
       ...options.operationsOptions,
       ...options.combinedOptions
     ];
-    if (allOptions.length > 0 && !allOptions.some(opt => opt.value === selectedMetric)) {
-      setStateSelectedMetric(allOptions[0].value);
+
+    // Set default metrics based on view level
+    const level = viewLevel as ViewLevel;
+    switch (level) {
+      case 'farm':
+        setStateSelectedMetric('totalCosts');
+        break;
+      case 'crop':
+        // For crop view, prefer grossMargin or first available metric
+        if (!allOptions.some(opt => opt.value === selectedMetric)) {
+          const defaultMetric = allOptions.find(opt => opt.value === 'grossMargin') || allOptions[0];
+          if (defaultMetric) {
+            setStateSelectedMetric(defaultMetric.value);
+          }
+        }
+        break;
+      case 'field':
+        // For field view, prefer yield or first available metric
+        if (!allOptions.some(opt => opt.value === selectedMetric)) {
+          const defaultMetric = allOptions.find(opt => opt.value === 'yield') || allOptions[0];
+          if (defaultMetric) {
+            setStateSelectedMetric(defaultMetric.value);
+          }
+        }
+        break;
     }
-  }, [selectedView, selectedTab]);
+  }, [selectedView, selectedTab, viewLevel, selectedMetric]);
+
+  // If we're in farm view, render the FarmOverviewCharts component
+  if (viewLevel === 'farm') {
+    return (
+      <FarmOverviewCharts
+        selectedYears={selectedYears}
+        selectedUnit={selectedUnit}
+        selectedMetric={selectedMetric}
+        costFilters={costFilters}
+      />
+    );
+  }
 
   const getMetricValue = (metric: MetricType, year: Year, unit: UnitType): number => {
     switch (metric) {
@@ -206,7 +229,18 @@ export function MultiYearGraph({
       
       selectedCrops.forEach((crop, cropIndex) => {
         validYears.forEach(year => {
-          const value = Math.random() * 5000 + 500; // Random value between 500 and 5500
+          // Get actual metric value instead of random value
+          let value = 0;
+          
+          if (isBasicMetric(selectedMetric)) {
+            value = getValue(selectedMetric, year, selectedUnit, crop);
+          } else if (selectedMetric === 'variableCosts') {
+            value = getVariableCosts(year, selectedUnit, crop);
+          } else if (selectedMetric === 'operationsCosts') {
+            value = getOperationsCosts(year, selectedUnit, crop);
+          } else if (selectedMetric === 'totalCosts') {
+            value = getTotalCosts(year, selectedUnit, crop);
+          }
           
           scatterData.push({
             x: cropIndex,
