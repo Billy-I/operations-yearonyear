@@ -3,15 +3,12 @@ import {
   BarChart, Bar, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ZAxis, Cell
 } from 'recharts';
-import { ViewType, UnitType, Year, ChemicalBreakdown, TabType, MetricsData } from '../../types/analytics';
+import { ViewType, UnitType, Year, ChemicalBreakdown, TabType, MetricType, ViewLevel } from '../../types/analytics';
 import { metricsData } from '../../data/metricsData';
 import { fieldsData } from '../../data/fieldData';
-import { getValue, getVariableCosts, getOperationsCosts, getTotalCosts } from '../../utils/metricsCalculations';
+import { getVariableCosts, getOperationsCosts } from '../../utils/metricsCalculations';
 import { AVAILABLE_CROPS } from '../../constants/analytics';
-
-type BasicMetricType = Exclude<keyof MetricsData, 'chemicalBreakdown'>;
-type CompositeMetricType = 'variableCosts' | 'operationsCosts' | 'totalCosts';
-type DataMetricType = BasicMetricType | CompositeMetricType;
+import { FarmOverviewCharts } from './FarmOverviewCharts';
 
 const CHEMICAL_COLORS = {
   traceElement: '#1F2937',  // Darkest gray
@@ -20,10 +17,10 @@ const CHEMICAL_COLORS = {
   adjuvant: '#9CA3AF'       // Light gray
 };
 
-interface CostFilters {
-  variable?: boolean;
-  operations?: boolean;
-}
+type CostFilters = {
+  variable: boolean;
+  operations: boolean;
+};
 
 // Year colors for scatter chart
 const YEAR_COLORS = {
@@ -41,14 +38,14 @@ interface MultiYearGraphProps {
   selectedUnit: UnitType;
   selectedTab?: TabType;
   selectedField?: string;
-  selectedCrop?: typeof AVAILABLE_CROPS[number];
   selectedCrops: (typeof AVAILABLE_CROPS[number])[];
-  costFilters?: CostFilters;
-  selectedMetric?: DataMetricType;
+  costFilters: CostFilters;
+  selectedMetric?: MetricType;
+  viewLevel?: ViewLevel;
 }
 
-const isBasicMetric = (metric: DataMetricType): metric is BasicMetricType => {
-  return metric !== 'variableCosts' && metric !== 'operationsCosts' && metric !== 'totalCosts';
+const isBasicMetric = (metric: MetricType): metric is Exclude<MetricType, 'variableCosts' | 'operationsCosts' | 'totalCosts' | 'chemicalBreakdown'> => {
+  return !['variableCosts', 'operationsCosts', 'totalCosts', 'chemicalBreakdown'].includes(metric);
 };
 
 export function MultiYearGraph({
@@ -57,24 +54,35 @@ export function MultiYearGraph({
   selectedUnit,
   selectedTab = 'comparison',
   selectedField,
-  selectedCrop,
   selectedCrops,
-  costFilters = { variable: true, operations: true },
-  selectedMetric: propSelectedMetric
+  costFilters,
+  selectedMetric: propSelectedMetric,
+  viewLevel = 'crop'
 }: MultiYearGraphProps) {
-  const [stateSelectedMetric, setStateSelectedMetric] = useState<DataMetricType>('costOfProduction');
-  // Use the prop value if provided, otherwise use the state value
+  const [stateSelectedMetric, setStateSelectedMetric] = useState<MetricType>('costOfProduction');
   const selectedMetric = propSelectedMetric || stateSelectedMetric;
+
+  // If we're in farm view, render the FarmOverviewCharts component
+  if (viewLevel === 'farm') {
+    return (
+      <FarmOverviewCharts
+        selectedYears={selectedYears}
+        selectedUnit={selectedUnit}
+        selectedMetric={selectedMetric}
+        costFilters={costFilters}
+      />
+    );
+  }
 
   const getMetricOptions = () => {
     // Base options that are always shown
-    const baseOptions: { value: DataMetricType; label: string }[] = [
+    const baseOptions: { value: MetricType; label: string }[] = [
       { value: 'production', label: 'Production' },
       { value: 'yield', label: 'Yield' }
     ];
 
     // Options for Input Costs (formerly Variable Costs)
-    const variableOptions: { value: DataMetricType; label: string }[] = costFilters.variable ? [
+    const variableOptions: { value: MetricType; label: string }[] = costFilters.variable ? [
       { value: 'costOfProduction', label: 'Cost of Production' },
       { value: 'seed', label: 'Seed' },
       { value: 'fertiliser', label: 'Fertiliser' },
@@ -84,7 +92,7 @@ export function MultiYearGraph({
     ] : [];
 
     // Options for Operation Costs
-    const operationsOptions: { value: DataMetricType; label: string }[] = costFilters.operations ? [
+    const operationsOptions: { value: MetricType; label: string }[] = costFilters.operations ? [
       { value: 'cultivating', label: 'Cultivating' },
       { value: 'drilling', label: 'Drilling' },
       { value: 'applications', label: 'Applications' },
@@ -94,12 +102,11 @@ export function MultiYearGraph({
     ] : [];
 
     // Combined options that require both filters
-    const combinedOptions: { value: DataMetricType; label: string }[] = (costFilters.variable && costFilters.operations) ? [
+    const combinedOptions: { value: MetricType; label: string }[] = (costFilters.variable && costFilters.operations) ? [
       { value: 'totalCosts', label: 'Total Costs' },
       { value: 'netMargin', label: 'Net Margin' }
     ] : [];
 
-    // Return categorized options
     return {
       baseOptions,
       variableOptions,
@@ -122,7 +129,7 @@ export function MultiYearGraph({
     }
   }, [selectedView, selectedTab]);
 
-  const getMetricValue = (metric: DataMetricType, year: Year, unit: UnitType): number => {
+  const getMetricValue = (metric: MetricType, year: Year, unit: UnitType): number => {
     switch (metric) {
       case 'variableCosts':
         return costFilters.variable ? getVariableCosts(year, unit) : 0;
@@ -132,8 +139,10 @@ export function MultiYearGraph({
         const variableCosts = costFilters.variable ? getVariableCosts(year, unit) : 0;
         const operationsCosts = costFilters.operations ? getOperationsCosts(year, unit) : 0;
         return variableCosts + operationsCosts;
+      case 'chemicalBreakdown':
+        return 0; // This is a special case that should be handled separately
       default:
-        if (isBasicMetric(metric) && metric in metricsData) {
+        if (metric in metricsData) {
           const metricData = metricsData[metric];
           // Check if this metric should be shown based on active filters
           const isVariableMetric = ['costOfProduction', 'seed', 'fertiliser', 'chemicals', 'grossMargin'].includes(metric);
@@ -165,14 +174,12 @@ export function MultiYearGraph({
       if (!fieldData) return [];
 
       return validYears.map(year => {
-        const yearKey = year as Year;
         const isInvalidField = selectedField === 'field1' && year === '2021';
         
         return {
           year,
-          'Field Value': isInvalidField ? null : fieldData.metrics[yearKey][selectedMetric as keyof typeof fieldData.metrics[Year]],
-          'Farm Average': isInvalidField ? null :
-            isBasicMetric(selectedMetric) ? getValue(selectedMetric, yearKey, selectedUnit) : getMetricValue(selectedMetric, yearKey, selectedUnit)
+          'Field Value': isInvalidField ? null : fieldData.metrics[year][selectedMetric as keyof typeof fieldData.metrics[Year]],
+          'Farm Average': isInvalidField ? null : getMetricValue(selectedMetric, year, selectedUnit)
         };
       });
     }
@@ -195,14 +202,10 @@ export function MultiYearGraph({
 
     // Multi-crop view (scatter chart)
     if (selectedCrops.length > 1) {
-      // For scatter chart, we need data in format: { x: cropIndex, y: value, crop: cropName, year: year }
       const scatterData: Array<{ x: number, y: number, crop: string, year: string }> = [];
       
       selectedCrops.forEach((crop, cropIndex) => {
         validYears.forEach(year => {
-          const yearKey = year as Year;
-          // Mock data - in a real app, you would fetch actual data for each crop
-          // This would need to be replaced with actual data fetching logic
           const value = Math.random() * 5000 + 500; // Random value between 500 and 5500
           
           scatterData.push({
@@ -234,7 +237,6 @@ export function MultiYearGraph({
 
   return (
     <div className="mt-6">
-
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
           {selectedCrops.length > 1 ? (
@@ -274,21 +276,16 @@ export function MultiYearGraph({
                 }}
                 labelFormatter={() => ''}
               />
-              <Legend
-                formatter={(value, entry, index) => {
-                  // Return year for the legend
-                  return value;
-                }}
-              />
-              {selectedYears.map((year, index) => (
+              <Legend />
+              {selectedYears.map(year => (
                 <Scatter
                   key={year}
                   name={year}
                   data={getData().filter(item => item.year === year)}
                   fill={YEAR_COLORS[year as keyof typeof YEAR_COLORS] || '#000000'}
                 >
-                  {getData().filter(item => item.year === year).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={YEAR_COLORS[year as keyof typeof YEAR_COLORS] || '#000000'} />
+                  {getData().filter(item => item.year === year).map((_, i) => (
+                    <Cell key={`cell-${i}`} fill={YEAR_COLORS[year as keyof typeof YEAR_COLORS] || '#000000'} />
                   ))}
                 </Scatter>
               ))}

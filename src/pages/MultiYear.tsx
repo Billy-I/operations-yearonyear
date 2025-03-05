@@ -340,7 +340,27 @@ export default function MultiYear() {
                 </div>
 
                 {/* Main visualization components */}
-                {(viewLevel === 'crop' && selectedCrops.length === 1) || viewLevel === 'field' ? (
+                {viewLevel === 'farm' ? (
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-end space-x-4">
+                      {/* Metrics Selector for Farm Overview */}
+                      <div>
+                        <label className="text-sm text-gray-600 mb-2 block">Metrics</label>
+                        <select
+                          value={selectedComparisonMetric}
+                          onChange={(e) => setSelectedComparisonMetric(e.target.value as DataMetricType)}
+                          className="bg-gray-50 px-3 py-2 rounded-md"
+                        >
+                          <option value="variableCosts">Total Input Costs</option>
+                          <option value="operationsCosts">Total Operations Costs</option>
+                          <option value="totalCosts">Total Costs (Inputs + Operations)</option>
+                          <option value="grossMargin">Gross Margin</option>
+                          <option value="netMargin">Net Margin</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                ) : (viewLevel === 'crop' && selectedCrops.length === 1) || viewLevel === 'field' ? (
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-end space-x-4">
                       {/* Metrics Selector */}
@@ -391,10 +411,10 @@ export default function MultiYear() {
                     selectedUnit={selectedUnit}
                     selectedTab={viewLevel === 'field' ? 'rotation' : 'comparison'}
                     selectedField={viewLevel === 'field' ? (selectedEntity || selectedField) : undefined}
-                    selectedCrop={selectedCrop}
                     selectedCrops={selectedCrops}
-                    costFilters={costFilters}
+                    costFilters={{ variable: true, operations: true }}
                     selectedMetric={selectedComparisonMetric}
+                    viewLevel={viewLevel}
                   />
                   
                   {viewLevel === 'field' ? (
