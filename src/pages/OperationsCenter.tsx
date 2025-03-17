@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { initialData } from '../data';
-import { OperationsData, Operation } from '../types';
+import { OperationsData, Operation, Template, FilterCombination } from '../types';
 import OperationRow from '../components/OperationRow';
 import Modal from '../components/Modal';
 import { Plus, Save, X, RotateCcw } from 'lucide-react';
 import AddOperationPanel from '../components/AddOperationPanel';
+import TemplateManagement from '../components/TemplateManagement';
+import { v4 as uuidv4 } from 'uuid';
 
 interface FilterOption {
   label: string;
@@ -43,8 +45,70 @@ const filterOptions: FilterOption[] = [
 ];
 
 export default function OperationsCenter() {
-  const [data, setData] = useState<OperationsData>(initialData);
-  const [originalData, setOriginalData] = useState<OperationsData>(initialData);
+  // Clear localStorage for templates to start fresh
+  useEffect(() => {
+    localStorage.removeItem('operationsTemplates');
+    localStorage.removeItem('lastUsedTemplate');
+  }, []);
+
+  // Template management state
+  const [templates, setTemplates] = useState<Template[]>([
+    {
+      id: 'yagro-default-readonly',
+      name: 'Yagro baseline Read only',
+      isDefault: true,
+      isEditable: false,
+      data: initialData,
+      filterCombinations: [
+        {
+          id: 'default-combination-readonly',
+          name: 'Default View',
+          selectedCrop: 'All crops',
+          selectedFilter: 'none',
+          selectedSubFilters: []
+        }
+      ],
+      activeFilterCombinationId: 'default-combination-readonly'
+    },
+    {
+      id: 'yagro-default-editable',
+      name: 'Yagro baseline',
+      isDefault: true,
+      isEditable: true,
+      data: initialData,
+      filterCombinations: [
+        {
+          id: 'default-combination-editable',
+          name: 'Default View',
+          selectedCrop: 'All crops',
+          selectedFilter: 'none',
+          selectedSubFilters: []
+        }
+      ],
+      activeFilterCombinationId: 'default-combination-editable'
+    }
+  ]);
+  
+  // Always start with the editable Yagro baseline template
+  const [currentTemplateId, setCurrentTemplateId] = useState<string>('yagro-default-editable');
+
+  // Get the current template
+  const currentTemplate = templates.find(t => t.id === currentTemplateId) || templates[0];
+  
+  // Get the active filter combination
+  const getActiveFilterCombination = (template: Template) => {
+    if (!template.activeFilterCombinationId || !template.filterCombinations.length) {
+      return template.filterCombinations[0];
+    }
+    return template.filterCombinations.find(fc => fc.id === template.activeFilterCombinationId) ||
+           template.filterCombinations[0];
+  };
+  
+  const activeFilterCombination = currentTemplate ? getActiveFilterCombination(currentTemplate) : null;
+  
+  // Ensure we have valid data by using initialData as a fallback
+  const [data, setData] = useState<OperationsData>(currentTemplate?.data || initialData);
+  const [originalData, setOriginalData] = useState<OperationsData>(currentTemplate?.data || initialData);
   const [modifiedOperations, setModifiedOperations] = useState<{
     category: keyof OperationsData;
     index: number | null;
@@ -53,18 +117,17 @@ export default function OperationsCenter() {
   const [hasChanges, setHasChanges] = useState(false);
   const [hasSavedChanges, setHasSavedChanges] = useState(false);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<'yagro' | 'custom'>('custom');
-  const [selectedCrop, setSelectedCrop] = useState<string>('All crops');
-  const [originalSelectedCrop, setOriginalSelectedCrop] = useState<string>('All crops');
-  const [selectedFilter, setSelectedFilter] = useState<string>('none');
-  const [originalFilter, setOriginalFilter] = useState<string>('none');
-  const [selectedSubFilters, setSelectedSubFilters] = useState<string[]>([]);
-  const [originalSubFilters, setOriginalSubFilters] = useState<string[]>([]);
+  const [selectedCrop, setSelectedCrop] = useState<string>(activeFilterCombination?.selectedCrop || 'All crops');
+  const [originalSelectedCrop, setOriginalSelectedCrop] = useState<string>(activeFilterCombination?.selectedCrop || 'All crops');
+  const [selectedFilter, setSelectedFilter] = useState<string>(activeFilterCombination?.selectedFilter || 'none');
+  const [originalFilter, setOriginalFilter] = useState<string>(activeFilterCombination?.selectedFilter || 'none');
+  const [selectedSubFilters, setSelectedSubFilters] = useState<string[]>(activeFilterCombination?.selectedSubFilters || []);
+  const [originalSubFilters, setOriginalSubFilters] = useState<string[]>(activeFilterCombination?.selectedSubFilters || []);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [showResetOptions, setShowResetOptions] = useState(false);
   const [showResetFilterConfirmation, setShowResetFilterConfirmation] = useState(false);
   const [showResetTableConfirmation, setShowResetTableConfirmation] = useState(false);
-  const [showSubFilters, setShowSubFilters] = useState(false);
+  const [showSubFilters, setShowSubFilters] = useState((activeFilterCombination?.selectedFilter || 'none') !== 'none');
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const [addOperationPanel, setAddOperationPanel] = useState<{
     isOpen: boolean;
@@ -83,25 +146,23 @@ export default function OperationsCenter() {
     index: null,
   });
 
+  // Save templates to localStorage whenever they change
   useEffect(() => {
-    // Only load from localStorage if we explicitly want to restore a previous session
-    const shouldRestoreSession = false; // This ensures we always use initialData on fresh load
-    const savedData = localStorage.getItem('operationsData');
-    if (shouldRestoreSession && savedData) {
-      const parsedData = JSON.parse(savedData);
-      setData(parsedData);
-      setOriginalData(parsedData);
-    }
-  }, []);
+    localStorage.setItem('operationsTemplates', JSON.stringify(templates));
+  }, [templates]);
+
+  // Save last used template
+  useEffect(() => {
+    localStorage.setItem('lastUsedTemplate', currentTemplateId);
+  }, [currentTemplateId]);
 
   useEffect(() => {
-    const hasDataChanged = JSON.stringify(data) !== JSON.stringify(originalData);
+    const hasDataChanged = JSON.stringify(data) !== JSON.stringify(originalData) ||
+                          selectedCrop !== originalSelectedCrop ||
+                          selectedFilter !== originalFilter ||
+                          JSON.stringify(selectedSubFilters) !== JSON.stringify(originalSubFilters);
     setHasChanges(hasDataChanged);
-  }, [data, originalData]);
-
-  useEffect(() => {
-    localStorage.setItem('operationsData', JSON.stringify(data));
-  }, [data]);
+  }, [data, originalData, selectedCrop, originalSelectedCrop, selectedFilter, originalFilter, selectedSubFilters, originalSubFilters]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -117,9 +178,55 @@ export default function OperationsCenter() {
   }, []);
 
   const handleSaveChanges = () => {
-    localStorage.setItem('operationsData', JSON.stringify(data));
+    if (!currentTemplate) return;
+    
+    // Create or update the filter combination
+    const newFilterCombination: FilterCombination = {
+      id: uuidv4(),
+      name: `Filter ${new Date().toLocaleDateString()}`,
+      selectedCrop,
+      selectedFilter,
+      selectedSubFilters: [...selectedSubFilters]
+    };
+    
+    // Check if there's a filter combination with the same settings
+    const existingFilterCombination = currentTemplate.filterCombinations.find(fc =>
+      fc.selectedCrop === selectedCrop &&
+      fc.selectedFilter === selectedFilter &&
+      JSON.stringify(fc.selectedSubFilters) === JSON.stringify(selectedSubFilters)
+    );
+    
+    let updatedFilterCombinations;
+    let activeFilterCombinationId;
+    
+    if (existingFilterCombination) {
+      // Use the existing filter combination
+      updatedFilterCombinations = currentTemplate.filterCombinations;
+      activeFilterCombinationId = existingFilterCombination.id;
+    } else {
+      // Add a new filter combination
+      updatedFilterCombinations = [...currentTemplate.filterCombinations, newFilterCombination];
+      activeFilterCombinationId = newFilterCombination.id;
+    }
+    
+    // Update the current template with the changes
+    const updatedTemplate: Template = {
+      ...currentTemplate,
+      data: JSON.parse(JSON.stringify(data)),
+      filterCombinations: updatedFilterCombinations,
+      activeFilterCombinationId
+    };
+    
+    // Update the templates array
+    setTemplates(prev =>
+      prev.map(t => t.id === currentTemplateId ? updatedTemplate : t)
+    );
+    
+    // Update local state
     setOriginalData(data);
     setOriginalSelectedCrop(selectedCrop);
+    setOriginalFilter(selectedFilter);
+    setOriginalSubFilters([...selectedSubFilters]);
     setHasChanges(false);
     setHasSavedChanges(true);
   };
@@ -405,8 +512,271 @@ export default function OperationsCenter() {
     );
   };
 
+  // Template management functions
+  const handleSelectTemplate = (template: Template) => {
+    // Update the templates array with the new template
+    setTemplates(prev =>
+      prev.map(t => t.id === template.id ? template : t)
+    );
+    
+    setCurrentTemplateId(template.id);
+    setData(template.data);
+    setOriginalData(template.data);
+    
+    // Get the active filter combination
+    const activeFilterCombination = getActiveFilterCombination(template);
+    
+    if (activeFilterCombination) {
+      setSelectedCrop(activeFilterCombination.selectedCrop);
+      setOriginalSelectedCrop(activeFilterCombination.selectedCrop);
+      setSelectedFilter(activeFilterCombination.selectedFilter);
+      setOriginalFilter(activeFilterCombination.selectedFilter);
+      setSelectedSubFilters(activeFilterCombination.selectedSubFilters);
+      setOriginalSubFilters(activeFilterCombination.selectedSubFilters);
+      setShowSubFilters(activeFilterCombination.selectedFilter !== 'none');
+    }
+    
+    setHasChanges(false);
+    setHasSavedChanges(false);
+  };
+
+  const handleSaveTemplate = (name: string, saveAsNew: boolean) => {
+    // Create a new filter combination with current state
+    const newFilterCombination: FilterCombination = {
+      id: uuidv4(),
+      name: `Filter ${new Date().toLocaleDateString()}`,
+      selectedCrop,
+      selectedFilter,
+      selectedSubFilters: [...selectedSubFilters]
+    };
+
+    // Create or update the template
+    let templateData: Template;
+    
+    if (saveAsNew) {
+      // Create a new template
+      templateData = {
+        id: uuidv4(),
+        name: name,
+        isDefault: false,
+        isEditable: true,
+        data: JSON.parse(JSON.stringify(data)),
+        filterCombinations: [newFilterCombination],
+        activeFilterCombinationId: newFilterCombination.id
+      };
+      
+      // Add new template
+      setTemplates(prev => [...prev, templateData]);
+      setCurrentTemplateId(templateData.id);
+    } else {
+      // Update existing template
+      const existingTemplate = templates.find(t => t.id === currentTemplateId);
+      if (!existingTemplate) return;
+      
+      // Check if there's a filter combination with the same settings
+      const existingFilterCombination = existingTemplate.filterCombinations.find(fc =>
+        fc.selectedCrop === selectedCrop &&
+        fc.selectedFilter === selectedFilter &&
+        JSON.stringify(fc.selectedSubFilters) === JSON.stringify(selectedSubFilters)
+      );
+      
+      if (existingFilterCombination) {
+        // Update the existing filter combination
+        templateData = {
+          ...existingTemplate,
+          name: name,
+          data: JSON.parse(JSON.stringify(data)),
+          activeFilterCombinationId: existingFilterCombination.id
+        };
+      } else {
+        // Add a new filter combination
+        templateData = {
+          ...existingTemplate,
+          name: name,
+          data: JSON.parse(JSON.stringify(data)),
+          filterCombinations: [...existingTemplate.filterCombinations, newFilterCombination],
+          activeFilterCombinationId: newFilterCombination.id
+        };
+      }
+      
+      // Update the template
+      setTemplates(prev =>
+        prev.map(t => t.id === currentTemplateId ? templateData : t)
+      );
+    }
+
+    // Reset change tracking
+    setOriginalData(data);
+    setOriginalSelectedCrop(selectedCrop);
+    setOriginalFilter(selectedFilter);
+    setOriginalSubFilters([...selectedSubFilters]);
+    setHasChanges(false);
+    setHasSavedChanges(true);
+  };
+
+  const handleDeleteTemplate = (templateId: string) => {
+    // Don't allow deleting the default template
+    const templateToDelete = templates.find(t => t.id === templateId);
+    if (!templateToDelete || templateToDelete.isDefault) return;
+
+    // Remove the template
+    setTemplates(prev => prev.filter(t => t.id !== templateId));
+
+    // If the current template is being deleted, switch to the default template
+    if (currentTemplateId === templateId) {
+      const defaultTemplate = templates.find(t => t.isDefault) || templates[0];
+      handleSelectTemplate(defaultTemplate);
+    }
+  };
+
+  const handleRenameTemplate = (templateId: string, newName: string) => {
+    setTemplates(prev =>
+      prev.map(t => t.id === templateId ? { ...t, name: newName } : t)
+    );
+  };
+
+  const handleResetTemplate = (resetAllFilters: boolean) => {
+    if (!currentTemplate || !currentTemplate.isEditable) return;
+    
+    // Find the default template to get baseline data
+    const defaultTemplate = templates.find(t => t.isDefault);
+    if (!defaultTemplate) return;
+    
+    // Get the current template
+    const templateToUpdate = templates.find(t => t.id === currentTemplateId);
+    if (!templateToUpdate) return;
+    
+    if (resetAllFilters) {
+      // Reset all filter combinations to use the default template data
+      const updatedTemplate = {
+        ...templateToUpdate,
+        data: JSON.parse(JSON.stringify(defaultTemplate.data))
+      };
+      
+      // Update the templates array
+      setTemplates(prev =>
+        prev.map(t => t.id === currentTemplateId ? updatedTemplate : t)
+      );
+      
+      // Update the current data
+      setData(updatedTemplate.data);
+      setOriginalData(updatedTemplate.data);
+    } else {
+      // Reset only the current filter combination
+      // Create a new data object with the current filter's data reset to default
+      const newData = JSON.parse(JSON.stringify(data));
+      
+      // Get the categories to reset
+      const categories: (keyof OperationsData)[] = ['cultivation', 'drilling', 'application', 'harvesting', 'other'];
+      
+      // Reset each category's data for the current crop
+      categories.forEach(category => {
+        const defaultOperation = defaultTemplate.data[category] as Operation;
+        const currentOperation = newData[category] as Operation;
+        
+        if (defaultOperation?.cropData?.[selectedCrop] && currentOperation) {
+          // Reset the main category data
+          currentOperation.cropData = {
+            ...currentOperation.cropData,
+            [selectedCrop]: JSON.parse(JSON.stringify(defaultOperation.cropData[selectedCrop]))
+          };
+          
+          // Reset sub-operations if they exist
+          if (defaultOperation.subOperations && currentOperation.subOperations) {
+            currentOperation.subOperations = currentOperation.subOperations.map(subOp => {
+              if (subOp.cropData?.[selectedCrop]) {
+                const defaultSubOp = defaultOperation.subOperations?.find(op => op.name === subOp.name);
+                if (defaultSubOp?.cropData?.[selectedCrop]) {
+                  return {
+                    ...subOp,
+                    cropData: {
+                      ...subOp.cropData,
+                      [selectedCrop]: JSON.parse(JSON.stringify(defaultSubOp.cropData[selectedCrop]))
+                    }
+                  };
+                }
+              }
+              return subOp;
+            });
+          }
+        }
+      });
+      
+      // Recalculate totals
+      const totals = calculateTotalAverages(newData, selectedCrop);
+      const finalData = {
+        ...newData,
+        totalAverageCost: totals.totalAverageCost,
+        totalCost: totals.totalCost
+      };
+      
+      // Update the current template with the reset data
+      const updatedTemplate = {
+        ...templateToUpdate,
+        data: finalData
+      };
+      
+      // Update the templates array
+      setTemplates(prev =>
+        prev.map(t => t.id === currentTemplateId ? updatedTemplate : t)
+      );
+      
+      // Update the current data
+      setData(finalData);
+      setOriginalData(finalData);
+    }
+    
+    // Reset modified operations tracking
+    setModifiedOperations([]);
+    setHasChanges(false);
+    setHasSavedChanges(false);
+  };
+
+  const handleDeleteFilterCombination = (filterId: string) => {
+    if (!currentTemplate || !currentTemplate.isEditable) return;
+    
+    // Find the template to update
+    const templateToUpdate = templates.find(t => t.id === currentTemplateId);
+    if (!templateToUpdate) return;
+    
+    // Remove the filter combination
+    const updatedFilterCombinations = templateToUpdate.filterCombinations.filter(
+      fc => fc.id !== filterId
+    );
+    
+    // If there are no filter combinations left, we can't delete it
+    if (updatedFilterCombinations.length === 0) return;
+    
+    // Update the template
+    const updatedTemplate = {
+      ...templateToUpdate,
+      filterCombinations: updatedFilterCombinations,
+      // If the active filter was deleted, set the first one as active
+      activeFilterCombinationId: templateToUpdate.activeFilterCombinationId === filterId
+        ? updatedFilterCombinations[0].id
+        : templateToUpdate.activeFilterCombinationId
+    };
+    
+    // Update the templates array
+    setTemplates(prev =>
+      prev.map(t => t.id === currentTemplateId ? updatedTemplate : t)
+    );
+    
+    // If the active filter was deleted, update the UI state
+    if (templateToUpdate.activeFilterCombinationId === filterId) {
+      const newActiveFilter = updatedFilterCombinations[0];
+      setSelectedCrop(newActiveFilter.selectedCrop);
+      setOriginalSelectedCrop(newActiveFilter.selectedCrop);
+      setSelectedFilter(newActiveFilter.selectedFilter);
+      setOriginalFilter(newActiveFilter.selectedFilter);
+      setSelectedSubFilters(newActiveFilter.selectedSubFilters);
+      setOriginalSubFilters(newActiveFilter.selectedSubFilters);
+      setShowSubFilters(newActiveFilter.selectedFilter !== 'none');
+    }
+  };
+
   const confirmDelete = (category: keyof OperationsData, index: number) => {
-    if (selectedTemplate === 'yagro') return;
+    if (!currentTemplate.isEditable) return;
     setDeleteModal({ isOpen: true, category, index });
   };
 
@@ -497,17 +867,10 @@ export default function OperationsCenter() {
     setDeleteModal({ isOpen: false, category: 'cultivation', index: null });
   };
 
-  const handleTemplateChange = (template: 'yagro' | 'custom') => {
-    setSelectedTemplate(template);
-    if (template === 'yagro') {
-      setData(initialData);
-      // Clear localStorage when switching to Yagro template
-      localStorage.removeItem('operationsData');
-    }
-  };
+  // This function is no longer needed as we use handleSelectTemplate instead
 
   const updateMainCategoryCost = (category: keyof OperationsData, newCost: number) => {
-    if (selectedTemplate === 'yagro') return;
+    if (!currentTemplate.isEditable) return;
     
     // Store original value if this is the first change
     const operation = data[category] as Operation;
@@ -562,7 +925,7 @@ export default function OperationsCenter() {
   };
 
   const updateSubOperationCost = (category: keyof OperationsData, index: number, newCost: number) => {
-    if (selectedTemplate === 'yagro') return;
+    if (!currentTemplate.isEditable) return;
     
     // Store original value if this is the first change
     const operation = data[category] as Operation;
@@ -686,15 +1049,13 @@ export default function OperationsCenter() {
   };
 
   const confirmResetTable = () => {
-    // Clear localStorage to ensure we start fresh
-    localStorage.removeItem('operationsData');
+    // Find the default template
+    const defaultTemplate = templates.find(t => t.isDefault) || templates[0];
     
-    setData(initialData);
-    setOriginalData(initialData);
-    setSelectedCrop('All crops');
-    setOriginalSelectedCrop('All crops');
-    setSelectedFilter('none');
-    setSelectedSubFilters([]);
+    // Switch to the default template
+    handleSelectTemplate(defaultTemplate);
+    
+    // Reset UI state
     setHasChanges(false);
     setHasSavedChanges(false);
     setShowResetTableConfirmation(false);
@@ -728,7 +1089,7 @@ export default function OperationsCenter() {
           onToggle={() => toggleSection(category)}
           isExpandable={!!displayOperation.subOperations?.length}
           onUpdateCost={(newCost) => updateMainCategoryCost(category, newCost)}
-          isEditable={selectedTemplate === 'custom'}
+          isEditable={currentTemplate.isEditable}
         />
         
         {expandedSections.includes(category) && (
@@ -738,13 +1099,13 @@ export default function OperationsCenter() {
                 <OperationRow 
                   operation={op}
                   isSubOperation={true}
-                  onDelete={selectedTemplate === 'custom' ? () => confirmDelete(category, i) : undefined}
+                  onDelete={currentTemplate.isEditable ? () => confirmDelete(category, i) : undefined}
                   onUpdateCost={(newCost) => updateSubOperationCost(category, i, newCost)}
-                  isEditable={selectedTemplate === 'custom'}
+                  isEditable={currentTemplate.isEditable}
                 />
               </div>
             ))}
-            {selectedTemplate === 'custom' && (
+            {currentTemplate.isEditable && (
               <div className="bg-gray-50 pl-8 pr-4 py-2 border-b border-gray-200">
                 <button
                   onClick={() => setAddOperationPanel({ isOpen: true, category })}
@@ -771,26 +1132,6 @@ export default function OperationsCenter() {
           <select className="border border-gray-300 rounded-md p-2">
             <option>2024</option>
           </select>
-          <div className="flex gap-2">
-            {hasChanges && selectedTemplate === 'custom' && (
-              <>
-                <button
-                  onClick={handleCancelChanges}
-                  className="flex items-center px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  <X size={16} className="mr-2" />
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveChanges}
-                  className="flex items-center px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                >
-                  <Save size={16} className="mr-2" />
-                  Save Changes
-                </button>
-              </>
-            )}
-          </div>
         </div>
       </div>
 
@@ -799,17 +1140,21 @@ export default function OperationsCenter() {
           <div className="grid grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">View/Template</label>
-              <select 
-                className="w-full border border-gray-300 rounded-md p-2"
-                value={selectedTemplate}
-                onChange={(e) => handleTemplateChange(e.target.value as 'yagro' | 'custom')}
-              >
-                <option value="custom">Custom Baseline (Editable)</option>
-                <option value="yagro">Yagro Baseline (Read-only)</option>
-              </select>
+              <TemplateManagement
+                templates={templates}
+                currentTemplate={currentTemplate}
+                onSelectTemplate={handleSelectTemplate}
+                onSaveTemplate={handleSaveTemplate}
+                onDeleteTemplate={handleDeleteTemplate}
+                onRenameTemplate={handleRenameTemplate}
+                onDeleteFilterCombination={handleDeleteFilterCombination}
+                onResetTemplate={handleResetTemplate}
+                onCancelChanges={handleCancelChanges}
+                hasChanges={hasChanges}
+              />
               <p className="mt-1 text-sm text-gray-500">
-                {selectedTemplate === 'yagro' 
-                  ? 'This template is read-only' 
+                {!currentTemplate.isEditable
+                  ? 'This template is read-only'
                   : 'You can edit costs in this template'}
               </p>
             </div>
@@ -820,9 +1165,9 @@ export default function OperationsCenter() {
                 value={selectedCrop}
                 onChange={(e) => handleCropChange(e.target.value)}
               >
-                {Object.keys(data.crops).map(crop => (
+                {data && data.crops ? Object.keys(data.crops).map(crop => (
                   <option key={crop} value={crop}>{crop}</option>
-                ))}
+                )) : null}
               </select>
             </div>
             <div className="relative" ref={filterDropdownRef}>
@@ -923,7 +1268,7 @@ export default function OperationsCenter() {
           <div className="grid grid-cols-3 gap-8">
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="text-sm text-gray-600 mb-1">Hectares</div>
-              <div className="text-2xl font-bold">{data.crops[selectedCrop]?.hectares || 0}</div>
+              <div className="text-2xl font-bold">{data && data.crops && data.crops[selectedCrop]?.hectares || 0}</div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="text-sm text-gray-600 mb-1">Cost (£/ha)</div>
