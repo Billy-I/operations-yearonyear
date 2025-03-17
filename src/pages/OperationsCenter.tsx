@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { initialData } from '../data';
-import { OperationsData, Operation, Template, FilterCombination } from '../types';
+import { OperationsData, Operation, Template, FilterCombination, EntityAssignment } from '../types';
 import OperationRow from '../components/OperationRow';
 import Modal from '../components/Modal';
 import { Plus, Save, X, RotateCcw } from 'lucide-react';
@@ -59,6 +59,14 @@ export default function OperationsCenter() {
       isDefault: true,
       isEditable: false,
       data: initialData,
+      assignments: [
+        {
+          id: 'default-assignment-readonly',
+          entityType: 'crop',
+          entityId: 'All crops',
+          entityName: 'All crops'
+        }
+      ],
       filterCombinations: [
         {
           id: 'default-combination-readonly',
@@ -68,7 +76,8 @@ export default function OperationsCenter() {
           selectedSubFilters: []
         }
       ],
-      activeFilterCombinationId: 'default-combination-readonly'
+      activeFilterCombinationId: 'default-combination-readonly',
+      activeAssignmentId: 'default-assignment-readonly'
     },
     {
       id: 'yagro-default-editable',
@@ -76,6 +85,14 @@ export default function OperationsCenter() {
       isDefault: true,
       isEditable: true,
       data: initialData,
+      assignments: [
+        {
+          id: 'default-assignment-editable',
+          entityType: 'crop',
+          entityId: 'All crops',
+          entityName: 'All crops'
+        }
+      ],
       filterCombinations: [
         {
           id: 'default-combination-editable',
@@ -85,7 +102,8 @@ export default function OperationsCenter() {
           selectedSubFilters: []
         }
       ],
-      activeFilterCombinationId: 'default-combination-editable'
+      activeFilterCombinationId: 'default-combination-editable',
+      activeAssignmentId: 'default-assignment-editable'
     }
   ]);
   
@@ -119,6 +137,28 @@ export default function OperationsCenter() {
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [selectedCrop, setSelectedCrop] = useState<string>(activeFilterCombination?.selectedCrop || 'All crops');
   const [originalSelectedCrop, setOriginalSelectedCrop] = useState<string>(activeFilterCombination?.selectedCrop || 'All crops');
+  // New approach: track filters by category
+  const [selectedFilters, setSelectedFilters] = useState<{[category: string]: string[]}>(() => {
+    // Initialize from active filter combination
+    if (activeFilterCombination?.selectedFilter && activeFilterCombination.selectedFilter !== 'none') {
+      return {
+        [activeFilterCombination.selectedFilter]: activeFilterCombination.selectedSubFilters || []
+      };
+    }
+    return {};
+  });
+  
+  const [originalFilters, setOriginalFilters] = useState<{[category: string]: string[]}>(() => {
+    // Initialize from active filter combination
+    if (activeFilterCombination?.selectedFilter && activeFilterCombination.selectedFilter !== 'none') {
+      return {
+        [activeFilterCombination.selectedFilter]: activeFilterCombination.selectedSubFilters || []
+      };
+    }
+    return {};
+  });
+  
+  // For backward compatibility
   const [selectedFilter, setSelectedFilter] = useState<string>(activeFilterCombination?.selectedFilter || 'none');
   const [originalFilter, setOriginalFilter] = useState<string>(activeFilterCombination?.selectedFilter || 'none');
   const [selectedSubFilters, setSelectedSubFilters] = useState<string[]>(activeFilterCombination?.selectedSubFilters || []);
@@ -159,10 +199,9 @@ export default function OperationsCenter() {
   useEffect(() => {
     const hasDataChanged = JSON.stringify(data) !== JSON.stringify(originalData) ||
                           selectedCrop !== originalSelectedCrop ||
-                          selectedFilter !== originalFilter ||
-                          JSON.stringify(selectedSubFilters) !== JSON.stringify(originalSubFilters);
+                          JSON.stringify(selectedFilters) !== JSON.stringify(originalFilters);
     setHasChanges(hasDataChanged);
-  }, [data, originalData, selectedCrop, originalSelectedCrop, selectedFilter, originalFilter, selectedSubFilters, originalSubFilters]);
+  }, [data, originalData, selectedCrop, originalSelectedCrop, selectedFilters, originalFilters]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -238,6 +277,9 @@ export default function OperationsCenter() {
   const confirmCancelChanges = () => {
     setData(originalData);
     setSelectedCrop(originalSelectedCrop);
+    setSelectedFilters(originalFilters);
+    setSelectedFilter(originalFilter);
+    setSelectedSubFilters(originalSubFilters);
     setHasChanges(false);
     setShowCancelConfirmation(false);
   };
@@ -247,6 +289,8 @@ export default function OperationsCenter() {
     setOriginalSelectedCrop(newCrop);
     
     // Reset filters
+    setSelectedFilters({});
+    setOriginalFilters({});
     setSelectedFilter('none');
     setSelectedSubFilters([]);
     setShowSubFilters(false);
@@ -267,14 +311,23 @@ export default function OperationsCenter() {
   };
 
   const handleFilterChange = (value: string) => {
+    // Store original values for change tracking
     if (selectedFilter === 'none') {
       setOriginalFilter(value);
       setOriginalSubFilters([]);
     }
+    
+    // Update the selected filter
     setSelectedFilter(value);
     
-    // Automatically select all applicable sub-filters for the current crop
-    if (value === 'end_use_market' && data.crops[selectedCrop]?.endUseMarket) {
+    // In the new UI, we don't automatically clear subfilters when changing filter types
+    // This makes the UI more intuitive when users can see all options at once
+    
+    // Special case for end_use_market - auto-select available filters if none are selected
+    if (value === 'end_use_market' &&
+        selectedSubFilters.length === 0 &&
+        data.crops[selectedCrop]?.endUseMarket) {
+      
       const availableFilters = Object.keys(data.crops[selectedCrop].endUseMarket);
       setSelectedSubFilters(availableFilters);
       
@@ -292,25 +345,28 @@ export default function OperationsCenter() {
       setData(finalData);
       setOriginalData(finalData);
     } else {
-      setSelectedSubFilters([]);
+      // For other filter types or when subfilters are already selected,
+      // we keep the current subfilters but recalculate hectares
       
-      // Reset to full hectares if changing away from end_use_market
-      if (value !== 'end_use_market') {
-        const fullHectares = data.crops[selectedCrop]?.hectares || 0;
-        const newData = updateDataWithFilteredHectares(data, selectedCrop, fullHectares);
-        const totals = calculateTotalAverages(newData, selectedCrop);
-        const finalData = {
-          ...newData,
-          totalAverageCost: totals.totalAverageCost,
-          totalCost: totals.totalCost
-        };
-        
-        // Update both current and original data
-        setData(finalData);
-        setOriginalData(finalData);
-      }
+      // Calculate hectares based on current selection
+      const filteredHectares = selectedSubFilters.length === 0
+        ? data.crops[selectedCrop]?.hectares || 0
+        : calculateFilteredHectares(selectedCrop, selectedSubFilters);
+      
+      const newData = updateDataWithFilteredHectares(data, selectedCrop, filteredHectares);
+      const totals = calculateTotalAverages(newData, selectedCrop);
+      const finalData = {
+        ...newData,
+        totalAverageCost: totals.totalAverageCost,
+        totalCost: totals.totalCost
+      };
+      
+      // Update both current and original data
+      setData(finalData);
+      setOriginalData(finalData);
     }
     
+    // Keep this for backward compatibility
     setShowSubFilters(value !== 'none');
   };
 
@@ -534,10 +590,77 @@ export default function OperationsCenter() {
       setSelectedSubFilters(activeFilterCombination.selectedSubFilters);
       setOriginalSubFilters(activeFilterCombination.selectedSubFilters);
       setShowSubFilters(activeFilterCombination.selectedFilter !== 'none');
+      
+      // Initialize selectedFilters from the active filter combination
+      if (activeFilterCombination.selectedFilter !== 'none' && activeFilterCombination.selectedSubFilters.length > 0) {
+        const newSelectedFilters = {
+          [activeFilterCombination.selectedFilter]: [...activeFilterCombination.selectedSubFilters]
+        };
+        setSelectedFilters(newSelectedFilters);
+        setOriginalFilters(newSelectedFilters);
+      } else {
+        setSelectedFilters({});
+        setOriginalFilters({});
+      }
     }
     
     setHasChanges(false);
     setHasSavedChanges(false);
+  };
+  
+  // Template assignment management
+  const handleAddAssignment = (assignment: Omit<EntityAssignment, 'id'>) => {
+    if (!currentTemplate) return;
+    
+    // Create a new assignment with a unique ID
+    const newAssignment: EntityAssignment = {
+      ...assignment,
+      id: uuidv4()
+    };
+    
+    // Add the assignment to the current template
+    const updatedTemplate: Template = {
+      ...currentTemplate,
+      assignments: [...currentTemplate.assignments, newAssignment],
+      activeAssignmentId: newAssignment.id
+    };
+    
+    // Update the templates array
+    setTemplates(prev =>
+      prev.map(t => t.id === currentTemplateId ? updatedTemplate : t)
+    );
+    
+    // If the assignment is for a crop, update the selected crop
+    if (assignment.entityType === 'crop') {
+      setSelectedCrop(assignment.entityId);
+      setOriginalSelectedCrop(assignment.entityId);
+    }
+  };
+  
+  const handleDeleteAssignment = (assignmentId: string) => {
+    if (!currentTemplate) return;
+    
+    // Find the assignment to delete
+    const assignmentToDelete = currentTemplate.assignments.find(a => a.id === assignmentId);
+    if (!assignmentToDelete) return;
+    
+    // Create a new template without the assignment
+    const updatedTemplate: Template = {
+      ...currentTemplate,
+      assignments: currentTemplate.assignments.filter(a => a.id !== assignmentId)
+    };
+    
+    // If the active assignment is being deleted, set a new active assignment
+    if (currentTemplate.activeAssignmentId === assignmentId && updatedTemplate.assignments.length > 0) {
+      updatedTemplate.activeAssignmentId = updatedTemplate.assignments[0].id;
+    } else if (updatedTemplate.assignments.length === 0) {
+      updatedTemplate.activeAssignmentId = undefined;
+    }
+    
+    // Update the templates array
+    setTemplates(prev =>
+      prev.map(t => t.id === currentTemplateId ? updatedTemplate : t)
+    );
   };
 
   const handleSaveTemplate = (name: string, saveAsNew: boolean) => {
@@ -561,8 +684,17 @@ export default function OperationsCenter() {
         isDefault: false,
         isEditable: true,
         data: JSON.parse(JSON.stringify(data)),
+        assignments: [
+          {
+            id: uuidv4(),
+            entityType: 'crop',
+            entityId: selectedCrop,
+            entityName: selectedCrop
+          }
+        ],
         filterCombinations: [newFilterCombination],
-        activeFilterCombinationId: newFilterCombination.id
+        activeFilterCombinationId: newFilterCombination.id,
+        activeAssignmentId: uuidv4()
       };
       
       // Add new template
@@ -610,6 +742,7 @@ export default function OperationsCenter() {
     setOriginalSelectedCrop(selectedCrop);
     setOriginalFilter(selectedFilter);
     setOriginalSubFilters([...selectedSubFilters]);
+    setOriginalFilters({...selectedFilters});
     setHasChanges(false);
     setHasSavedChanges(true);
   };
@@ -733,45 +866,85 @@ export default function OperationsCenter() {
   };
 
   const handleDeleteFilterCombination = (filterId: string) => {
-    if (!currentTemplate || !currentTemplate.isEditable) return;
+    console.log("Attempting to delete filter ID:", filterId);
     
-    // Find the template to update
-    const templateToUpdate = templates.find(t => t.id === currentTemplateId);
-    if (!templateToUpdate) return;
+    // Basic validation
+    if (!currentTemplate || !filterId) {
+      console.error("Missing template or filter ID");
+      return;
+    }
     
-    // Remove the filter combination
-    const updatedFilterCombinations = templateToUpdate.filterCombinations.filter(
-      fc => fc.id !== filterId
-    );
+    // Create a deep copy of the template to avoid unintended mutations
+    const templateCopy = JSON.parse(JSON.stringify(currentTemplate));
     
-    // If there are no filter combinations left, we can't delete it
-    if (updatedFilterCombinations.length === 0) return;
+    // Log all filter combinations before deletion
+    console.log("Before deletion - All filters:", templateCopy.filterCombinations.map((fc: FilterCombination) => ({
+      id: fc.id,
+      crop: fc.selectedCrop,
+      filter: fc.selectedFilter
+    })));
     
-    // Update the template
-    const updatedTemplate = {
-      ...templateToUpdate,
-      filterCombinations: updatedFilterCombinations,
-      // If the active filter was deleted, set the first one as active
-      activeFilterCombinationId: templateToUpdate.activeFilterCombinationId === filterId
-        ? updatedFilterCombinations[0].id
-        : templateToUpdate.activeFilterCombinationId
+    // Find the filter to delete by ID - be very explicit
+    const filterToDelete = templateCopy.filterCombinations.find((fc: FilterCombination) => fc.id === filterId);
+    if (!filterToDelete) {
+      console.error("Filter not found with ID:", filterId);
+      return;
+    }
+    
+    console.log("Found filter to delete:", filterToDelete.selectedCrop, filterToDelete.selectedFilter);
+    
+    // Don't delete if it's the last filter combination
+    if (templateCopy.filterCombinations.length <= 1) {
+      console.error("Cannot delete the last filter");
+      return;
+    }
+    
+    // Only keep filters that don't match the exact ID we want to delete
+    const remainingFilters = templateCopy.filterCombinations.filter((fc: FilterCombination) => fc.id !== filterId);
+    
+    console.log("After deletion - Remaining filters:", remainingFilters.map((fc: FilterCombination) => ({
+      id: fc.id,
+      crop: fc.selectedCrop,
+      filter: fc.selectedFilter
+    })));
+    
+    // Update active filter ID if needed
+    let newActiveId = templateCopy.activeFilterCombinationId;
+    if (newActiveId === filterId) {
+      newActiveId = remainingFilters[0].id;
+      console.log("Updated active filter ID to:", newActiveId);
+    }
+    
+    // Create brand new template with the modified filters
+    const updatedTemplate: Template = {
+      ...templateCopy,
+      filterCombinations: remainingFilters,
+      activeFilterCombinationId: newActiveId
     };
     
-    // Update the templates array
-    setTemplates(prev =>
-      prev.map(t => t.id === currentTemplateId ? updatedTemplate : t)
-    );
+    // Update the templates state with the new template object
+    setTemplates(prevTemplates => {
+      // Create a new array to avoid mutation
+      return prevTemplates.map(template =>
+        template.id === currentTemplate.id ? updatedTemplate : template
+      );
+    });
     
-    // If the active filter was deleted, update the UI state
-    if (templateToUpdate.activeFilterCombinationId === filterId) {
-      const newActiveFilter = updatedFilterCombinations[0];
-      setSelectedCrop(newActiveFilter.selectedCrop);
-      setOriginalSelectedCrop(newActiveFilter.selectedCrop);
-      setSelectedFilter(newActiveFilter.selectedFilter);
-      setOriginalFilter(newActiveFilter.selectedFilter);
-      setSelectedSubFilters(newActiveFilter.selectedSubFilters);
-      setOriginalSubFilters(newActiveFilter.selectedSubFilters);
-      setShowSubFilters(newActiveFilter.selectedFilter !== 'none');
+    // Update current view if we're on the affected template
+    if (currentTemplateId === currentTemplate.id) {
+      const newActiveFilter = remainingFilters.find((fc: FilterCombination) => fc.id === newActiveId);
+      if (newActiveFilter) {
+        console.log("Updating current view with new active filter:", newActiveFilter.selectedCrop, newActiveFilter.selectedFilter);
+        
+        // Update all related state
+        setSelectedCrop(newActiveFilter.selectedCrop);
+        setOriginalSelectedCrop(newActiveFilter.selectedCrop);
+        setSelectedFilter(newActiveFilter.selectedFilter);
+        setOriginalFilter(newActiveFilter.selectedFilter);
+        setSelectedSubFilters([...newActiveFilter.selectedSubFilters]);
+        setOriginalSubFilters([...newActiveFilter.selectedSubFilters]);
+        setShowSubFilters(newActiveFilter.selectedFilter !== 'none');
+      }
     }
   };
 
@@ -985,7 +1158,6 @@ export default function OperationsCenter() {
 
   const handleResetFilter = () => {
     setShowResetFilterConfirmation(true);
-    setShowResetOptions(false);
   };
 
   const confirmResetFilter = () => {
@@ -1035,12 +1207,36 @@ export default function OperationsCenter() {
     setModifiedOperations([]);
     
     // Reset filter UI state
+    setSelectedFilters(originalFilters);
     setSelectedFilter(originalFilter);
     setSelectedSubFilters(originalSubFilters);
+    
+    // Keep this for backward compatibility
     setShowSubFilters(originalFilter !== 'none');
+    
+    // Close the confirmation modal
     setShowResetFilterConfirmation(false);
+    
     // Reset the saved changes flag to hide the reset button
     setHasSavedChanges(false);
+    
+    // Display a temporary success message (optional)
+    const successMessage = document.createElement('div');
+    successMessage.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-md shadow-lg z-50 flex items-center';
+    successMessage.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      Filter reset successfully
+    `;
+    document.body.appendChild(successMessage);
+    
+    // Remove the message after 3 seconds
+    setTimeout(() => {
+      if (document.body.contains(successMessage)) {
+        document.body.removeChild(successMessage);
+      }
+    }, 3000);
   };
 
   const handleResetTable = () => {
@@ -1059,6 +1255,24 @@ export default function OperationsCenter() {
     setHasChanges(false);
     setHasSavedChanges(false);
     setShowResetTableConfirmation(false);
+    
+    // Display a temporary success message
+    const successMessage = document.createElement('div');
+    successMessage.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-md shadow-lg z-50 flex items-center';
+    successMessage.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      Table reset to default values
+    `;
+    document.body.appendChild(successMessage);
+    
+    // Remove the message after 3 seconds
+    setTimeout(() => {
+      if (document.body.contains(successMessage)) {
+        document.body.removeChild(successMessage);
+      }
+    }, 3000);
   };
 
   const renderOperationCategory = (category: keyof OperationsData) => {
@@ -1137,129 +1351,298 @@ export default function OperationsCenter() {
 
       <div className="bg-white rounded-lg shadow mb-6">
         <div className="p-4 border-b border-gray-200">
-          <div className="grid grid-cols-4 gap-4">
+          {/* Two-panel layout: Template selection & Application */}
+          <div className="grid grid-cols-2 gap-6">
+            {/* Left panel: Template selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">View/Template</label>
-              <TemplateManagement
-                templates={templates}
-                currentTemplate={currentTemplate}
-                onSelectTemplate={handleSelectTemplate}
-                onSaveTemplate={handleSaveTemplate}
-                onDeleteTemplate={handleDeleteTemplate}
-                onRenameTemplate={handleRenameTemplate}
-                onDeleteFilterCombination={handleDeleteFilterCombination}
-                onResetTemplate={handleResetTemplate}
-                onCancelChanges={handleCancelChanges}
-                hasChanges={hasChanges}
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                {!currentTemplate.isEditable
-                  ? 'This template is read-only'
-                  : 'You can edit costs in this template'}
-              </p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Crops</label>
-              <select 
-                className="w-full border border-gray-300 rounded-md p-2"
-                value={selectedCrop}
-                onChange={(e) => handleCropChange(e.target.value)}
-              >
-                {data && data.crops ? Object.keys(data.crops).map(crop => (
-                  <option key={crop} value={crop}>{crop}</option>
-                )) : null}
-              </select>
-            </div>
-            <div className="relative" ref={filterDropdownRef}>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Filter by</label>
-              <div className="relative">
-                <select 
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  value={selectedFilter}
-                  onChange={(e) => handleFilterChange(e.target.value)}
-                >
-                  {filterOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                {showSubFilters && (
-                  <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-10">
-                    {filterOptions
-                      .find(opt => opt.value === selectedFilter)
-                      ?.subOptions?.map(subOption => (
-                        <label
-                          key={subOption.value}
-                          className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedSubFilters.includes(subOption.value)}
-                            onChange={() => handleSubFilterChange(subOption.value)}
-                            className="mr-2"
-                          />
-                          {subOption.label}
-                        </label>
-                      ))}
-                  </div>
-                )}
+              <h3 className="font-medium text-gray-700 mb-3">Template Selection</h3>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-600 mb-1">View/Template</label>
+                <TemplateManagement
+                  templates={templates}
+                  currentTemplate={currentTemplate}
+                  onSelectTemplate={handleSelectTemplate}
+                  onSaveTemplate={handleSaveTemplate}
+                  onDeleteTemplate={handleDeleteTemplate}
+                  onRenameTemplate={handleRenameTemplate}
+                  onDeleteFilterCombination={handleDeleteFilterCombination}
+                  onDeleteAssignment={handleDeleteAssignment}
+                  onAddAssignment={handleAddAssignment}
+                  onResetTemplate={handleResetTemplate}
+                  onCancelChanges={handleCancelChanges}
+                  hasChanges={hasChanges}
+                  availableEntities={{
+                    crops: Object.keys(data.crops),
+                    varieties: ['Skyfall', 'Crusoe', 'KWS Extase'],
+                    fields: ['Field 1', 'Field 2', 'Field 3']
+                  }}
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  {!currentTemplate.isEditable
+                    ? 'This template is read-only'
+                    : 'You can edit costs in this template'}
+                </p>
               </div>
-            </div>
-            <div className="flex flex-col">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Fields</label>
-              <div className="flex gap-2">
-                <select className="flex-1 border border-gray-300 rounded-md p-2">
-                  <option>All</option>
-                </select>
+              
+              {/* Simple Reset Options */}
+              <div className="mt-4">
                 {hasSavedChanges && !hasChanges && (
-                  <button
-                    onClick={() => setShowResetOptions(!showResetOptions)}
-                    className="flex items-center px-3 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                  >
-                    <RotateCcw size={16} />
-                  </button>
-                )}
-                {showResetOptions && (
-                  <div className="absolute right-0 mt-10 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200">
+                  <div className="flex gap-2">
                     <button
                       onClick={handleResetFilter}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b border-gray-200"
+                      className="text-sm px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50 flex items-center"
                     >
-                      Reset Current Filter
+                      <RotateCcw size={14} className="mr-1.5" />
+                      Reset Current View
                     </button>
                     <button
                       onClick={handleResetTable}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-50 text-red-600"
+                      className="text-sm px-3 py-1.5 border border-red-200 text-red-700 rounded hover:bg-red-50 flex items-center"
                     >
+                      <RotateCcw size={14} className="mr-1.5" />
                       Reset Entire Table
                     </button>
                   </div>
                 )}
               </div>
             </div>
-          </div>
-          {selectedSubFilters.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {selectedSubFilters.map(filter => {
-                const subOption = filterOptions
-                  .find(opt => opt.value === selectedFilter)
-                  ?.subOptions?.find(sub => sub.value === filter);
-                return (
-                  <span
-                    key={filter}
-                    className="inline-flex items-center px-2 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+            
+            {/* Right panel: Template Application */}
+            <div>
+              <h3 className="font-medium text-gray-700 mb-3">Template Application</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Apply to Crop</label>
+                  <select
+                    className="w-full border border-gray-300 rounded-md p-2"
+                    value={selectedCrop}
+                    onChange={(e) => handleCropChange(e.target.value)}
                   >
-                    {subOption?.label}
-                    <button
-                      onClick={() => handleSubFilterChange(filter)}
-                      className="ml-1 hover:text-blue-600"
-                    >
-                      ×
-                    </button>
-                  </span>
-                );
-              })}
+                    {data && data.crops ? Object.keys(data.crops).map(crop => (
+                      <option key={crop} value={crop}>{crop}</option>
+                    )) : null}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Apply to Fields</label>
+                  <select className="w-full border border-gray-300 rounded-md p-2">
+                    <option>All Fields</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Simplified filtering approach */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-600 mb-2">Filter by Characteristics</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {filterOptions.filter(opt => opt.value !== 'none').map(option => (
+                    <div key={option.value} className="border border-gray-200 rounded p-3">
+                      <p className="font-medium text-sm mb-2">{option.label}</p>
+                      <div className="space-y-1.5">
+                        {option.subOptions?.map(subOption => (
+                          <label key={subOption.value} className="flex items-center text-sm">
+                            <input
+                              type="checkbox"
+                              checked={(selectedFilters[option.value] || []).includes(subOption.value)}
+                              onChange={() => {
+                                // Create a new copy of the selectedFilters object
+                                const newSelectedFilters = { ...selectedFilters };
+                                
+                                // Initialize the array for this filter category if it doesn't exist
+                                if (!newSelectedFilters[option.value]) {
+                                  newSelectedFilters[option.value] = [];
+                                }
+                                
+                                // Toggle the subfilter value
+                                const isSelected = newSelectedFilters[option.value].includes(subOption.value);
+                                if (isSelected) {
+                                  // Remove the value if it's already selected
+                                  newSelectedFilters[option.value] = newSelectedFilters[option.value]
+                                    .filter(val => val !== subOption.value);
+                                  
+                                  // Remove the category entirely if it's empty
+                                  if (newSelectedFilters[option.value].length === 0) {
+                                    delete newSelectedFilters[option.value];
+                                  }
+                                } else {
+                                  // Add the value if it's not selected
+                                  newSelectedFilters[option.value] = [
+                                    ...newSelectedFilters[option.value],
+                                    subOption.value
+                                  ];
+                                }
+                                
+                                // Update the state
+                                setSelectedFilters(newSelectedFilters);
+                                setOriginalFilters(newSelectedFilters);
+                                
+                                // For backward compatibility
+                                if (Object.keys(newSelectedFilters).length > 0) {
+                                  const lastCategory = Object.keys(newSelectedFilters)[0];
+                                  setSelectedFilter(lastCategory);
+                                  setSelectedSubFilters(newSelectedFilters[lastCategory] || []);
+                                  
+                                  // Add variety assignments when varieties are selected
+                                  if (lastCategory === 'varieties' && currentTemplate && currentTemplate.isEditable) {
+                                    // Add each selected variety as an assignment
+                                    newSelectedFilters[lastCategory].forEach(varietyValue => {
+                                      const varietyOption = filterOptions.find(opt => opt.value === 'varieties')?.subOptions?.find(sub => sub.value === varietyValue);
+                                      if (varietyOption) {
+                                        // Check if this variety is already assigned
+                                        const existingAssignment = currentTemplate.assignments.find(
+                                          a => a.entityType === 'variety' && a.entityId === varietyValue
+                                        );
+                                        
+                                        // Only add if not already assigned
+                                        if (!existingAssignment) {
+                                          handleAddAssignment({
+                                            entityType: 'variety',
+                                            entityId: varietyValue,
+                                            entityName: varietyOption.label
+                                          });
+                                        }
+                                      }
+                                    });
+                                  }
+                                } else {
+                                  setSelectedFilter('none');
+                                  setSelectedSubFilters([]);
+                                }
+                                
+                                // Calculate hectares based on all selected filters
+                                let allSelectedSubFilters: string[] = [];
+                                Object.values(newSelectedFilters).forEach(filters => {
+                                  allSelectedSubFilters = [...allSelectedSubFilters, ...filters];
+                                });
+                                
+                                const filteredHectares = allSelectedSubFilters.length === 0
+                                  ? data.crops[selectedCrop]?.hectares || 0
+                                  : calculateFilteredHectares(selectedCrop, allSelectedSubFilters);
+                                
+                                const newData = updateDataWithFilteredHectares(data, selectedCrop, filteredHectares);
+                                const totals = calculateTotalAverages(newData, selectedCrop);
+                                const finalData = {
+                                  ...newData,
+                                  totalAverageCost: totals.totalAverageCost,
+                                  totalCost: totals.totalCost
+                                };
+                                
+                                // Update data
+                                setData(finalData);
+                                setOriginalData(finalData);
+                              }}
+                              className="mr-2"
+                            />
+                            {subOption.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Display active filters as tags */}
+          {Object.keys(selectedFilters).length > 0 && (
+            <div className="mt-4 pt-3 border-t border-gray-100">
+              <div className="flex items-center">
+                <span className="text-sm font-medium text-gray-600 mr-2">Active Filters:</span>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(selectedFilters).map(([category, filters]) => {
+                    const categoryOption = filterOptions.find(opt => opt.value === category);
+                    return filters.map(filter => {
+                      const subOption = categoryOption?.subOptions?.find(sub => sub.value === filter);
+                      return (
+                        <span
+                          key={`${category}-${filter}`}
+                          className="inline-flex items-center px-2 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                        >
+                          <span className="font-medium mr-1">{categoryOption?.label}:</span> {subOption?.label}
+                          <button
+                            onClick={() => {
+                              // Create a new copy of the selectedFilters object
+                              const newSelectedFilters = { ...selectedFilters };
+                              
+                              // Remove this filter
+                              newSelectedFilters[category] = newSelectedFilters[category].filter(f => f !== filter);
+                              
+                              // Remove the category if it's empty
+                              if (newSelectedFilters[category].length === 0) {
+                                delete newSelectedFilters[category];
+                              }
+                              
+                              // Update the state
+                              setSelectedFilters(newSelectedFilters);
+                              setOriginalFilters(newSelectedFilters);
+                              
+                              // For backward compatibility
+                              if (Object.keys(newSelectedFilters).length > 0) {
+                                const lastCategory = Object.keys(newSelectedFilters)[0];
+                                setSelectedFilter(lastCategory);
+                                setSelectedSubFilters(newSelectedFilters[lastCategory] || []);
+                                
+                                // Add variety assignments when varieties are selected
+                                if (lastCategory === 'varieties' && currentTemplate && currentTemplate.isEditable) {
+                                  // Add each selected variety as an assignment
+                                  newSelectedFilters[lastCategory].forEach(varietyValue => {
+                                    const varietyOption = filterOptions.find(opt => opt.value === 'varieties')?.subOptions?.find(sub => sub.value === varietyValue);
+                                    if (varietyOption) {
+                                      // Check if this variety is already assigned
+                                      const existingAssignment = currentTemplate.assignments.find(
+                                        a => a.entityType === 'variety' && a.entityId === varietyValue
+                                      );
+                                      
+                                      // Only add if not already assigned
+                                      if (!existingAssignment) {
+                                        handleAddAssignment({
+                                          entityType: 'variety',
+                                          entityId: varietyValue,
+                                          entityName: varietyOption.label
+                                        });
+                                      }
+                                    }
+                                  });
+                                }
+                              } else {
+                                setSelectedFilter('none');
+                                setSelectedSubFilters([]);
+                              }
+                              
+                              // Calculate hectares based on all selected filters
+                              let allSelectedSubFilters: string[] = [];
+                              Object.values(newSelectedFilters).forEach(filters => {
+                                allSelectedSubFilters = [...allSelectedSubFilters, ...filters];
+                              });
+                              
+                              const filteredHectares = allSelectedSubFilters.length === 0
+                                ? data.crops[selectedCrop]?.hectares || 0
+                                : calculateFilteredHectares(selectedCrop, allSelectedSubFilters);
+                              
+                              const newData = updateDataWithFilteredHectares(data, selectedCrop, filteredHectares);
+                              const totals = calculateTotalAverages(newData, selectedCrop);
+                              const finalData = {
+                                ...newData,
+                                totalAverageCost: totals.totalAverageCost,
+                                totalCost: totals.totalCost
+                              };
+                              
+                              // Update data
+                              setData(finalData);
+                              setOriginalData(finalData);
+                            }}
+                            className="ml-1 hover:text-blue-600"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    });
+                  })}
+                </div>
+              </div>
             </div>
           )}
         </div>

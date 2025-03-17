@@ -21,6 +21,35 @@ export interface CropData {
   };
 }
 
+export interface EntityAssignment {
+  id: string;
+  entityType: 'crop' | 'variety' | 'field';
+  entityId: string;
+  entityName: string;
+}
+
+export interface Template {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  isEditable: boolean;
+  data: OperationsData;
+  assignments: EntityAssignment[];
+  activeAssignmentId?: string;
+  // Keep for backward compatibility
+  filterCombinations: FilterCombination[];
+  activeFilterCombinationId?: string;
+  columnOrder?: string[];
+}
+
+export interface FilterCombination {
+  id: string;
+  name: string;
+  selectedCrop: string;
+  selectedFilter: string;
+  selectedSubFilters: string[];
+}
+
 export interface OperationsData {
   cultivation: Operation;
   drilling: Operation;
