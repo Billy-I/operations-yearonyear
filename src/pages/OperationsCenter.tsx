@@ -5,6 +5,9 @@ import OperationRow from '../components/OperationRow';
 import Modal from '../components/Modal';
 import { Plus, Save, X, RotateCcw } from 'lucide-react';
 import AddOperationPanel from '../components/AddOperationPanel';
+import ChangeLog, { ChangeLogEntry } from '../components/ChangeLog';
+import CustomizationsOverview from '../components/CustomizationsOverview';
+import { v4 as uuidv4 } from 'uuid';
 
 interface FilterOption {
   label: string;
@@ -49,7 +52,11 @@ export default function OperationsCenter() {
     category: keyof OperationsData;
     index: number | null;
     originalValue: number;
+    crop: string; // Add crop information to track which crop was modified
   }[]>([]);
+  
+  // Change log to track all modifications
+  const [changeLog, setChangeLog] = useState<ChangeLogEntry[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [hasSavedChanges, setHasSavedChanges] = useState(false);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
@@ -84,20 +91,32 @@ export default function OperationsCenter() {
   });
 
   useEffect(() => {
-    // Only load from localStorage if we explicitly want to restore a previous session
-    const shouldRestoreSession = false; // This ensures we always use initialData on fresh load
+    // Load saved data from localStorage on page load
     const savedData = localStorage.getItem('operationsData');
-    if (shouldRestoreSession && savedData) {
-      const parsedData = JSON.parse(savedData);
-      setData(parsedData);
-      setOriginalData(parsedData);
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setData(parsedData);
+        setOriginalData(parsedData);
+        setHasSavedChanges(true);
+      } catch (error) {
+        console.error('Error parsing saved operations data:', error);
+        // Fallback to initial data if there's an error
+        setData(initialData);
+        setOriginalData(initialData);
+      }
     }
   }, []);
-
   useEffect(() => {
+    // Check if data has changed from the original data
     const hasDataChanged = JSON.stringify(data) !== JSON.stringify(originalData);
-    setHasChanges(hasDataChanged);
-  }, [data, originalData]);
+    
+    // Also check if the selected crop has changed
+    const hasCropChanged = selectedCrop !== originalSelectedCrop;
+    
+    // Update the hasChanges state based on both conditions
+    setHasChanges(hasDataChanged || hasCropChanged);
+  }, [data, originalData, selectedCrop, originalSelectedCrop]);
 
   useEffect(() => {
     localStorage.setItem('operationsData', JSON.stringify(data));
@@ -117,11 +136,22 @@ export default function OperationsCenter() {
   }, []);
 
   const handleSaveChanges = () => {
+    // Save the current data to localStorage
     localStorage.setItem('operationsData', JSON.stringify(data));
+    
+    // Update state to reflect saved changes
     setOriginalData(data);
     setOriginalSelectedCrop(selectedCrop);
     setHasChanges(false);
     setHasSavedChanges(true);
+    
+    // Clear the change log
+    setChangeLog([]);
+    
+    // Update modifiedOperations to reflect the current state compared to initialData
+    // This ensures the CustomizationsOverview shows the correct customizations
+    const newModifiedOperations = findModifiedOperations(data, initialData);
+    setModifiedOperations(newModifiedOperations);
   };
 
   const handleCancelChanges = () => {
@@ -133,6 +163,84 @@ export default function OperationsCenter() {
     setSelectedCrop(originalSelectedCrop);
     setHasChanges(false);
     setShowCancelConfirmation(false);
+    
+    // Clear the change log
+    setChangeLog([]);
+    
+    // We need to restore the modifiedOperations to match the original data
+    // This ensures that the CustomizationsOverview panel shows the correct customizations
+    // after canceling changes
+    const newModifiedOperations = findModifiedOperations(originalData, initialData);
+    setModifiedOperations(newModifiedOperations);
+  };
+  
+  // Helper function to find modified operations by comparing with initial data
+  const findModifiedOperations = (currentData: OperationsData, baseData: OperationsData) => {
+    const modified: {
+      category: keyof OperationsData;
+      index: number | null;
+      originalValue: number;
+      crop: string;
+    }[] = [];
+    
+    const categories: (keyof OperationsData)[] = ['cultivation', 'drilling', 'application', 'harvesting', 'other'];
+    
+    // Check all crops
+    Object.keys(currentData.crops).forEach(cropName => {
+      // Check each operation category
+      categories.forEach(category => {
+        const currentOperation = currentData[category] as Operation;
+        const baseOperation = baseData[category] as Operation;
+        
+        // Skip if operation doesn't exist
+        if (!currentOperation || !baseOperation) return;
+        
+        // Check main operation
+        if (currentOperation.cropData?.[cropName] && baseOperation.cropData?.[cropName]) {
+          const currentValue = currentOperation.cropData[cropName].costPerHa;
+          const baseValue = baseOperation.cropData[cropName].costPerHa;
+          
+          // Use a small epsilon for floating point comparison
+          const epsilon = 0.001;
+          if (Math.abs(currentValue - baseValue) > epsilon) {
+            modified.push({
+              category,
+              index: null,
+              originalValue: baseValue,
+              crop: cropName
+            });
+          }
+        }
+        
+        // Check sub-operations
+        if (currentOperation.subOperations && baseOperation.subOperations) {
+          currentOperation.subOperations.forEach((subOp, index) => {
+            if (subOp.cropData?.[cropName]) {
+              // Find matching sub-operation in base data
+              const baseSubOp = baseOperation.subOperations?.find(op => op.name === subOp.name);
+              
+              if (baseSubOp?.cropData?.[cropName]) {
+                const currentValue = subOp.cropData[cropName].costPerHa;
+                const baseValue = baseSubOp.cropData[cropName].costPerHa;
+                
+                // Use a small epsilon for floating point comparison
+                const epsilon = 0.001;
+                if (Math.abs(currentValue - baseValue) > epsilon) {
+                  modified.push({
+                    category,
+                    index,
+                    originalValue: baseValue,
+                    crop: cropName
+                  });
+                }
+              }
+            }
+          });
+        }
+      });
+    });
+    
+    return modified;
   };
 
   const handleCropChange = (newCrop: string) => {
@@ -503,21 +611,280 @@ export default function OperationsCenter() {
       setData(initialData);
       // Clear localStorage when switching to Yagro template
       localStorage.removeItem('operationsData');
+      // Clear modified operations tracking
+      setModifiedOperations([]);
+      setChangeLog([]);
     }
   };
 
-  const updateMainCategoryCost = (category: keyof OperationsData, newCost: number) => {
+  // Function to add an entry to the change log
+  const addToChangeLog = (
+    category: keyof OperationsData,
+    index: number | null,
+    oldValue: number,
+    newValue: number
+  ) => {
+    const operation = data[category] as Operation;
+    let operationName = operation.name;
+    
+    // If it's a sub-operation, get its name
+    if (index !== null && operation.subOperations && operation.subOperations[index]) {
+      operationName = operation.subOperations[index].name;
+    }
+    
+    const entry: ChangeLogEntry = {
+      id: uuidv4(),
+      timestamp: new Date(),
+      category: operation.name,
+      operationName,
+      oldValue,
+      newValue,
+      isSubOperation: index !== null
+    };
+    
+    setChangeLog(prev => [entry, ...prev]);
+  };
+  
+  // Function to undo a specific change
+  const handleUndoChange = (changeId: string) => {
+    const change = changeLog.find(c => c.id === changeId);
+    if (!change) return;
+    
+    // Find the category and index
+    const categoryKey = Object.keys(data).find(key => {
+      const op = data[key as keyof OperationsData] as Operation;
+      return op.name === change.category;
+    }) as keyof OperationsData | undefined;
+    
+    if (!categoryKey) return;
+    
+    if (change.isSubOperation) {
+      // Find the sub-operation index
+      const operation = data[categoryKey] as Operation;
+      const subOpIndex = operation.subOperations?.findIndex(op => op.name === change.operationName) ?? -1;
+      
+      if (subOpIndex >= 0) {
+        updateSubOperationCost(categoryKey, subOpIndex, change.oldValue, changeId);
+      }
+    } else {
+      updateMainCategoryCost(categoryKey, change.oldValue, changeId);
+    }
+    
+    // Remove this change from the log
+    setChangeLog(prev => prev.filter(c => c.id !== changeId));
+  };
+  
+  // Function to clear all changes
+  const handleClearChanges = () => {
+    // Reset to original data
+    setData(originalData);
+    setChangeLog([]);
+    setModifiedOperations([]);
+  };
+  
+  // Function to reset a specific customization
+  const handleResetCustomization = (
+    categoryName: string,
+    operationName: string,
+    cropName: string,
+    isSubOperation: boolean
+  ) => {
+    // Use initialData as the default data source
+    const defaultData = initialData;
+    
+    // Find the category key based on the category name
+    const categoryKey = Object.keys(data).find(key => {
+      const op = data[key as keyof OperationsData] as Operation;
+      return op?.name === categoryName;
+    }) as keyof OperationsData | undefined;
+    
+    if (!categoryKey) return;
+    
+    // Store the current data state before making changes
+    // This allows us to restore it if the user cancels
+    const currentDataState = JSON.parse(JSON.stringify(data));
+    
+    // Create a new data object with the reset values
+    setData(prev => {
+      const newData = { ...prev };
+      const operation = newData[categoryKey] as Operation;
+      const defaultOperation = initialData[categoryKey] as Operation;
+      
+      if (isSubOperation) {
+        // Reset a sub-operation
+        if (operation.subOperations) {
+          const subOpIndex = operation.subOperations.findIndex(op => op.name === operationName);
+          
+          if (subOpIndex >= 0 && operation.subOperations[subOpIndex].cropData?.[cropName]) {
+            const defaultSubOp = defaultOperation.subOperations?.find(op => op.name === operationName);
+            
+            if (defaultSubOp?.cropData?.[cropName]) {
+              const defaultValue = defaultSubOp.cropData[cropName].costPerHa;
+              const hectares = prev.crops[cropName]?.hectares || 0;
+              
+              // Update the sub-operation with the default value
+              operation.subOperations[subOpIndex].cropData = {
+                ...operation.subOperations[subOpIndex].cropData,
+                [cropName]: {
+                  hectares,
+                  costPerHa: defaultValue,
+                  totalCost: defaultValue * hectares
+                }
+              };
+              
+              // Recalculate the category average
+              const newCategoryTotal = calculateCategoryAverage(operation.subOperations);
+              operation.cropData = {
+                ...operation.cropData,
+                [cropName]: {
+                  hectares,
+                  costPerHa: newCategoryTotal,
+                  totalCost: newCategoryTotal * hectares
+                }
+              };
+            }
+          }
+        }
+      } else {
+        // Reset a main operation
+        if (operation.cropData?.[cropName] && defaultOperation.cropData?.[cropName]) {
+          const defaultValue = defaultOperation.cropData[cropName].costPerHa;
+          const hectares = prev.crops[cropName]?.hectares || 0;
+          
+          // Update the operation with the default value
+          operation.cropData[cropName] = {
+            hectares,
+            costPerHa: defaultValue,
+            totalCost: defaultValue * hectares
+          };
+          
+          // If there are sub-operations, reset them to their original baseline values
+          if (operation.subOperations && defaultOperation.subOperations) {
+            operation.subOperations = operation.subOperations.map(subOp => {
+              // Find the matching sub-operation in the default data
+              const defaultSubOp = defaultOperation.subOperations?.find(op => op.name === subOp.name);
+              
+              if (defaultSubOp?.cropData?.[cropName] && subOp.cropData) {
+                const defaultSubValue = defaultSubOp.cropData[cropName].costPerHa;
+                
+                return {
+                  ...subOp,
+                  cropData: {
+                    ...subOp.cropData,
+                    [cropName]: {
+                      hectares,
+                      costPerHa: defaultSubValue,
+                      totalCost: defaultSubValue * hectares
+                    }
+                  }
+                };
+              }
+              return subOp;
+            });
+          }
+        }
+      }
+      
+      // Recalculate totals
+      const totals = calculateTotalAverages(newData, cropName);
+      return {
+        ...newData,
+        totalAverageCost: totals.totalAverageCost,
+        totalCost: totals.totalCost
+      };
+    });
+    
+    // Update modifiedOperations to remove the reset operation and all related operations
+    setModifiedOperations(prev => {
+      // If resetting a sub-operation, only remove that specific sub-operation
+      if (isSubOperation) {
+        return prev.filter(op => {
+          // Keep everything except the specific sub-operation being reset
+          // Get the operation and check if the sub-operation name matches
+          const operation = data[op.category] as Operation;
+          const subOpName = op.index !== null &&
+                           operation.subOperations &&
+                           op.index < operation.subOperations.length ?
+                           operation.subOperations[op.index].name : '';
+          
+          return !(op.category === categoryKey &&
+                  op.index !== null &&
+                  op.crop === cropName &&
+                  subOpName === operationName);
+        });
+      }
+      // If resetting a main operation, remove the main operation and all its sub-operations
+      else {
+        return prev.filter(op => {
+          // Keep everything except operations for this category and crop
+          return !(op.category === categoryKey && op.crop === cropName);
+        });
+      }
+    });
+    
+    // Set hasChanges to true so the user can save or cancel
+    setHasChanges(true);
+    
+    // Store the original data so it can be restored if the user cancels
+    setOriginalData(currentDataState);
+    
+    // Add a message to the change log
+    const currentOp = data[categoryKey as keyof OperationsData] as Operation;
+    const defaultOp = defaultData[categoryKey as keyof OperationsData] as Operation;
+    let subOpIndex: number | null = null;
+    let currentValue = 0;
+    let defaultValue = 0;
+    
+    if (isSubOperation && currentOp.subOperations) {
+      subOpIndex = currentOp.subOperations.findIndex(op => op.name === operationName);
+      if (subOpIndex >= 0) {
+        // Get the current value
+        currentValue = currentOp.subOperations[subOpIndex].cropData?.[cropName]?.costPerHa || 0;
+        
+        // Find the default value
+        const defaultSubOp = defaultOp.subOperations?.find(op => op.name === operationName);
+        defaultValue = defaultSubOp?.cropData?.[cropName]?.costPerHa || 0;
+      }
+    } else {
+      // For main operations
+      currentValue = currentOp.cropData?.[cropName]?.costPerHa || 0;
+      defaultValue = defaultOp.cropData?.[cropName]?.costPerHa || 0;
+    }
+    
+    addToChangeLog(
+      categoryKey as keyof OperationsData,
+      subOpIndex,
+      currentValue, // Current value before reset
+      defaultValue  // Default value to reset to
+    );
+  };
+  const updateMainCategoryCost = (
+    category: keyof OperationsData,
+    newCost: number,
+    changeIdToSkip?: string
+  ) => {
     if (selectedTemplate === 'yagro') return;
     
     // Store original value if this is the first change
     const operation = data[category] as Operation;
     const currentValue = operation.cropData?.[selectedCrop]?.costPerHa || operation.costPerHa;
-    if (!modifiedOperations.some(op => op.category === category && op.index === null)) {
+    
+    // Skip if the value hasn't changed
+    if (Math.abs(currentValue - newCost) < 0.001) return;
+    
+    // Only track the modification if it's not already tracked
+    if (!modifiedOperations.some(op => op.category === category && op.index === null && op.crop === selectedCrop)) {
       setModifiedOperations(prev => [...prev, {
         category,
         index: null,
-        originalValue: currentValue
+        originalValue: currentValue,
+        crop: selectedCrop
       }]);
+      
+      // Add to change log if it's not an undo operation
+      if (!changeIdToSkip) {
+        addToChangeLog(category, null, currentValue, newCost);
+      }
     }
     
     setData(prev => {
@@ -561,7 +928,12 @@ export default function OperationsCenter() {
     });
   };
 
-  const updateSubOperationCost = (category: keyof OperationsData, index: number, newCost: number) => {
+  const updateSubOperationCost = (
+    category: keyof OperationsData,
+    index: number,
+    newCost: number,
+    changeIdToSkip?: string
+  ) => {
     if (selectedTemplate === 'yagro') return;
     
     // Store original value if this is the first change
@@ -569,12 +941,21 @@ export default function OperationsCenter() {
     const subOp = operation.subOperations?.[index];
     const currentValue = subOp?.cropData?.[selectedCrop]?.costPerHa || subOp?.costPerHa || 0;
     
-    if (!modifiedOperations.some(op => op.category === category && op.index === index)) {
+    // Skip if the value hasn't changed
+    if (Math.abs(currentValue - newCost) < 0.001) return;
+    
+    if (!modifiedOperations.some(op => op.category === category && op.index === index && op.crop === selectedCrop)) {
       setModifiedOperations(prev => [...prev, {
         category,
         index,
-        originalValue: currentValue
+        originalValue: currentValue,
+        crop: selectedCrop
       }]);
+      
+      // Add to change log if it's not an undo operation
+      if (!changeIdToSkip && subOp) {
+        addToChangeLog(category, index, currentValue, newCost);
+      }
     }
     
     setData(prev => {
@@ -698,6 +1079,10 @@ export default function OperationsCenter() {
     setHasChanges(false);
     setHasSavedChanges(false);
     setShowResetTableConfirmation(false);
+    
+    // Clear the change log and modified operations tracking
+    setChangeLog([]);
+    setModifiedOperations([]);
   };
 
   const renderOperationCategory = (category: keyof OperationsData) => {
@@ -722,25 +1107,29 @@ export default function OperationsCenter() {
 
     return (
       <>
-        <OperationRow 
+        <OperationRow
           operation={displayOperation}
           isExpanded={expandedSections.includes(category)}
           onToggle={() => toggleSection(category)}
           isExpandable={!!displayOperation.subOperations?.length}
           onUpdateCost={(newCost) => updateMainCategoryCost(category, newCost)}
           isEditable={selectedTemplate === 'custom'}
+          isModified={modifiedOperations.some(op => op.category === category && op.index === null && op.crop === selectedCrop)}
+          initialValue={modifiedOperations.find(op => op.category === category && op.index === null && op.crop === selectedCrop)?.originalValue}
         />
         
         {expandedSections.includes(category) && (
           <>
             {displayOperation.subOperations?.map((op, i) => (
               <div key={i} className="bg-gray-50 pl-8">
-                <OperationRow 
+                <OperationRow
                   operation={op}
                   isSubOperation={true}
                   onDelete={selectedTemplate === 'custom' ? () => confirmDelete(category, i) : undefined}
                   onUpdateCost={(newCost) => updateSubOperationCost(category, i, newCost)}
                   isEditable={selectedTemplate === 'custom'}
+                  isModified={modifiedOperations.some(mod => mod.category === category && mod.index === i && mod.crop === selectedCrop)}
+                  initialValue={modifiedOperations.find(mod => mod.category === category && mod.index === i && mod.crop === selectedCrop)?.originalValue}
                 />
               </div>
             ))}
@@ -793,6 +1182,22 @@ export default function OperationsCenter() {
           </div>
         </div>
       </div>
+
+      {/* Changes Made Panel */}
+      {changeLog.length > 0 && (
+        <ChangeLog
+          changes={changeLog}
+          onUndoChange={handleUndoChange}
+          onClearChanges={handleClearChanges}
+        />
+      )}
+      
+      {/* Customizations Overview Panel - always visible */}
+      <CustomizationsOverview
+        data={data}
+        defaultData={initialData}
+        onResetCustomization={handleResetCustomization}
+      />
 
       <div className="bg-white rounded-lg shadow mb-6">
         <div className="p-4 border-b border-gray-200">

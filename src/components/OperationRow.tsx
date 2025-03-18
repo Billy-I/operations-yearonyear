@@ -11,6 +11,8 @@ interface OperationRowProps {
   onUpdateCost: (newCost: number) => void;
   isEditable?: boolean;
   isSubOperation?: boolean;
+  isModified?: boolean; // New prop to indicate if this operation has been modified
+  initialValue?: number; // Original value before modification
 }
 
 export default function OperationRow({
@@ -21,7 +23,9 @@ export default function OperationRow({
   onDelete,
   onUpdateCost,
   isEditable = true,
-  isSubOperation = false
+  isSubOperation = false,
+  isModified = false,
+  initialValue
 }: OperationRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(operation.costPerHa.toString());
@@ -60,7 +64,10 @@ export default function OperationRow({
   const handleSave = () => {
     const newValue = parseFloat(editValue);
     if (!isNaN(newValue) && newValue >= 0) {
-      onUpdateCost(newValue);
+      // Only update if the value has actually changed
+      if (newValue !== originalValue) {
+        onUpdateCost(newValue);
+      }
     } else {
       setEditValue(originalValue.toString());
     }
@@ -104,12 +111,24 @@ export default function OperationRow({
               min="0"
             />
           ) : (
-            <span 
-              className={`${isEditable ? 'cursor-pointer hover:text-blue-600' : ''}`}
-              onClick={handleEdit}
-            >
-              £{operation.costPerHa.toFixed(2)}/ha
-            </span>
+            <div className="flex items-center">
+              <span
+                className={`${isEditable ? 'cursor-pointer hover:text-blue-600' : ''} ${isModified ? 'text-blue-600 font-medium' : ''}`}
+                onClick={handleEdit}
+              >
+                £{operation.costPerHa.toFixed(2)}/ha
+              </span>
+              {isModified && initialValue !== undefined && (
+                <span className="ml-2 text-xs text-gray-500">
+                  (was £{initialValue.toFixed(2)})
+                </span>
+              )}
+              {isModified && (
+                <span className="ml-2 text-xs px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded">
+                  Modified
+                </span>
+              )}
+            </div>
           )}
         </div>
         <div className="w-48 text-right pr-12">£{operation.totalCost.toFixed(2)}</div>
