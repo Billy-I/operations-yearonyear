@@ -47,16 +47,17 @@ export type CostChartView =
   | 'financial-impact-sunburst'
   | 'financial-impact-treemap'
   | 'financial-impact-gauge'
-  | 'financial-impact-stepline';
+  | 'financial-impact-stepline'
+  | 'multi-year-preview';
 
 /**
  * Common props for all chart views
  */
 export interface BaseChartProps {
   year: Year;
-  costUnit: 'per_ha' | 'total';
+  costUnit: 'per_ha' | 'per_tonne' | 'total';
   hectares: number; // Used for converting between per hectare and total values
-  onUnitChange: (unit: 'per_ha' | 'total') => void;
+  onUnitChange: (unit: 'per_ha' | 'per_tonne' | 'total') => void;
 }
 
 /**

@@ -1,39 +1,42 @@
-import { HelpCircle, ChevronDown } from 'lucide-react';
+import { HelpCircle, ChevronDown, Info } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { cropData } from '../data/cropData';
 import MarketRangeIndicator from '../components/analytics/charts/common/MarketRangeIndicator';
+import { HelpPanel, ExplorerHelpContent, FeatureNotification, CostCategoryIndicator } from '../components/help';
 
 export default function Explorer() {
   const [selectedYear, setSelectedYear] = useState('2024');
-  const [costFilters, setCostFilters] = useState({
-    variable: true,
-    operations: true
-  });
+  const [costType, setCostType] = useState<'input' | 'total'>('total');
   const [totalCost, setTotalCost] = useState(1600000);
   const [margin, setMargin] = useState(300000);
   const [costPerHa, setCostPerHa] = useState(10000);
   const [marginPerHa, setMarginPerHa] = useState(1875);
+  const [showHelpPanel, setShowHelpPanel] = useState(false);
+  const [showNotification, setShowNotification] = useState(true);
 
   useEffect(() => {
     const baseCost = 1600000;
     
-    // Adjust costs based on filters
+    // Adjust costs based on cost type
     let costMultiplier = 0;
-    if (costFilters.variable) costMultiplier += 0.6; // Variable costs are 60% of total
-    if (costFilters.operations) costMultiplier += 0.4; // Operation costs are 40% of total
+    if (costType === 'input') {
+      costMultiplier = 0.6; // Input costs are 60% of total
+    } else if (costType === 'total') {
+      costMultiplier = 1.0; // Total costs include both input and operations (100%)
+    }
     
     const newTotalCost = baseCost * costMultiplier;
     const newCostPerHa = newTotalCost / 160;
     
-    // Adjust margins based on filters
+    // Adjust margins based on cost type
     const baseMargin = 300000;
     let marginMultiplier = 0;
     
-    if (costFilters.variable && costFilters.operations) {
-      marginMultiplier = 1; // Net margin when both filters are active
-    } else if (costFilters.variable) {
-      marginMultiplier = 1.5; // Gross margin when only variable costs are active
+    if (costType === 'total') {
+      marginMultiplier = 1; // Net margin when showing total costs
+    } else if (costType === 'input') {
+      marginMultiplier = 1.5; // Gross margin when showing input costs only
     }
     
     const newMargin = baseMargin * marginMultiplier;
@@ -43,17 +46,25 @@ export default function Explorer() {
     setCostPerHa(newCostPerHa);
     setMargin(newMargin);
     setMarginPerHa(newMarginPerHa);
-  }, [costFilters]);
+  }, [costType]);
 
   const getMarginLabel = () => {
-    if (!costFilters.variable) return 'Margin';
-    return costFilters.variable && costFilters.operations ? 'Net Margin' : 'Gross Margin';
+    return costType === 'total' ? 'Net Margin' : 'Gross Margin';
   };
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Explorer</h1>
+        <div className="flex items-center">
+          <h1 className="text-2xl font-bold">Explorer</h1>
+          <button 
+            onClick={() => setShowHelpPanel(true)}
+            className="ml-2 text-gray-400 hover:text-gray-600"
+            aria-label="Help"
+          >
+            <HelpCircle size={20} />
+          </button>
+        </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <button className="bg-gray-50 px-3 py-2 rounded-md">
@@ -84,32 +95,57 @@ export default function Explorer() {
         </div>
       </div>
 
-      {/* Cost Category Filters */}
+      {/* Feature Notification */}
+      {showNotification && (
+        <div className="mb-6">
+          <FeatureNotification
+            title="New Feature: Cost Categories Toggle"
+            message={
+              <>
+                <p className="mb-2">We've updated our cost filters to a simple checkbox. When "Total costs" is checked, you'll see all costs including operations (cultivating, drilling, etc.). When unchecked, you'll only see input costs (seed, fertilizer, and chemicals). Total Costs is selected by default to show your complete financial picture.</p>
+                <div className="mt-3 flex items-center">
+                  <Link
+                    to="/data/operations"
+                    className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-800 bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded-md transition-colors"
+                  >
+                    <span className="mr-1">Go to Operations Center</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </Link>
+                  <span className="ml-2 text-xs text-gray-600">Customize your operations costs</span>
+                </div>
+              </>
+            }
+            onLearnMore={() => setShowHelpPanel(true)}
+            onDismiss={() => setShowNotification(false)}
+          />
+        </div>
+      )}
+
+      {/* Cost Category Toggle */}
       <div className="bg-white rounded-lg shadow mb-6 p-4">
         <div className="flex items-center space-x-4">
           <span className="text-sm font-medium text-gray-700">Cost Categories:</span>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setCostFilters(prev => ({ ...prev, variable: !prev.variable }))}
-              className={`px-3 py-1 rounded-full text-sm ${
-                costFilters.variable
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-gray-200 text-gray-600'
-              }`}
-            >
-              Variable Costs
-            </button>
-            <button
-              onClick={() => setCostFilters(prev => ({ ...prev, operations: !prev.operations }))}
-              className={`px-3 py-1 rounded-full text-sm ${
-                costFilters.operations
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-gray-200 text-gray-600'
-              }`}
-            >
-              Operation Costs
-            </button>
+          <div className="flex items-center">
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                checked={costType === 'total'}
+                onChange={(e) => setCostType(e.target.checked ? 'total' : 'input')}
+                className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Total costs</span>
+              <CostCategoryIndicator className="ml-1" size={14} showIcon={false} />
+            </label>
           </div>
+          <button
+            onClick={() => setShowHelpPanel(true)}
+            className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+          >
+            <Info size={16} className="mr-1" />
+            How do these affect my margins?
+          </button>
         </div>
       </div>
 
@@ -122,7 +158,10 @@ export default function Explorer() {
               <div className="text-2xl font-bold">160</div>
             </div>
             <div>
-              <div className="text-sm text-gray-600 mb-1">{getMarginLabel()} (£)</div>
+              <div className="text-sm text-gray-600 mb-1 flex items-center">
+                {getMarginLabel()} (£)
+                <CostCategoryIndicator className="ml-1" size={14} showIcon={false} />
+              </div>
               <div className="text-2xl font-bold">£{margin.toLocaleString('en-GB', { maximumFractionDigits: 2 })}</div>
             </div>
             <div>
@@ -162,14 +201,12 @@ export default function Explorer() {
                       <ChevronDown size={16} />
                     </div>
                   </th>
-                  {costFilters.variable && !costFilters.operations && (
-                    <th className="px-4 py-3 overflow-hidden">
-                      <div className="flex items-center justify-center space-x-1">
-                        <span>Market Range</span>
-                        <HelpCircle size={16} className="text-gray-400" />
-                      </div>
-                    </th>
-                  )}
+                  <th className="px-4 py-3 overflow-hidden">
+                    <div className="flex items-center justify-center space-x-1">
+                      <span>Inputs Marker Range</span>
+                      <HelpCircle size={16} className="text-gray-400" />
+                    </div>
+                  </th>
                   <th className="px-4 py-3">
                     <div className="flex items-center justify-end space-x-1">
                       <span>CoP</span>
@@ -190,53 +227,57 @@ export default function Explorer() {
                   </th>
                   <th className="px-4 py-3">
                     <div className="flex items-center justify-end space-x-1">
-                      <span>{!costFilters.variable ? 'Margin' : (costFilters.variable && costFilters.operations ? 'Net Margin' : 'GM')}</span>
-                      <HelpCircle size={16} className="text-gray-400" />
+                      <div className="flex items-center">
+                        <span>{costType === 'total' ? 'Net Margin' : 'GM'}</span>
+                        <CostCategoryIndicator className="mx-1" size={14} showIcon={false} />
+                        <HelpCircle size={16} className="text-gray-400" />
+                      </div>
                     </div>
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {cropData.map((crop, index) => {
-                  // Adjust costs based on filters
+                  // Adjust costs based on cost type
                   let costMultiplier = 0;
-                  if (costFilters.variable) costMultiplier += 0.6; // Variable costs are 60% of total
-                  if (costFilters.operations) costMultiplier += 0.4; // Operation costs are 40% of total
+                  if (costType === 'input') {
+                    costMultiplier = 0.6; // Input costs are 60% of total
+                  } else if (costType === 'total') {
+                    costMultiplier = 1.0; // Total costs include both input and operations (100%)
+                  }
                   const adjustedCost = crop.cost.value * costMultiplier;
 
-                  // Adjust margins based on filters
+                  // Adjust margins based on cost type
                   let marginMultiplier = 0;
-                  if (costFilters.variable && costFilters.operations) {
-                    marginMultiplier = 1; // Net margin when both filters are active
-                  } else if (costFilters.variable) {
-                    marginMultiplier = 1.5; // Gross margin when only variable costs are active
+                  if (costType === 'total') {
+                    marginMultiplier = 1; // Net margin when showing total costs
+                  } else if (costType === 'input') {
+                    marginMultiplier = 1.5; // Gross margin when showing input costs only
                   }
                   const adjustedMargin = crop.gm.value * marginMultiplier;
 
                   return (
                     <tr key={index} className="border-t border-gray-200">
                       <td className="px-4 py-4">
-                        <Link 
-                          to={`/analytics/explorer/${encodeURIComponent(crop.name)}`} 
+                        <Link
+                          to={`/analytics/explorer/${encodeURIComponent(crop.name)}`}
                           className="text-gray-700 hover:text-gray-900"
                         >
                           {crop.name}
                         </Link>
                       </td>
                       <td className="px-4 py-4">{crop.area}</td>
-                      {costFilters.variable && !costFilters.operations && (
-                        <td className="px-4 py-4 overflow-hidden">
-                          <MarketRangeIndicator
-                            data={{
-                              min: crop.marketRange.min,
-                              max: crop.marketRange.max,
-                              average: (crop.marketRange.min + crop.marketRange.max) / 2,
-                              current: crop.marketRange.current
-                            }}
-                            formatValue={(value) => `£${value.toFixed(2)}/t`}
-                          />
-                        </td>
-                      )}
+                      <td className="px-4 py-4 overflow-hidden">
+                        <MarketRangeIndicator
+                          data={{
+                            min: crop.marketRange.min,
+                            max: crop.marketRange.max,
+                            average: (crop.marketRange.min + crop.marketRange.max) / 2,
+                            current: crop.marketRange.current
+                          }}
+                          formatValue={(value) => `£${value.toFixed(2)}/t`}
+                        />
+                      </td>
                       <td className="px-4 py-4 text-right">
                         <span className={crop.cop.hasWarning ? 'text-gray-700 font-medium' : ''}>
                           £{crop.cop.value.toFixed(2)}/t
@@ -267,6 +308,14 @@ export default function Explorer() {
           </div>
         </div>
       </div>
+
+      {/* Help Panel */}
+      <HelpPanel
+        isOpen={showHelpPanel}
+        onClose={() => setShowHelpPanel(false)}
+        title="Explorer Help"
+        content={<ExplorerHelpContent />}
+      />
     </div>
   );
 }

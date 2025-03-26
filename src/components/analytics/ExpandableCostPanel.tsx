@@ -52,8 +52,8 @@ function CostRow({
 
   return (
     <>
-      <tr className="border-b border-gray-100">
-        <td className="py-3 w-1/4">
+      <tr className="border-b border-gray-100 cost-row">
+        <td className="py-3 w-1/4 cost-row-category">
           <div className="flex items-center" style={{ paddingLeft: `${level * 1.5}rem` }}>
             {hasSubcategories && (
               <button
@@ -129,6 +129,22 @@ function CostRow({
   );
 }
 
+// CSS to hide link icons
+const hideLinkIconsStyle = `
+  .cost-row-category::before {
+    display: none !important;
+  }
+  td::before {
+    display: none !important;
+  }
+  tr::before {
+    display: none !important;
+  }
+  .link-icon {
+    display: none !important;
+  }
+`;
+
 export default function ExpandableCostPanel({
   title,
   categories,
@@ -159,6 +175,9 @@ export default function ExpandableCostPanel({
 
   return (
     <div className="bg-white rounded-lg shadow">
+      {/* Add style tag to hide link icons */}
+      <style dangerouslySetInnerHTML={{ __html: hideLinkIconsStyle }} />
+      
       <div className="p-4 border-b border-gray-200 flex items-center">
         <h3 className="font-semibold">{title}</h3>
       </div>

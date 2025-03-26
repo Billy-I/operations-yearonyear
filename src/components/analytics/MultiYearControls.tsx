@@ -1,6 +1,6 @@
 import { Leaf, Filter } from 'lucide-react';
 import { AVAILABLE_CROPS, AVAILABLE_FILTERS } from '../../constants/analytics';
-import { TabType } from '../../types/analytics';
+import { TabType, UnitType } from '../../types/analytics';
 
 type AvailableCrop = typeof AVAILABLE_CROPS[number];
 
@@ -11,6 +11,8 @@ interface MultiYearControlsProps {
   setSelectedFilter: (filter: string) => void;
   selectedTab: TabType;
   setSelectedTab: (tab: TabType) => void;
+  selectedUnit: UnitType;
+  setSelectedUnit: (unit: UnitType) => void;
 }
 
 export const MultiYearControls = ({
@@ -19,7 +21,9 @@ export const MultiYearControls = ({
   selectedFilter,
   setSelectedFilter,
   selectedTab,
-  setSelectedTab
+  setSelectedTab,
+  selectedUnit,
+  setSelectedUnit
 }: MultiYearControlsProps) => {
   return (
     <div className="flex justify-between items-center">
@@ -54,6 +58,33 @@ export const MultiYearControls = ({
                 <option key={filter} value={filter}>{filter}</option>
               ))}
             </select>
+          </div>
+        </div>
+        
+        {/* Unit Toggle */}
+        <div>
+          <div className="text-sm text-gray-600 mb-2">Display Units</div>
+          <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-md">
+            <div className="flex items-center space-x-2">
+              <button
+                className={`px-2 py-1 text-xs rounded ${selectedUnit === '£/t' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+                onClick={() => setSelectedUnit('£/t')}
+              >
+                £/t
+              </button>
+              <button
+                className={`px-2 py-1 text-xs rounded ${selectedUnit === '£/ha' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+                onClick={() => setSelectedUnit('£/ha')}
+              >
+                £/ha
+              </button>
+              <button
+                className={`px-2 py-1 text-xs rounded ${selectedUnit === '£' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+                onClick={() => setSelectedUnit('£')}
+              >
+                Total (£)
+              </button>
+            </div>
           </div>
         </div>
       </div>

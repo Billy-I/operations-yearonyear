@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ArrowUpDown, HelpCircle } from 'lucide-react';
 import { MetricsData, Year } from '../../types/analytics';
+import { CostCategoryIndicator } from '../../components/help';
 
 interface PerformanceData {
   name: string;
@@ -101,7 +102,12 @@ export default function DetailedPerformanceTable({
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="p-4 border-b border-gray-200">
-        <h3 className="font-semibold">Performance by {groupBy}</h3>
+        <div className="flex items-center">
+          <h3 className="font-semibold">Performance by {groupBy}</h3>
+          {showNetMargin !== undefined && (
+            <CostCategoryIndicator className="ml-2" size={14} />
+          )}
+        </div>
       </div>
       
       <div className="overflow-x-auto">
