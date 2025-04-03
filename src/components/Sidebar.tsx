@@ -105,14 +105,6 @@ export default function Sidebar() {
             <Wallet size={20} />
             <span>Budgets</span>
           </Link>
-          <Link to="/tracker/budgets-alt" className={getLinkClasses('/tracker/budgets-alt')}>
-            <Wallet size={20} />
-            <span>Budgets (Alt)</span>
-          </Link>
-          <Link to="/tracker/budgets-simple" className={getLinkClasses('/tracker/budgets-simple')}>
-            <Wallet size={20} />
-            <span>Budgets Simple</span>
-          </Link>
         </DropdownSection>
 
         <DropdownSection
