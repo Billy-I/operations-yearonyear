@@ -2,24 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom'; // Import useLocation
 import AddBudgetPanel from '../components/AddBudgetPanel';
 
+interface SummaryItem {
+  label: string;
+  value: string;
+  isBold?: boolean; // Optional flag for bold values
+}
+
 interface SummaryCardProps {
   title: string;
-  value: string;
+  items: SummaryItem[];
   info?: string;
 }
 
-const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, info }) => (
-  <div className="p-4 border border-gray-200 rounded-lg">
-    <div className="flex items-center gap-1">
-      <span className="text-sm text-gray-600">{title}</span>
-      {info && (
-        <span className="text-gray-400 hover:text-gray-600 cursor-help" title={info}>
-          ⓘ
-        </span>
-      )}
+const SummaryCard: React.FC<SummaryCardProps> = ({ title, items, info }) => (
+    <div className="p-4 border border-gray-200 rounded-lg flex flex-col justify-between h-full"> {/* Added flex, justify-between, h-full */}
+      <div> {/* Wrapper for title and info */}
+        <div className="flex items-center justify-between gap-1 mb-2"> {/* Added justify-between */}
+          <span className="text-sm font-medium text-gray-900">{title}</span> {/* Changed styling */}
+          {info && (
+            <span className="text-gray-400 hover:text-gray-600 cursor-help" title={info}>
+              {/* Using Heroicon question mark circle */}
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+              </svg>
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="space-y-1"> {/* Wrapper for items */}
+        {items.map((item, index) => (
+          <div key={index} className="flex justify-between items-baseline"> {/* Align items */}
+            <span className="text-sm text-gray-600">{item.label}</span>
+            <span className={`text-sm ${item.isBold ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>{item.value}</span> {/* Conditional bold */}
+          </div>
+        ))}
+      </div>
     </div>
-    <div className="mt-1 text-lg font-medium text-gray-900">{value}</div>
-  </div>
 );
 
 interface CropRowProps {
@@ -362,13 +380,75 @@ const Budgets: React.FC = () => {
     setIsPanelOpen(false);
   };
 
+  // --- Calculations for Summary Cards ---
+  const formatCurrencyValue = (value: number): string => {
+    // Use en-GB for £ symbol placement
+    return value.toLocaleString('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const formatAreaValue = (value: number): string => {
+    return `${value.toFixed(2)} ha`;
+  };
+
+  const parseValue = (valueString: string | undefined, removeChars: string = '£,'): number => {
+      if (!valueString) return 0;
+      // Remove specified characters and any whitespace around them, also units like /ha, /t
+      const cleaned = valueString.replace(new RegExp(`[${removeChars}\\s/a-zA-Z]+`, 'g'), '').trim();
+      const number = parseFloat(cleaned);
+      return isNaN(number) ? 0 : number;
+  };
+
+
+  const totalArea = variableCosts.reduce((total, cost) => total + parseValue(cost.area, 'ha'), 0);
+  // Placeholder for harvested area as it's not in the data
+  const harvestedAreaValue = 0;
+  const harvestedAreaPercentage = totalArea > 0 ? (harvestedAreaValue / totalArea) * 100 : 0;
+  const harvestedAreaDisplay = `${harvestedAreaValue.toFixed(2)} ha (${harvestedAreaPercentage.toFixed(0)}%)`;
+
+
+  const totalInputCosts = variableCosts.reduce((total, cost) => {
+    const area = parseValue(cost.area, 'ha');
+    const seed = parseValue(cost.seed);
+    const fertiliser = parseValue(cost.fertiliser);
+    const chemical = parseValue(cost.chemical);
+    // Costs are per ha, so multiply by area
+    return total + (seed + fertiliser + chemical) * area;
+  }, 0);
+
+  const totalOperationsCosts = operationsCosts.reduce((total, cost) => {
+    // These costs seem to be totals already, not per ha based on AddBudgetPanel logic and table totals
+    return total +
+      parseValue(cost.cultivation) +
+      parseValue(cost.drilling) +
+      parseValue(cost.application) +
+      parseValue(cost.harvesting) +
+      parseValue(cost.other);
+  }, 0);
+
+  const totalCosts = totalInputCosts + totalOperationsCosts;
+
+  const totalSales = variableCosts.reduce((total, cost) => {
+      const area = parseValue(cost.area, 'ha');
+      const yieldVal = parseValue(cost.yield, 't/ha');
+      const price = parseValue(cost.price, '/t');
+      return total + (yieldVal * price * area);
+  }, 0);
+
+  // Gross Margin = Total Sales - Total Input Costs
+  const budgetedGrossMargin = totalSales - totalInputCosts;
+
+  // Net Margin = Gross Margin - Total Operations Costs
+  const calculatedNetMargin = budgetedGrossMargin - totalOperationsCosts;
+
+  // --- End Calculations ---
+
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold text-gray-900">Budgets</h1>
           <span className="text-gray-400">/</span>
-          {/* Removed conditional display of selectedCrop */}
           <span className="text-gray-600">{selectedYear}</span>
         </div>
         <select
@@ -378,31 +458,45 @@ const Budgets: React.FC = () => {
         >
           <option value="2025">2025</option>
           <option value="2024">2024</option>
+          {/* Add more years if needed */}
         </select>
       </div>
 
       <h2 className="text-xl font-medium text-gray-900 mb-4">Summary</h2>
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        <SummaryCard 
-          title="Total area" 
-          value="2209.17 ha" 
-          info="Total area across all crops"
-        />
-        <SummaryCard 
-          title="Total cost" 
-          value="£1,139,903.55"
-          info="Sum of all variable and operations costs"
-        />
-        <SummaryCard 
-          title="Total sales" 
-          value="£46,244,631.76"
-          info="Projected total sales based on yield and price"
-        />
-        <SummaryCard 
-          title="Budgeted Gross Margin" 
-          value="£45,104,728.21"
-          info="Total sales minus total costs"
-        />
+      {/* Updated grid for responsiveness and content */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+         <SummaryCard
+            title="Area Information"
+            info="Details about the total and harvested farm area."
+            items={[
+              { label: "Total Area", value: formatAreaValue(totalArea), isBold: true },
+              { label: "Harvested area", value: harvestedAreaDisplay, isBold: true }, // Using placeholder
+            ]}
+          />
+          <SummaryCard
+            title="Costs"
+            info="Breakdown of input and operational costs."
+            items={[
+              { label: "Input", value: formatCurrencyValue(totalInputCosts), isBold: true },
+              { label: "Operations", value: formatCurrencyValue(totalOperationsCosts), isBold: true },
+              { label: "Total", value: formatCurrencyValue(totalCosts), isBold: false }, // Total is not bold in image
+            ]}
+          />
+          <SummaryCard
+            title="Sales"
+            info="Total projected sales based on yield and price."
+            items={[
+              { label: "Total Sales", value: formatCurrencyValue(totalSales), isBold: true },
+            ]}
+          />
+          <SummaryCard
+            title="Profitability"
+            info="Budgeted gross and net margins."
+            items={[
+              { label: "Budgeted Gross Margin", value: formatCurrencyValue(budgetedGrossMargin), isBold: true },
+              { label: "Budgeted Net Margin", value: formatCurrencyValue(calculatedNetMargin), isBold: true },
+            ]}
+          />
       </div>
 
       <div className="mb-8">
@@ -510,27 +604,6 @@ const Budgets: React.FC = () => {
                     })()}
                   </td>
                   <td className="py-3 px-4"></td>
-                </tr>
-                <tr className="border-t-2 border-gray-300 bg-gray-100 font-semibold">
-                  <td className="py-3 px-4 text-gray-900">Total (Variable + Operations)</td>
-                  <td className="py-3 px-4 text-gray-900">£{(
-                    variableCosts.reduce((total, cost) => {
-                      const area = parseFloat(cost.area.split(' ')[0]);
-                      const seed = parseFloat(cost.seed.split('£')[1].split(' ')[0]);
-                      const fertiliser = parseFloat(cost.fertiliser.split('£')[1].split(' ')[0]);
-                      const chemical = parseFloat(cost.chemical.split('£')[1].split(' ')[0]);
-                      return total + (seed + fertiliser + chemical) * area;
-                    }, 0) +
-                    operationsCosts.reduce((total, cost) => {
-                      return total +
-                        parseFloat(cost.cultivation.replace('£', '').replace(',', '')) +
-                        parseFloat(cost.drilling.replace('£', '').replace(',', '')) +
-                        parseFloat(cost.application.replace('£', '').replace(',', '')) +
-                        parseFloat(cost.harvesting.replace('£', '').replace(',', '')) +
-                        parseFloat(cost.other.replace('£', '').replace(',', ''));
-                    }, 0)
-                  ).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                  <td colSpan={6} className="py-3 px-4"></td>
                 </tr>
               </tbody>
             </table>
