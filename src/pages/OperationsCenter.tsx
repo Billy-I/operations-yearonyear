@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom'; // Import useLocation
 import { initialData } from '../data';
 import { OperationsData, Operation } from '../types';
 import OperationRow from '../components/OperationRow';
 import Modal from '../components/Modal';
-import { Plus, Save, X, RotateCcw } from 'lucide-react';
+import { Plus, Save, X, RotateCcw, Info } from 'lucide-react'; // Added Info icon
 import AddOperationPanel from '../components/AddOperationPanel';
 
 interface FilterOption {
@@ -54,8 +55,15 @@ export default function OperationsCenter() {
   const [hasSavedChanges, setHasSavedChanges] = useState(false);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<'yagro' | 'custom'>('custom');
-  const [selectedCrop, setSelectedCrop] = useState<string>('All crops');
-  const [originalSelectedCrop, setOriginalSelectedCrop] = useState<string>('All crops');
+  // Read initial year and crop from URL query parameters
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialYear = searchParams.get('year') || '2024'; // Default to 2024 if not provided
+  const initialCrop = searchParams.get('crop') ? decodeURIComponent(searchParams.get('crop')!) : 'All crops'; // Default to 'All crops'
+
+  const [selectedCrop, setSelectedCrop] = useState<string>(initialCrop);
+  const [originalSelectedCrop, setOriginalSelectedCrop] = useState<string>(initialCrop);
+  const [selectedYear, setSelectedYear] = useState<string>(initialYear);
   const [selectedFilter, setSelectedFilter] = useState<string>('none');
   const [originalFilter, setOriginalFilter] = useState<string>('none');
   const [selectedSubFilters, setSelectedSubFilters] = useState<string[]>([]);
@@ -83,16 +91,43 @@ export default function OperationsCenter() {
     index: null,
   });
 
+  
+    // Banner visibility is now determined by selectedYear === '2025'
+  
+  // Effect to handle initial data loading and filtering based on URL params
   useEffect(() => {
-    // Only load from localStorage if we explicitly want to restore a previous session
-    const shouldRestoreSession = false; // This ensures we always use initialData on fresh load
-    const savedData = localStorage.getItem('operationsData');
-    if (shouldRestoreSession && savedData) {
-      const parsedData = JSON.parse(savedData);
-      setData(parsedData);
-      setOriginalData(parsedData);
+    // Use initialData as the base
+    let currentData = initialData;
+    setOriginalData(initialData); // Set original data based on initial load
+
+    // If a specific crop is passed via URL, apply initial filtering
+    if (initialCrop !== 'All crops') {
+      const fullHectares = currentData.crops[initialCrop]?.hectares || 0;
+      const newData = updateDataWithFilteredHectares(currentData, initialCrop, fullHectares);
+      const totals = calculateTotalAverages(newData, initialCrop);
+      currentData = {
+        ...newData,
+        totalAverageCost: totals.totalAverageCost,
+        totalCost: totals.totalCost
+      };
+      // Set original data again after initial filtering
+      setOriginalData(currentData);
+    } else {
+       // Calculate totals for "All crops" if no specific crop is selected initially
+       const totals = calculateTotalAverages(currentData, 'All crops');
+       currentData = {
+         ...currentData,
+         totalAverageCost: totals.totalAverageCost,
+         totalCost: totals.totalCost
+       };
+       setOriginalData(currentData); // Set original data for "All crops"
     }
-  }, []);
+
+    setData(currentData); // Set the initial data state
+
+    // No dependency array needed here as it should only run once on mount based on URL params
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only on mount
 
   useEffect(() => {
     const hasDataChanged = JSON.stringify(data) !== JSON.stringify(originalData);
@@ -768,8 +803,13 @@ export default function OperationsCenter() {
           <h1 className="text-2xl font-bold">Operations Centre</h1>
         </div>
         <div className="flex items-center gap-4">
-          <select className="border border-gray-300 rounded-md p-2">
-            <option>2024</option>
+          <select
+            className="border border-gray-300 rounded-md p-2"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+          >
+            <option value="2024">2024</option>
+            <option value="2025">2025</option> {/* Add 2025 option */}
           </select>
           <div className="flex gap-2">
             {hasChanges && selectedTemplate === 'custom' && (
@@ -795,6 +835,15 @@ export default function OperationsCenter() {
       </div>
 
       <div className="bg-white rounded-lg shadow mb-6">
+        {/* Baseline Notification Banner (Placeholder for 2025) */}
+        {selectedYear === '2025' && (
+          <div className="mb-4 p-4 bg-blue-50 border-b border-blue-200 flex items-start text-sm text-blue-800">
+            <Info size={18} className="mr-3 mt-0.5 flex-shrink-0 text-blue-600" />
+            <div>
+              <span className="font-medium">Using Baseline Data:</span> The operations data shown for this year is based on the previous year's baseline. You can edit these values. When official system data for this year becomes available, you'll have the option to merge it, preserving any edits you've made.
+            </div>
+          </div>
+        )}
         <div className="p-4 border-b border-gray-200">
           <div className="grid grid-cols-4 gap-4">
             <div>

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 
 const CropProgress = () => {
   const [view, setView] = useState<'Table' | 'Grid'>('Table');
-  const [year, setYear] = useState('2024');
+  const [year, setYear] = useState('2025'); // Default to 2025
 
   const crops = [
     {
@@ -79,6 +80,7 @@ const CropProgress = () => {
             className="px-3 py-2 border border-gray-200 rounded-lg text-gray-600 bg-white"
           >
             <option value="2024">2024</option>
+            <option value="2025">2025</option> {/* Add 2025 option */}
           </select>
           <div className="flex gap-2 bg-gray-900 rounded-lg p-1">
             <button
@@ -122,10 +124,12 @@ const CropProgress = () => {
             </tr>
           </thead>
           <tbody>
-            {crops.map((crop, index) => (
+            {/* Filter crops based on the selected year */}
+            {(year === '2025' ? crops.slice(0, 3) : crops).map((crop, index) => (
               <tr key={index} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-200">
                 <td className="p-4 text-gray-900">
-                  <Link to={`/tracker/crop-progress/${encodeURIComponent(crop.name)}`} className="hover:underline">
+                  {/* Pass the selected year as a query parameter */}
+                  <Link to={`/tracker/crop-progress/${encodeURIComponent(crop.name)}?year=${year}`} className="hover:underline">
                     {crop.name}
                   </Link>
                 </td>
@@ -139,12 +143,15 @@ const CropProgress = () => {
                   )}
                 </td>
                 <td className="p-4">
-                  <span className="text-gray-600">£{crop.costToDate.value.toFixed(2)}</span>
-                  {crop.costToDate.change !== 0 && (
-                    <span className="ml-2 text-gray-400">
-                      {crop.costToDate.change > 0 ? '+' : ''}{crop.costToDate.change}%
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600">£{crop.costToDate.value.toFixed(2)}</span>
+                    {crop.costToDate.change !== 0 && (
+                      <span className="text-gray-400">
+                        {crop.costToDate.change > 0 ? '+' : ''}{crop.costToDate.change}%
+                      </span>
+                    )}
+                    {/* "Add operations" link removed */}
+                  </div>
                 </td>
                 <td className="p-4">
                   <div className="w-32 bg-gray-100 rounded-lg h-2">

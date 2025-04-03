@@ -35,7 +35,9 @@ const injectStyles = () => {
 interface AddBudgetPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (data: any) => void;
+  onSave: (data: any, mode: 'add' | 'edit') => void; // Renamed onAdd to onSave, added mode
+  mode: 'add' | 'edit'; // Add mode prop
+  initialData?: any; // Add optional initialData for editing
 }
 
 interface TabVisitState {
@@ -86,7 +88,7 @@ const defaultOperations: Record<string, SubOperation[]> = {
   ]
 };
 
-const AddBudgetPanel: React.FC<AddBudgetPanelProps> = ({ isOpen, onClose, onAdd }) => {
+const AddBudgetPanel: React.FC<AddBudgetPanelProps> = ({ isOpen, onClose, onSave, mode, initialData }) => {
   const [activeTab, setActiveTab] = useState<TabType>('variable');
   const [isLoadMenuOpen, setIsLoadMenuOpen] = useState(false);
   const [operationDetailsOpen, setOperationDetailsOpen] = useState(false);
@@ -102,27 +104,110 @@ const AddBudgetPanel: React.FC<AddBudgetPanelProps> = ({ isOpen, onClose, onAdd 
     { name: 'other', expanded: false, subOperations: [...defaultOperations.other] }
   ]);
   
-  const [formData, setFormData] = useState({
-    crop: AVAILABLE_CROPS[0],
-    // Variable costs
-    area: '',
-    seed: '',
-    fertiliser: '',
-    chemical: '',
-    yield: '',
-    price: '',
-    // Operation costs
-    cultivation: '',
-    drilling: '',
-    application: '',
-    harvesting: '',
-    other: ''
+  // Initialize formData based on mode and initialData
+  const [formData, setFormData] = useState(() => {
+    const defaultData = {
+      crop: AVAILABLE_CROPS[0],
+      area: '', seed: '', fertiliser: '', chemical: '', yield: '', price: '', // Variable
+      cultivation: '', drilling: '', application: '', harvesting: '', other: '' // Operations
+    };
+    if (mode === 'edit' && initialData) {
+      // Pre-fill with initialData, parsing numeric values if needed
+      return {
+        crop: initialData.crop || defaultData.crop,
+        area: initialData.area || '',
+        seed: initialData.seed || '',
+        fertiliser: initialData.fertiliser || '',
+        chemical: initialData.chemical || '',
+        yield: initialData.yield || '',
+        price: initialData.price || '',
+        cultivation: initialData.cultivation || '',
+        drilling: initialData.drilling || '',
+        application: initialData.application || '',
+        harvesting: initialData.harvesting || '',
+        other: initialData.other || ''
+      };
+    }
+    return defaultData;
   });
 
   const operationsCostsRef = useRef<HTMLDivElement>(null);
   const variableCostsRef = useRef<HTMLDivElement>(null);
   const loadMenuRef = useRef<HTMLDivElement>(null);
   
+  // Effect to reset/prefill form when panel opens or initialData/mode changes
+  useEffect(() => {
+    if (isOpen) {
+      const defaultData = {
+        crop: AVAILABLE_CROPS[0], area: '', seed: '', fertiliser: '', chemical: '', yield: '', price: '',
+        cultivation: '', drilling: '', application: '', harvesting: '', other: ''
+      };
+      // Reset operation categories to default structure first
+      const defaultOpCategories = [
+        { name: 'cultivation', expanded: false, subOperations: [...defaultOperations.cultivation] },
+        { name: 'drilling', expanded: false, subOperations: [...defaultOperations.drilling] },
+        { name: 'application', expanded: false, subOperations: [...defaultOperations.application] },
+        { name: 'harvesting', expanded: false, subOperations: [...defaultOperations.harvesting] },
+        { name: 'other', expanded: false, subOperations: [...defaultOperations.other] }
+      ];
+
+      if (mode === 'edit' && initialData) { // EDIT MODE
+        console.log("AddBudgetPanel useEffect - Received initialData:", initialData);
+        
+        // Pre-fill all fields regardless of which table was clicked
+        const editFormData = {
+          ...defaultData,
+          crop: initialData.crop || defaultData.crop,
+          area: initialData.area || '',
+          seed: initialData.seed || '',
+          fertiliser: initialData.fertiliser || '',
+          chemical: initialData.chemical || '',
+          yield: initialData.yield || '',
+          price: initialData.price || '',
+          cultivation: initialData.cultivation || '',
+          drilling: initialData.drilling || '',
+          application: initialData.application || '',
+          harvesting: initialData.harvesting || '',
+          other: initialData.other || ''
+        };
+        
+        setFormData(editFormData);
+        
+        // Set the active tab and panel visibility based on which table was clicked
+        setActiveTab(initialData.type);
+        setVariableDetailsOpen(initialData.type === 'variable');
+        setOperationDetailsOpen(initialData.type === 'operations');
+        
+        // Always update operation categories with the operations data
+        const updatedCategories = operationCategories.map(category => {
+          const categoryValue = initialData[category.name] || '0';
+          const value = parseFloat(categoryValue);
+          const subOpCount = category.subOperations.length;
+          const valuePerOp = (value / subOpCount).toFixed(2);
+          
+          return {
+            ...category,
+            subOperations: category.subOperations.map(op => ({
+              ...op,
+              cost: valuePerOp
+            }))
+          };
+        });
+        setOperationCategories(updatedCategories);
+
+      } else { // ADD MODE
+        setFormData(defaultData);
+        setOperationCategories(defaultOpCategories); // Reset categories for add mode
+        setActiveTab('variable'); // Default to variable tab
+        setVariableDetailsOpen(true);
+        setOperationDetailsOpen(false);
+      }
+    }
+  }, [isOpen, mode, initialData]);
+  console.log("[Render] formData state before return:", formData); // Log formData before render
+
+  // Inject animation styles
+
   // Inject animation styles
   React.useEffect(() => {
     const cleanup = injectStyles();
@@ -431,9 +516,12 @@ const AddBudgetPanel: React.FC<AddBudgetPanelProps> = ({ isOpen, onClose, onAdd 
       other: formData.other || '0'
     };
 
-    // Submit both sets of data
-    onAdd(variableCosts);
-    onAdd(operationCosts);
+    // Submit data based on the active tab
+    if (activeTab === 'variable') {
+      onSave(variableCosts, mode);
+    } else {
+      onSave(operationCosts, mode);
+    }
 
     // Reset form
     setFormData({
@@ -467,7 +555,7 @@ const AddBudgetPanel: React.FC<AddBudgetPanelProps> = ({ isOpen, onClose, onAdd 
       <div className="h-full flex flex-col">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-medium text-gray-900">Add Budget</h2>
+            <h2 className="text-xl font-medium text-gray-900">{mode === 'edit' ? 'Edit Budget' : 'Add Budget'}</h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-500"
@@ -488,6 +576,7 @@ const AddBudgetPanel: React.FC<AddBudgetPanelProps> = ({ isOpen, onClose, onAdd 
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
                   required
+                  disabled={mode === 'edit'} // Disable crop selection when editing
                 >
                   {AVAILABLE_CROPS.map(crop => (
                     <option key={crop} value={crop}>{crop}</option>
@@ -751,12 +840,14 @@ const AddBudgetPanel: React.FC<AddBudgetPanelProps> = ({ isOpen, onClose, onAdd 
                               <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">{category.name}</label>
                               <div className="flex gap-2">
                                 <input
-                                  type="number"
-                                  value={formData[category.name as keyof typeof formData]}
+                                  type="text" inputMode="decimal" // Change type to text
+                                  // Add key and refine value binding
+                                  key={`${category.name}-${initialData?.crop || 'add'}`}
+                                  value={String(formData[category.name as keyof typeof formData] ?? '')}
                                   onChange={(e) => {
                                     setFormData(prev => ({
                                       ...prev,
-                                      [category.name]: e.target.value
+                                      [category.name]: e.target.value // Keep storing as string
                                     }));
                                   }}
                                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
