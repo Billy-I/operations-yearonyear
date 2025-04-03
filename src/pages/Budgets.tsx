@@ -48,8 +48,8 @@ interface CropRowProps {
   chemical: string;
   yield: string;
   price: string;
-  gm: string;
-  onEdit: () => void; // Add onEdit prop
+  gm: string; // Gross Margin per hectare
+  onEdit: () => void;
 }
 
 const CropRow: React.FC<CropRowProps> = ({ crop, area, seed, fertiliser, chemical, yield: yieldValue, price, gm, onEdit }) => (
@@ -63,7 +63,7 @@ const CropRow: React.FC<CropRowProps> = ({ crop, area, seed, fertiliser, chemica
     <td className="py-3 px-4 text-gray-600">{price}</td>
     <td className="py-3 px-4 text-gray-600">{gm}</td>
     <td className="py-3 px-4">
-      <button onClick={onEdit} className="text-gray-600 hover:text-gray-900"> {/* Call onEdit */}
+      <button onClick={onEdit} className="text-gray-600 hover:text-gray-900">
         ✏️
       </button>
     </td>
@@ -72,24 +72,25 @@ const CropRow: React.FC<CropRowProps> = ({ crop, area, seed, fertiliser, chemica
 
 interface OperationsRowProps {
   crop: string;
-  cultivation: string;
-  drilling: string;
-  application: string;
-  harvesting: string;
-  other: string;
-  netMargin?: string;
-  onEdit: () => void; // Add onEdit prop
+  cultivation: string; // Stored as Total £
+  drilling: string;     // Stored as Total £
+  application: string;  // Stored as Total £
+  harvesting: string;   // Stored as Total £
+  other: string;        // Stored as Total £
+  netMargin?: string;   // Stored as Total £
+  onEdit: () => void;
 }
 
-const OperationsRow: React.FC<OperationsRowProps> = ({ 
-  crop, 
+// This component receives already formatted strings based on the toggle
+const OperationsRow: React.FC<OperationsRowProps> = ({
+  crop,
   cultivation,
   drilling,
   application,
   harvesting,
   other,
   netMargin,
-  onEdit // Destructure onEdit
+  onEdit
 }) => (
   <tr className="border-b border-gray-200 hover:bg-gray-50">
     <td className="py-3 px-4 text-gray-900">{crop}</td>
@@ -100,7 +101,7 @@ const OperationsRow: React.FC<OperationsRowProps> = ({
     <td className="py-3 px-4 text-gray-600">{other}</td>
     <td className="py-3 px-4 text-gray-600">{netMargin}</td>
     <td className="py-3 px-4">
-      <button onClick={onEdit} className="text-gray-600 hover:text-gray-900"> {/* Call onEdit */}
+      <button onClick={onEdit} className="text-gray-600 hover:text-gray-900">
         ✏️
       </button>
     </td>
@@ -110,280 +111,20 @@ const OperationsRow: React.FC<OperationsRowProps> = ({
 const Budgets: React.FC = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const initialYear = searchParams.get('year') || '2025'; // Default to 2025
-  const initialCrop = searchParams.get('crop') ? decodeURIComponent(searchParams.get('crop')!) : 'All Crops'; // Default to All Crops
+  const initialYear = searchParams.get('year') || '2025';
+  const initialCrop = searchParams.get('crop') ? decodeURIComponent(searchParams.get('crop')!) : 'All Crops';
 
   const [selectedYear, setSelectedYear] = useState(initialYear);
   const [selectedCrop, setSelectedCrop] = useState(initialCrop);
-  const [panelMode, setPanelMode] = useState<'add' | 'edit'>('add'); // State for panel mode
-  const [editingBudgetData, setEditingBudgetData] = useState<any>(null); // State for data being edited
+  const [panelMode, setPanelMode] = useState<'add' | 'edit'>('add');
+  const [editingBudgetData, setEditingBudgetData] = useState<any>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  // Add initial onEdit handlers to the initial data
-  const [variableCosts, setVariableCosts] = useState<CropRowProps[]>(() => [
-    {
-      crop: "Wheat (Winter)", area: "130.00 ha", seed: "£130.00 /ha", fertiliser: "£130.00 /ha",
-      chemical: "£130.00 /ha", yield: "130.00 t/ha", price: "£130.00 /t", gm: "£16,510.00 /ha",
-      onEdit: () => {} // Placeholder, will be replaced by handleEdit below
-    },
-    {
-      crop: "Triticale (Spring)", area: "182.00 ha", seed: "£182.00 /ha", fertiliser: "£182.00 /ha",
-      chemical: "£182.00 /ha", yield: "182.00 t/ha", price: "£182.00 /t", gm: "£32,578.00 /ha",
-      onEdit: () => {}
-    },
-    {
-      crop: "Vining Pea", area: "108.00 ha", seed: "£108.00 /ha", fertiliser: "£108.00 /ha",
-      chemical: "£108.00 /ha", yield: "108.00 t/ha", price: "£108.00 /t", gm: "£11,340.00 /ha",
-      onEdit: () => {}
-    }
-  ].map(item => ({ ...item, onEdit: () => handleEdit(item, 'variable') }))); // Assign actual handler
+  const [operationsCostUnit, setOperationsCostUnit] = useState<'total' | 'perHa'>('total');
 
-  const [operationsCosts, setOperationsCosts] = useState<OperationsRowProps[]>([]);
-
-  // Initialize operations costs with calculated net margins
-  useEffect(() => {
-    // Calculate net margin for a crop
-    const calculateNetMargin = (cropName: string) => {
-      // Find the matching variable cost entry
-      const variableCost = variableCosts.find(vc => vc.crop === cropName);
-      
-      if (!variableCost) return "£0.00";
-      
-      // Parse the gross margin from the variable costs
-      const grossMargin = parseFloat(variableCost.gm.replace('£', '').replace(',', '').split(' ')[0]);
-      
-      // Calculate total operations costs for this crop
-      const operationCost = initialOperationsCosts.find(oc => oc.crop === cropName);
-      
-      if (!operationCost) return "£0.00";
-      
-      const totalOperationsCost = 
-        parseFloat(operationCost.cultivation.replace('£', '').replace(',', '')) +
-        parseFloat(operationCost.drilling.replace('£', '').replace(',', '')) +
-        parseFloat(operationCost.application.replace('£', '').replace(',', '')) +
-        parseFloat(operationCost.harvesting.replace('£', '').replace(',', '')) +
-        parseFloat(operationCost.other.replace('£', '').replace(',', ''));
-      
-      // Calculate net margin (gross margin - operations costs)
-      const netMargin = grossMargin - totalOperationsCost;
-      
-      // Format with commas for thousands
-      return netMargin >= 0 
-        ? `£${netMargin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : `-£${Math.abs(netMargin).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    };
-
-    // Add initial onEdit handlers
-    const initialOperationsCostsData = [
-       {
-         crop: "Wheat (Winter)", cultivation: "£6,500.00", drilling: "£3,900.00",
-         application: "£2,600.00", harvesting: "£5,200.00", other: "£1,300.00"
-       },
-       {
-         crop: "Triticale (Spring)", cultivation: "£9,100.00", drilling: "£5,460.00",
-         application: "£3,640.00", harvesting: "£7,280.00", other: "£1,820.00"
-       }
-     ];
-
-    const initialOperationsCosts: OperationsRowProps[] = initialOperationsCostsData.map(item => ({
-        ...item,
-        onEdit: () => handleEdit(item, 'operations') // Assign actual handler
-    }));
-
-    // Calculate and add net margin for each operations cost
-    const operationsWithNetMargin = initialOperationsCosts.map(cost => ({
-      ...cost,
-      netMargin: calculateNetMargin(cost.crop)
-    }));
-
-    setOperationsCosts(operationsWithNetMargin);
-    // TODO: Filter or fetch data based on selectedYear and selectedCrop here
-    // For now, using hardcoded data.
-
-  }, [variableCosts, selectedYear, selectedCrop]); // Recalculate when variable costs, year, or crop change
-
-  // Calculate net margin for a crop - used for new operations costs
-  const calculateNetMargin = (cropName: string) => {
-    // Find the matching variable cost entry
-    const variableCost = variableCosts.find(vc => vc.crop === cropName);
-    // Find the matching operations cost entry
-    const operationCost = operationsCosts.find(oc => oc.crop === cropName);
-    
-    if (!variableCost || !operationCost) return "£0.00";
-    
-    // Parse the gross margin from the variable costs
-    const grossMargin = parseFloat(variableCost.gm.replace('£', '').replace(',', '').split(' ')[0]);
-    
-    // Calculate total operations costs
-    const totalOperationsCost = 
-      parseFloat(operationCost.cultivation.replace('£', '').replace(',', '')) +
-      parseFloat(operationCost.drilling.replace('£', '').replace(',', '')) +
-      parseFloat(operationCost.application.replace('£', '').replace(',', '')) +
-      parseFloat(operationCost.harvesting.replace('£', '').replace(',', '')) +
-      parseFloat(operationCost.other.replace('£', '').replace(',', ''));
-    
-    // Calculate net margin (gross margin - operations costs)
-    const netMargin = grossMargin - totalOperationsCost;
-    
-    // Format with commas for thousands
-    return netMargin >= 0 
-      ? `£${netMargin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-      : `-£${Math.abs(netMargin).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-  
-    // Function to handle opening the panel for editing
-    const handleEdit = (itemData: any, type: 'variable' | 'operations') => {
-      // Helper to extract number from formatted string (e.g., "£130.00 /ha" -> 130.00)
-      const parseValue = (valueString: string | undefined): string => {
-        if (!valueString) return '';
-        // Remove currency symbols (£) and commas (,) only
-        const cleaned = valueString.replace(/[£,]/g, '');
-        // Parse the remaining string as a float
-        const number = parseFloat(cleaned);
-        // Return the number as a string, or an empty string if parsing failed
-        return isNaN(number) ? '' : number.toString();
-      };
-
-      // Find matching data from the other table
-      const crop = itemData.crop;
-      const matchingVariableCost = variableCosts.find(c => c.crop === crop);
-      const matchingOperationsCost = operationsCosts.find(c => c.crop === crop);
-
-      // Combine both variable and operations data
-      const dataToEdit = {
-        type, // Keep track of which table was clicked
-        crop: itemData.crop,
-        // Variable costs data
-        area: matchingVariableCost ? parseValue(matchingVariableCost.area) : '',
-        seed: matchingVariableCost ? parseValue(matchingVariableCost.seed) : '',
-        fertiliser: matchingVariableCost ? parseValue(matchingVariableCost.fertiliser) : '',
-        chemical: matchingVariableCost ? parseValue(matchingVariableCost.chemical) : '',
-        yield: matchingVariableCost ? parseValue(matchingVariableCost.yield) : '',
-        price: matchingVariableCost ? parseValue(matchingVariableCost.price) : '',
-        // Operations costs data
-        cultivation: matchingOperationsCost ? parseValue(matchingOperationsCost.cultivation) : '',
-        drilling: matchingOperationsCost ? parseValue(matchingOperationsCost.drilling) : '',
-        application: matchingOperationsCost ? parseValue(matchingOperationsCost.application) : '',
-        harvesting: matchingOperationsCost ? parseValue(matchingOperationsCost.harvesting) : '',
-        other: matchingOperationsCost ? parseValue(matchingOperationsCost.other) : '',
-      };
-
-      setEditingBudgetData(dataToEdit);
-      setPanelMode('edit');
-      setIsPanelOpen(true);
-    };
-
-  // Renamed function to handle both add and edit (eventually)
-  const handleSaveBudget = (data: any, mode: 'add' | 'edit') => {
-    // Helper to format number to currency string
-    const formatCurrency = (value: string | number | undefined, unit: string = ''): string => {
-      const num = parseFloat(value?.toString() || '0');
-      const formatted = `£${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      return unit ? `${formatted} ${unit}` : formatted;
-    };
-     // Helper to format number with unit
-    const formatUnit = (value: string | number | undefined, unit: string): string => {
-      const num = parseFloat(value?.toString() || '0');
-      return `${num.toFixed(2)} ${unit}`;
-    };
-
-
-    if (data.type === 'variable') {
-      const grossMargin = data.yield && data.price
-        ? (Number(data.yield) * Number(data.price))
-        : 0;
-
-      // Create the budget data object *without* onEdit first
-      const budgetData: Omit<CropRowProps, 'onEdit'> = {
-        crop: data.crop,
-        area: formatUnit(data.area, 'ha'),
-        seed: formatCurrency(data.seed, '/ha'),
-        fertiliser: formatCurrency(data.fertiliser, '/ha'),
-        chemical: formatCurrency(data.chemical, '/ha'),
-        yield: formatUnit(data.yield, 't/ha'),
-        price: formatCurrency(data.price, '/t'),
-        gm: formatCurrency(grossMargin, '/ha')
-      };
-
-      // Now create the final object including the onEdit handler
-      const finalBudgetData: CropRowProps = {
-          ...budgetData,
-          onEdit: () => handleEdit(budgetData, 'variable') // Pass the *unformatted* data to handleEdit if needed, or re-parse
-      };
-
-
-      if (mode === 'edit') {
-        setVariableCosts(prev => prev.map(cost =>
-          cost.crop === data.crop ? finalBudgetData : cost // Use finalBudgetData with onEdit
-        ));
-      } else { // mode === 'add'
-         // Check if crop already exists before adding
-        const exists = variableCosts.some(cost => cost.crop === data.crop);
-        if (!exists) {
-            setVariableCosts(prev => [...prev, finalBudgetData]); // Use finalBudgetData with onEdit
-        } else {
-            // Optionally handle the case where the crop already exists (e.g., show an error)
-            console.warn(`Budget for crop "${data.crop}" already exists.`);
-        }
-      }
-    }
-
-    // For Operations costs
-    else if (data.type === 'operations') {
-       // Create budget data object *without* onEdit and netMargin first
-       const budgetData: Omit<OperationsRowProps, 'onEdit' | 'netMargin'> = {
-         crop: data.crop,
-         cultivation: formatCurrency(data.cultivation),
-         drilling: formatCurrency(data.drilling),
-         application: formatCurrency(data.application),
-         harvesting: formatCurrency(data.harvesting),
-         other: formatCurrency(data.other),
-       };
-
-       // Calculate net margin separately
-       const variableCost = variableCosts.find(vc => vc.crop === data.crop);
-       let netMarginStr = '£0.00';
-       if (variableCost) {
-         const grossMargin = parseFloat(variableCost.gm.replace(/[£,]/g, '').split(' ')[0] || '0');
-         const totalOperationsCost =
-           parseFloat(data.cultivation || '0') +
-           parseFloat(data.drilling || '0') +
-           parseFloat(data.application || '0') +
-           parseFloat(data.harvesting || '0') +
-           parseFloat(data.other || '0');
-         const netMargin = grossMargin - totalOperationsCost;
-         netMarginStr = formatCurrency(netMargin);
-       }
-
-       // Create the final object including netMargin and onEdit
-       const finalBudgetData: OperationsRowProps = {
-           ...budgetData,
-           netMargin: netMarginStr,
-           onEdit: () => handleEdit(budgetData, 'operations') // Pass unformatted data if needed
-       };
-
-
-      if (mode === 'edit') {
-        setOperationsCosts(prev => prev.map(cost =>
-          cost.crop === data.crop ? finalBudgetData : cost // Use finalBudgetData with onEdit
-        ));
-      } else { // mode === 'add'
-         // Check if crop already exists before adding
-         const exists = operationsCosts.some(cost => cost.crop === data.crop);
-         if (!exists) {
-            setOperationsCosts(prev => [...prev, finalBudgetData]); // Use finalBudgetData with onEdit
-         } else {
-             console.warn(`Operations budget for crop "${data.crop}" already exists.`);
-         }
-      }
-    }
-
-    setIsPanelOpen(false);
-  };
-
-  // --- Calculations for Summary Cards ---
-  const formatCurrencyValue = (value: number): string => {
-    // Use en-GB for £ symbol placement
-    return value.toLocaleString('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // --- Utility Functions ---
+  const formatCurrencyValue = (value: number, unit: 'total' | 'perHa' = 'total'): string => {
+    const formatted = value.toLocaleString('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return unit === 'perHa' ? `${formatted} /ha` : formatted;
   };
 
   const formatAreaValue = (value: number): string => {
@@ -392,40 +133,275 @@ const Budgets: React.FC = () => {
 
   const parseValue = (valueString: string | undefined, removeChars: string = '£,'): number => {
       if (!valueString) return 0;
-      // Remove specified characters and any whitespace around them, also units like /ha, /t
+      // Remove specified characters, units, and whitespace. Handle potential negative sign.
       const cleaned = valueString.replace(new RegExp(`[${removeChars}\\s/a-zA-Z]+`, 'g'), '').trim();
       const number = parseFloat(cleaned);
-      return isNaN(number) ? 0 : number;
+      // Check if original string started with '-' after removing currency/commas but before removing letters/units
+      const mightBeNegative = valueString.replace(/[£,]/g, '').trim().startsWith('-');
+      const finalNumber = isNaN(number) ? 0 : (mightBeNegative && number > 0 ? -number : number); // Ensure negative sign is preserved if needed
+      return finalNumber;
+  };
+  // --- End Utility Functions ---
+
+  // --- State Initialization ---
+  const [variableCosts, setVariableCosts] = useState<CropRowProps[]>([]);
+  const [operationsCosts, setOperationsCosts] = useState<OperationsRowProps[]>([]);
+
+  // Initial data setup and net margin calculation
+  useEffect(() => {
+    // Define initial variable costs data structure
+    const initialVariableCostsData = [
+      {
+        crop: "Wheat (Winter)", area: "130.00 ha", seed: "£130.00 /ha", fertiliser: "£130.00 /ha",
+        chemical: "£130.00 /ha", yield: "130.00 t/ha", price: "£130.00 /t", gm: "£16510.00 /ha" // Example GM/ha
+      },
+      {
+        crop: "Triticale (Spring)", area: "182.00 ha", seed: "£182.00 /ha", fertiliser: "£182.00 /ha",
+        chemical: "£182.00 /ha", yield: "182.00 t/ha", price: "£182.00 /t", gm: "£32578.00 /ha" // Example GM/ha
+      },
+      {
+        crop: "Vining Pea", area: "108.00 ha", seed: "£108.00 /ha", fertiliser: "£108.00 /ha",
+        chemical: "£108.00 /ha", yield: "108.00 t/ha", price: "£108.00 /t", gm: "£11340.00 /ha" // Example GM/ha
+      }
+    ];
+
+    // Define initial operations costs data structure (Total £)
+    const initialOperationsCostsData = [
+       {
+         crop: "Wheat (Winter)", cultivation: "£6500.00", drilling: "£3900.00",
+         application: "£2600.00", harvesting: "£5200.00", other: "£1300.00"
+       },
+       {
+         crop: "Triticale (Spring)", cultivation: "£9100.00", drilling: "£5460.00",
+         application: "£3640.00", harvesting: "£7280.00", other: "£1820.00"
+       }
+     ];
+
+    // Calculate net margin (Total £)
+    const calculateNetMarginTotal = (cropName: string, currentVarCosts: CropRowProps[], currentOpCosts: Omit<OperationsRowProps, 'netMargin' | 'onEdit'>) => {
+      const variableCost = currentVarCosts.find(vc => vc.crop === cropName);
+      if (!variableCost) return formatCurrencyValue(0);
+
+      const area = parseValue(variableCost.area, 'ha');
+      const grossMarginPerHa = parseValue(variableCost.gm); // GM is stored per ha
+      const totalGrossMargin = grossMarginPerHa * area;
+
+      const totalOperationsCost =
+        parseValue(currentOpCosts.cultivation) +
+        parseValue(currentOpCosts.drilling) +
+        parseValue(currentOpCosts.application) +
+        parseValue(currentOpCosts.harvesting) +
+        parseValue(currentOpCosts.other);
+
+      const netMargin = totalGrossMargin - totalOperationsCost;
+      return formatCurrencyValue(netMargin);
+    };
+
+    // Map initial variable costs data and add onEdit
+    const initialVariableCostsWithEdit = initialVariableCostsData.map(item => ({
+        ...item,
+        onEdit: () => handleEdit(item, 'variable')
+    }));
+    setVariableCosts(initialVariableCostsWithEdit);
+
+    // Map initial operations costs data, calculate net margin, and add onEdit
+    const initialOperationsCostsWithEditAndMargin = initialOperationsCostsData.map(item => {
+        const netMargin = calculateNetMarginTotal(item.crop, initialVariableCostsWithEdit, item);
+        return {
+            ...item,
+            netMargin: netMargin,
+            onEdit: () => handleEdit(item, 'operations')
+        };
+    });
+    setOperationsCosts(initialOperationsCostsWithEditAndMargin);
+
+    // TODO: Filter or fetch data based on selectedYear and selectedCrop here
+
+  }, [selectedYear, selectedCrop]); // Rerun only when year/crop changes, not variableCosts
+
+
+  // --- Edit Handling ---
+  const handleEdit = (itemData: any, type: 'variable' | 'operations') => {
+    const parseEditValue = (valueString: string | undefined): string => {
+      if (!valueString) return '';
+      const cleaned = valueString.replace(/[£,]/g, '');
+      const numberMatch = cleaned.match(/^-?\d+(\.\d+)?/);
+      return numberMatch ? numberMatch[0] : '';
+    };
+
+    const crop = itemData.crop;
+    const matchingVariableCost = variableCosts.find(c => c.crop === crop);
+    const matchingOperationsCost = operationsCosts.find(c => c.crop === crop);
+
+    const dataToEdit = {
+      type,
+      crop: itemData.crop,
+      // Variable costs data (expecting per ha values for edit)
+      area: matchingVariableCost ? parseEditValue(matchingVariableCost.area) : '',
+      seed: matchingVariableCost ? parseEditValue(matchingVariableCost.seed) : '',
+      fertiliser: matchingVariableCost ? parseEditValue(matchingVariableCost.fertiliser) : '',
+      chemical: matchingVariableCost ? parseEditValue(matchingVariableCost.chemical) : '',
+      yield: matchingVariableCost ? parseEditValue(matchingVariableCost.yield) : '',
+      price: matchingVariableCost ? parseEditValue(matchingVariableCost.price) : '',
+      // Operations costs data (expecting total values for edit)
+      cultivation: matchingOperationsCost ? parseEditValue(matchingOperationsCost.cultivation) : '',
+      drilling: matchingOperationsCost ? parseEditValue(matchingOperationsCost.drilling) : '',
+      application: matchingOperationsCost ? parseEditValue(matchingOperationsCost.application) : '',
+      harvesting: matchingOperationsCost ? parseEditValue(matchingOperationsCost.harvesting) : '',
+      other: matchingOperationsCost ? parseEditValue(matchingOperationsCost.other) : '',
+    };
+
+    setEditingBudgetData(dataToEdit);
+    setPanelMode('edit');
+    setIsPanelOpen(true);
+  };
+
+  // --- Save Handling ---
+  const handleSaveBudget = (data: any, mode: 'add' | 'edit') => {
+     const formatCurrency = (value: string | number | undefined, unitSuffix: string = ''): string => {
+        const num = parseFloat(value?.toString() || '0');
+        const formatted = num.toLocaleString('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return unitSuffix ? `${formatted} ${unitSuffix}` : formatted;
+     };
+     const formatUnit = (value: string | number | undefined, unit: string): string => {
+       const num = parseFloat(value?.toString() || '0');
+       return `${num.toFixed(2)} ${unit}`;
+     };
+
+    // Recalculate Net Margin (Total £) based on potentially updated data
+    const recalculateNetMarginTotal = (cropName: string, currentVarCosts: CropRowProps[], currentOpCostsData: any) => {
+        const variableCost = currentVarCosts.find(vc => vc.crop === cropName);
+        if (!variableCost) return formatCurrency(0);
+
+        const area = parseValue(variableCost.area, 'ha');
+        const grossMarginPerHa = parseValue(variableCost.gm); // GM is stored per ha
+        const totalGrossMargin = grossMarginPerHa * area;
+
+        // Use the potentially updated operations data passed in 'currentOpCostsData'
+        const totalOperationsCost =
+            parseFloat(currentOpCostsData.cultivation || '0') +
+            parseFloat(currentOpCostsData.drilling || '0') +
+            parseFloat(currentOpCostsData.application || '0') +
+            parseFloat(currentOpCostsData.harvesting || '0') +
+            parseFloat(currentOpCostsData.other || '0');
+
+        const netMargin = totalGrossMargin - totalOperationsCost;
+        return formatCurrency(netMargin);
+    };
+
+    if (data.type === 'variable') {
+      // Calculate GM per hectare from input data
+      const gmPerHa = (Number(data.yield || 0) * Number(data.price || 0)) -
+                      (Number(data.seed || 0) + Number(data.fertiliser || 0) + Number(data.chemical || 0));
+
+      const budgetData: Omit<CropRowProps, 'onEdit'> = {
+        crop: data.crop,
+        area: formatUnit(data.area, 'ha'),
+        seed: formatCurrency(data.seed, '/ha'),
+        fertiliser: formatCurrency(data.fertiliser, '/ha'),
+        chemical: formatCurrency(data.chemical, '/ha'),
+        yield: formatUnit(data.yield, 't/ha'),
+        price: formatCurrency(data.price, '/t'),
+        gm: formatCurrency(gmPerHa, '/ha') // Store GM per ha
+      };
+
+      const finalBudgetData: CropRowProps = {
+          ...budgetData,
+          onEdit: () => handleEdit(budgetData, 'variable')
+      };
+
+      let updatedVariableCosts: CropRowProps[];
+      if (mode === 'edit') {
+        updatedVariableCosts = variableCosts.map(cost =>
+          cost.crop === data.crop ? finalBudgetData : cost
+        );
+      } else {
+        const exists = variableCosts.some(cost => cost.crop === data.crop);
+        if (!exists) {
+            updatedVariableCosts = [...variableCosts, finalBudgetData];
+        } else {
+            console.warn(`Variable budget for crop "${data.crop}" already exists.`);
+            updatedVariableCosts = variableCosts;
+        }
+      }
+      setVariableCosts(updatedVariableCosts);
+
+      // After updating variable costs, recalculate and update net margins in *existing* operations costs
+      setOperationsCosts(prevOpsCosts => prevOpsCosts.map(opCost => {
+          if (opCost.crop === data.crop) {
+              // Recalculate net margin using the *updated* variable costs list
+              const newNetMargin = recalculateNetMarginTotal(data.crop, updatedVariableCosts, opCost);
+              return { ...opCost, netMargin: newNetMargin };
+          }
+          return opCost;
+      }));
+
+    } else if (data.type === 'operations') {
+       const budgetData: Omit<OperationsRowProps, 'onEdit' | 'netMargin'> = {
+         crop: data.crop,
+         cultivation: formatCurrency(data.cultivation), // Store as total £
+         drilling: formatCurrency(data.drilling),
+         application: formatCurrency(data.application),
+         harvesting: formatCurrency(data.harvesting),
+         other: formatCurrency(data.other),
+       };
+
+       // Recalculate net margin using current variable costs and the *new* operations data
+       const netMarginStr = recalculateNetMarginTotal(data.crop, variableCosts, data);
+
+       const finalBudgetData: OperationsRowProps = {
+           ...budgetData,
+           netMargin: netMarginStr, // Store total net margin
+           onEdit: () => handleEdit(budgetData, 'operations')
+       };
+
+      if (mode === 'edit') {
+        setOperationsCosts(prev => prev.map(cost =>
+          cost.crop === data.crop ? finalBudgetData : cost
+        ));
+      } else {
+         const exists = operationsCosts.some(cost => cost.crop === data.crop);
+         if (!exists) {
+            // Ensure corresponding variable cost exists before adding operations
+            const varCostExists = variableCosts.some(vc => vc.crop === data.crop);
+            if (varCostExists) {
+                setOperationsCosts(prev => [...prev, finalBudgetData]);
+            } else {
+                console.warn(`Cannot add operations budget for crop "${data.crop}" as no variable budget exists.`);
+            }
+         } else {
+             console.warn(`Operations budget for crop "${data.crop}" already exists.`);
+         }
+      }
+    }
+
+    setIsPanelOpen(false);
+    setEditingBudgetData(null);
   };
 
 
+  // --- Calculations for Summary Cards (depend on state) ---
   const totalArea = variableCosts.reduce((total, cost) => total + parseValue(cost.area, 'ha'), 0);
-  // Placeholder for harvested area as it's not in the data
-  const harvestedAreaValue = 0;
+  const harvestedAreaValue = 0; // Placeholder
   const harvestedAreaPercentage = totalArea > 0 ? (harvestedAreaValue / totalArea) * 100 : 0;
   const harvestedAreaDisplay = `${harvestedAreaValue.toFixed(2)} ha (${harvestedAreaPercentage.toFixed(0)}%)`;
-
 
   const totalInputCosts = variableCosts.reduce((total, cost) => {
     const area = parseValue(cost.area, 'ha');
     const seed = parseValue(cost.seed);
     const fertiliser = parseValue(cost.fertiliser);
     const chemical = parseValue(cost.chemical);
-    // Costs are per ha, so multiply by area
     return total + (seed + fertiliser + chemical) * area;
   }, 0);
 
-  const totalOperationsCosts = operationsCosts.reduce((total, cost) => {
-    // These costs seem to be totals already, not per ha based on AddBudgetPanel logic and table totals
+  const totalOperationsCostsValue = operationsCosts.reduce((total, cost) => {
     return total +
-      parseValue(cost.cultivation) +
-      parseValue(cost.drilling) +
-      parseValue(cost.application) +
-      parseValue(cost.harvesting) +
+      parseValue(cost.cultivation) + parseValue(cost.drilling) +
+      parseValue(cost.application) + parseValue(cost.harvesting) +
       parseValue(cost.other);
   }, 0);
 
-  const totalCosts = totalInputCosts + totalOperationsCosts;
+  const totalCosts = totalInputCosts + totalOperationsCostsValue;
 
   const totalSales = variableCosts.reduce((total, cost) => {
       const area = parseValue(cost.area, 'ha');
@@ -434,17 +410,14 @@ const Budgets: React.FC = () => {
       return total + (yieldVal * price * area);
   }, 0);
 
-  // Gross Margin = Total Sales - Total Input Costs
   const budgetedGrossMargin = totalSales - totalInputCosts;
-
-  // Net Margin = Gross Margin - Total Operations Costs
-  const calculatedNetMargin = budgetedGrossMargin - totalOperationsCosts;
-
+  const calculatedNetMargin = budgetedGrossMargin - totalOperationsCostsValue;
   // --- End Calculations ---
 
 
   return (
     <div className="p-6">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold text-gray-900">Budgets</h1>
@@ -458,94 +431,80 @@ const Budgets: React.FC = () => {
         >
           <option value="2025">2025</option>
           <option value="2024">2024</option>
-          {/* Add more years if needed */}
         </select>
       </div>
 
+      {/* Summary Cards */}
       <h2 className="text-xl font-medium text-gray-900 mb-4">Summary</h2>
-      {/* Updated grid for responsiveness and content */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
          <SummaryCard
-            title="Area Information"
-            info="Details about the total and harvested farm area."
+            title="Area Information" info="Details about the total and harvested farm area."
             items={[
               { label: "Total Area", value: formatAreaValue(totalArea), isBold: true },
-              { label: "Harvested area", value: harvestedAreaDisplay, isBold: true }, // Using placeholder
-            ]}
-          />
+              { label: "Harvested area", value: harvestedAreaDisplay, isBold: true },
+            ]} />
           <SummaryCard
-            title="Costs"
-            info="Breakdown of input and operational costs."
+            title="Costs" info="Breakdown of input and operational costs."
             items={[
               { label: "Input", value: formatCurrencyValue(totalInputCosts), isBold: true },
-              { label: "Operations", value: formatCurrencyValue(totalOperationsCosts), isBold: true },
-              { label: "Total", value: formatCurrencyValue(totalCosts), isBold: false }, // Total is not bold in image
-            ]}
-          />
+              { label: "Operations", value: formatCurrencyValue(totalOperationsCostsValue), isBold: true },
+              { label: "Total", value: formatCurrencyValue(totalCosts), isBold: false },
+            ]} />
           <SummaryCard
-            title="Sales"
-            info="Total projected sales based on yield and price."
-            items={[
-              { label: "Total Sales", value: formatCurrencyValue(totalSales), isBold: true },
-            ]}
-          />
+            title="Sales" info="Total projected sales based on yield and price."
+            items={[ { label: "Total Sales", value: formatCurrencyValue(totalSales), isBold: true } ]} />
           <SummaryCard
-            title="Profitability"
-            info="Budgeted gross and net margins."
+            title="Profitability" info="Budgeted gross and net margins."
             items={[
               { label: "Budgeted Gross Margin", value: formatCurrencyValue(budgetedGrossMargin), isBold: true },
               { label: "Budgeted Net Margin", value: formatCurrencyValue(calculatedNetMargin), isBold: true },
-            ]}
-          />
+            ]} />
       </div>
 
+      {/* Variable Costs Table */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-medium text-gray-900">Crops</h2>
-          <button 
-            onClick={() => {
-              setPanelMode('add'); // Set mode to 'add'
-              setEditingBudgetData(null); // Clear any editing data
-              setIsPanelOpen(true);
-            }}
+          <button
+            onClick={() => { setPanelMode('add'); setEditingBudgetData(null); setIsPanelOpen(true); }}
             className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
-          >
-            + Add budgets
-          </button>
+          > + Add budgets </button>
         </div>
-        
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
             <h3 className="font-medium text-gray-900">Variable Costs</h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[800px]">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Crop</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Area</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Seed</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Fertiliser</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Chemical</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Yield</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Price</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">GM</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Area (ha)</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Seed (£/ha)</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Fertiliser (£/ha)</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Chemical (£/ha)</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Yield (t/ha)</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Price (£/t)</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">GM (£/ha)</th>
                   <th className="py-3 px-4"></th>
                 </tr>
               </thead>
               <tbody>
-                {variableCosts.map((cost, index) => (
-                  <CropRow key={index} {...cost} onEdit={() => handleEdit(cost, 'variable')} />
+                {variableCosts.map((cost) => (
+                  <CropRow key={cost.crop} {...cost} onEdit={() => handleEdit(cost, 'variable')} />
                 ))}
+                {/* Total Variable Costs Row */}
                 <tr className="border-t-2 border-gray-300 bg-gray-50 font-medium">
                   <td className="py-3 px-4 text-gray-900">Total Variable Costs</td>
-                  <td className="py-3 px-4 text-gray-900">{variableCosts.reduce((total, cost) => total + parseFloat(cost.area.split(' ')[0]), 0).toFixed(2)} ha</td>
-                  <td className="py-3 px-4 text-gray-900">£{variableCosts.reduce((total, cost) => total + parseFloat(cost.seed.split('£')[1].split(' ')[0]) * parseFloat(cost.area.split(' ')[0]), 0).toFixed(2)}</td>
-                  <td className="py-3 px-4 text-gray-900">£{variableCosts.reduce((total, cost) => total + parseFloat(cost.fertiliser.split('£')[1].split(' ')[0]) * parseFloat(cost.area.split(' ')[0]), 0).toFixed(2)}</td>
-                  <td className="py-3 px-4 text-gray-900">£{variableCosts.reduce((total, cost) => total + parseFloat(cost.chemical.split('£')[1].split(' ')[0]) * parseFloat(cost.area.split(' ')[0]), 0).toFixed(2)}</td>
-                  <td className="py-3 px-4 text-gray-900">{variableCosts.reduce((total, cost) => total + parseFloat(cost.yield.split(' ')[0]) * parseFloat(cost.area.split(' ')[0]), 0).toFixed(2)} t</td>
-                  <td className="py-3 px-4 text-gray-900">-</td>
-                  <td className="py-3 px-4 text-gray-900">£{variableCosts.reduce((total, cost) => total + parseFloat(cost.gm.split('£')[1].split(' ')[0]) * parseFloat(cost.area.split(' ')[0]), 0).toFixed(2)}</td>
+                  <td className="py-3 px-4 text-gray-900">{formatAreaValue(variableCosts.reduce((total, cost) => total + parseValue(cost.area, 'ha'), 0))}</td>
+                  {/* Totals below are sum of (value/ha * area) */}
+                  <td className="py-3 px-4 text-gray-900">{formatCurrencyValue(variableCosts.reduce((total, cost) => total + parseValue(cost.seed) * parseValue(cost.area, 'ha'), 0))}</td>
+                  <td className="py-3 px-4 text-gray-900">{formatCurrencyValue(variableCosts.reduce((total, cost) => total + parseValue(cost.fertiliser) * parseValue(cost.area, 'ha'), 0))}</td>
+                  <td className="py-3 px-4 text-gray-900">{formatCurrencyValue(variableCosts.reduce((total, cost) => total + parseValue(cost.chemical) * parseValue(cost.area, 'ha'), 0))}</td>
+                  <td className="py-3 px-4 text-gray-900">{variableCosts.reduce((total, cost) => total + parseValue(cost.yield, 't/ha') * parseValue(cost.area, 'ha'), 0).toFixed(2)} t</td>
+                  <td className="py-3 px-4 text-gray-900">-</td> {/* Price total doesn't make sense */}
+                  {/* Total Gross Margin (Sum of GM/ha * Area for each crop) */}
+                  <td className="py-3 px-4 text-gray-900">{formatCurrencyValue(variableCosts.reduce((total, cost) => total + parseValue(cost.gm) * parseValue(cost.area, 'ha'), 0))}</td>
                   <td className="py-3 px-4"></td>
                 </tr>
               </tbody>
@@ -554,54 +513,103 @@ const Budgets: React.FC = () => {
         </div>
       </div>
 
+      {/* Operations Costs Table */}
       <div className="mb-8">
         <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+          {/* Header with Toggle */}
+          <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
             <h3 className="font-medium text-gray-900">Operations Costs</h3>
+            <div className="flex items-center space-x-1 border border-gray-300 rounded-md p-0.5">
+              <button
+                onClick={() => setOperationsCostUnit('total')}
+                className={`px-2 py-0.5 rounded-md text-xs ${operationsCostUnit === 'total' ? 'bg-gray-800 text-white' : 'text-gray-600 hover:bg-gray-200'}`}
+              > £ Total </button>
+              <button
+                onClick={() => setOperationsCostUnit('perHa')}
+                className={`px-2 py-0.5 rounded-md text-xs ${operationsCostUnit === 'perHa' ? 'bg-gray-800 text-white' : 'text-gray-600 hover:bg-gray-200'}`}
+              > £ /ha </button>
+            </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[800px]">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Crop</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Cultivation</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Drilling</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Application</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Harvesting</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Other</th>
-                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Net Margin</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Cultivation ({operationsCostUnit === 'total' ? '£' : '£/ha'})</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Drilling ({operationsCostUnit === 'total' ? '£' : '£/ha'})</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Application ({operationsCostUnit === 'total' ? '£' : '£/ha'})</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Harvesting ({operationsCostUnit === 'total' ? '£' : '£/ha'})</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Other ({operationsCostUnit === 'total' ? '£' : '£/ha'})</th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Net Margin ({operationsCostUnit === 'total' ? '£' : '£/ha'})</th>
                   <th className="py-3 px-4"></th>
                 </tr>
               </thead>
               <tbody>
-                {operationsCosts.map((cost, index) => (
-                  <OperationsRow key={index} {...cost} onEdit={() => handleEdit(cost, 'operations')} />
-                ))}
+                {/* Operations Costs Rows - Dynamically render based on unit */}
+                {operationsCosts.map((cost) => {
+                  const vCost = variableCosts.find(vc => vc.crop === cost.crop);
+                  const area = vCost ? parseValue(vCost.area, 'ha') : 0;
+
+                  // Display helper for individual cost categories
+                  const displayCost = (valueStr: string | undefined) => {
+                    const numValue = parseValue(valueStr); // Stored as Total £
+                    if (operationsCostUnit === 'perHa') {
+                      const perHaValue = area > 0 ? numValue / area : 0;
+                      return formatCurrencyValue(perHaValue, 'perHa');
+                    }
+                    return formatCurrencyValue(numValue, 'total');
+                  };
+
+                  // Display helper for Net Margin (which is also stored as Total £)
+                  const displayNetMargin = (valueStr: string | undefined) => {
+                    const numValue = parseValue(valueStr); // Stored as Total £
+                    if (operationsCostUnit === 'perHa') {
+                      const perHaValue = area > 0 ? numValue / area : 0;
+                      return formatCurrencyValue(perHaValue, 'perHa');
+                    }
+                    return formatCurrencyValue(numValue, 'total');
+                  };
+
+                  return (
+                    <OperationsRow
+                      key={cost.crop}
+                      crop={cost.crop}
+                      cultivation={displayCost(cost.cultivation)}
+                      drilling={displayCost(cost.drilling)}
+                      application={displayCost(cost.application)}
+                      harvesting={displayCost(cost.harvesting)}
+                      other={displayCost(cost.other)}
+                      netMargin={displayNetMargin(cost.netMargin)}
+                      onEdit={() => handleEdit(cost, 'operations')}
+                    />
+                  );
+                })}
+                {/* Total Operations Costs Row - Dynamically calculate based on unit */}
                 <tr className="border-t-2 border-gray-300 bg-gray-50 font-medium">
                   <td className="py-3 px-4 text-gray-900">Total Operations Costs</td>
-                  <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.cultivation.split('£')[1]), 0).toFixed(2)}</td>
-                  <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.drilling.split('£')[1]), 0).toFixed(2)}</td>
-                  <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.application.split('£')[1]), 0).toFixed(2)}</td>
-                  <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.harvesting.split('£')[1]), 0).toFixed(2)}</td>
-                  <td className="py-3 px-4 text-gray-900">£{operationsCosts.reduce((total, cost) => total + parseFloat(cost.other.split('£')[1]), 0).toFixed(2)}</td>
+                  {/* Calculate and display totals based on toggle state */}
+                  {[ 'cultivation', 'drilling', 'application', 'harvesting', 'other'].map(key => (
+                    <td key={key} className="py-3 px-4 text-gray-900">
+                      {formatCurrencyValue(operationsCosts.reduce((total, cost) => {
+                        const vCost = variableCosts.find(vc => vc.crop === cost.crop);
+                        const area = vCost ? parseValue(vCost.area, 'ha') : 0;
+                        const value = parseValue((cost as any)[key]); // Get total numeric value
+                        // If perHa, sum the calculated per-ha values; otherwise, sum total values
+                        const valueToAdd = (operationsCostUnit === 'perHa' && area > 0) ? value / area : value;
+                        return total + valueToAdd;
+                      }, 0), operationsCostUnit)}
+                    </td>
+                  ))}
+                  {/* Total Net Margin Calculation - Dynamic */}
                   <td className="py-3 px-4 text-gray-900">
-                    {(() => {
-                      const totalNetMargin = operationsCosts.reduce((total, cost) => {
-                        if (!cost.netMargin) return total;
-                        
-                        // Handle both positive and negative values
-                        const isNegative = cost.netMargin.startsWith('-');
-                        const valueStr = isNegative ? cost.netMargin.substring(2) : cost.netMargin.substring(1);
-                        const value = parseFloat(valueStr.replace(',', ''));
-                        
-                        return total + (isNegative ? -value : value);
-                      }, 0);
-                      
-                      // Format with commas for thousands
-                      return totalNetMargin >= 0 
-                        ? `£${totalNetMargin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                        : `-£${Math.abs(totalNetMargin).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    })()}
+                    {formatCurrencyValue(operationsCosts.reduce((total, cost) => {
+                      const vCost = variableCosts.find(vc => vc.crop === cost.crop);
+                      const area = vCost ? parseValue(vCost.area, 'ha') : 0;
+                      const value = parseValue(cost.netMargin); // Get total numeric value
+                      // If perHa, sum the calculated per-ha values; otherwise, sum total values
+                      const valueToAdd = (operationsCostUnit === 'perHa' && area > 0) ? value / area : value;
+                      return total + valueToAdd;
+                    }, 0), operationsCostUnit)}
                   </td>
                   <td className="py-3 px-4"></td>
                 </tr>
@@ -611,15 +619,13 @@ const Budgets: React.FC = () => {
         </div>
       </div>
 
+      {/* Add/Edit Panel */}
       <AddBudgetPanel
         isOpen={isPanelOpen}
-        onClose={() => {
-          setIsPanelOpen(false);
-          setEditingBudgetData(null); // Clear editing data on close
-        }}
+        onClose={() => { setIsPanelOpen(false); setEditingBudgetData(null); }}
         onSave={handleSaveBudget}
-        mode={panelMode} // Pass the current mode
-        initialData={editingBudgetData} // Pass data for editing
+        mode={panelMode}
+        initialData={editingBudgetData}
       />
     </div>
   );
