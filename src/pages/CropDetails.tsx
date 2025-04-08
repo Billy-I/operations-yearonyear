@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'; // Added useEffect
 import { useParams, useLocation } from 'react-router-dom'; // Import useLocation
-import { HelpCircle, ArrowLeft, Info, Package, Tractor } from 'lucide-react'; // Added Info, Package, Tractor icons
+import { HelpCircle, ArrowLeft, Info, Package, Tractor, TableProperties } from 'lucide-react'; // Added Info, Package, Tractor, TableProperties icons
 import { Link } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts'; // Added PieChart, Pie, Cell, ReferenceLine
+import Modal from '../components/Modal'; // Import Modal component
 
 // Hardcoded data for UI implementation
 const CROP_AREA_HA = 641.16;
@@ -244,6 +245,19 @@ const PIE_COLORS = ['#3b82f6', '#10b981']; // Blue for Input, Green for Ops
 const INPUT_PIE_COLORS = ['#60a5fa', '#3b82f6', '#1d4ed8']; // Shades of blue
 const OPS_PIE_COLORS = ['#34d399', '#10b981', '#059669', '#047857', '#065f46']; // Shades of green
 
+// Placeholder data for the Variable Costs Per Variety Modal
+const variableCostsPerVarietyData = [
+  { category: 'Seed', kwsExtaseTotal: 35030.97, kwsExtaseHa: 94.99, crusoeTotal: 13703.42, crusoeHa: 102.10, mayflowerTotal: 10986.54, mayflowerHa: 100.22 },
+  { category: 'Fertiliser', kwsExtaseTotal: 190374.27, kwsExtaseHa: 516.24, crusoeTotal: 68453.34, crusoeHa: 510.05, mayflowerTotal: 59391.90, mayflowerHa: 541.80 },
+  { category: 'Chemical Foliar Fertiliser', kwsExtaseTotal: 768.07, kwsExtaseHa: 2.08, crusoeTotal: 276.83, crusoeHa: 2.06, mayflowerTotal: 250.38, mayflowerHa: 2.28 },
+  { category: 'Chemical Herbicide', kwsExtaseTotal: 48442.04, kwsExtaseHa: 131.36, crusoeTotal: 16259.18, crusoeHa: 121.15, mayflowerTotal: 14710.34, mayflowerHa: 134.19 },
+  { category: 'Chemical Anti-Foam', kwsExtaseTotal: 648.90, kwsExtaseHa: 1.76, crusoeTotal: 235.64, crusoeHa: 1.76, mayflowerTotal: 192.54, mayflowerHa: 1.76 },
+  { category: 'Chemical Adjuvant', kwsExtaseTotal: 7019.82, kwsExtaseHa: 19.04, crusoeTotal: 2303.60, crusoeHa: 17.16, mayflowerTotal: 2042.45, mayflowerHa: 18.63 },
+  { category: 'Chemical Fungicide', kwsExtaseTotal: 57836.05, kwsExtaseHa: 156.84, crusoeTotal: 20367.25, crusoeHa: 151.76, mayflowerTotal: 16763.96, mayflowerHa: 152.93 },
+  { category: 'Chemical Trace Element', kwsExtaseTotal: 9464.01, kwsExtaseHa: 25.66, crusoeTotal: 3013.39, crusoeHa: 22.45, mayflowerTotal: 2737.06, mayflowerHa: 24.97 },
+  { category: 'Chemical Plant Growth Regulator', kwsExtaseTotal: 10433.64, kwsExtaseHa: 28.29, crusoeTotal: 2795.27, crusoeHa: 20.83, mayflowerTotal: 2208.52, mayflowerHa: 20.15 },
+];
+
 
 // Helper to format currency
 const formatCurrency = (value: number) => `£${value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -323,6 +337,7 @@ export default function CropDetails() {
   const [inputCostViewUnit, setInputCostViewUnit] = useState<CostTableViewUnit>('perHa');
   const [operationsCostViewUnit, setOperationsCostViewUnit] = useState<CostTableViewUnit>('perHa');
   const [includeOperationsCosts, setIncludeOperationsCosts] = useState(true); // State for Cost Categories toggle
+  const [isVarietyCostModalOpen, setIsVarietyCostModalOpen] = useState(false); // State for the new modal
 
   // State for group visibility - Benchmarks default off
   const [visibleGroups, setVisibleGroups] = useState<Record<GroupKey, boolean>>({
@@ -658,7 +673,16 @@ export default function CropDetails() {
           {/* Input Costs Table */}
            <div className="mt-8"> {/* Adjusted margin if needed */}
              <div className="flex justify-between items-center mb-3">
-               <h3 className="text-lg font-semibold text-gray-800">Input Costs</h3>
+               <div className="flex items-center"> {/* Wrap title and icon */}
+                 <h3 className="text-lg font-semibold text-gray-800 mr-2">Input Costs</h3>
+                 <button
+                   onClick={() => setIsVarietyCostModalOpen(true)}
+                   className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-200"
+                   title="View Variable Costs Per Variety"
+                 >
+                   <TableProperties size={18} />
+                 </button>
+               </div>
                {/* Unit Toggle */}
                <div className="flex space-x-1 bg-gray-200 p-1 rounded-md">
                  <UnitToggleButton label="£/ha" value="perHa" currentUnit={inputCostViewUnit} setUnit={setInputCostViewUnit} />
@@ -858,6 +882,45 @@ export default function CropDetails() {
 
             </div> {/* End Sales Section Grid */}
       </div> {/* End Main Content Area */}
+
+       {/* Variable Costs Per Variety Modal */}
+       <Modal isOpen={isVarietyCostModalOpen} onClose={() => setIsVarietyCostModalOpen(false)} onConfirm={() => {}} title="Variable Costs To Date, Per Variety">
+         <div className="overflow-x-auto">
+           <table className="min-w-full divide-y divide-gray-200 text-sm">
+             <thead className="bg-gray-50">
+               <tr>
+                 <th scope="col" className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                 <th scope="col" colSpan={2} className="px-4 py-2 text-center font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">KWS Extase</th>
+                 <th scope="col" colSpan={2} className="px-4 py-2 text-center font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">Crusoe</th>
+                 <th scope="col" colSpan={2} className="px-4 py-2 text-center font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">Mayflower</th>
+               </tr>
+               <tr>
+                 <th scope="col" className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider"></th>
+                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">Total £</th>
+                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">£/ha</th>
+                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">Total £</th>
+                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">£/ha</th>
+                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">Total £</th>
+                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">£/ha</th>
+               </tr>
+             </thead>
+             <tbody className="bg-white divide-y divide-gray-200">
+               {variableCostsPerVarietyData.map((item) => (
+                 <tr key={item.category}>
+                   <td className="px-4 py-2 whitespace-nowrap font-medium text-gray-900">{item.category}</td>
+                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700 border-l border-gray-200">{formatCurrency(item.kwsExtaseTotal)}</td>
+                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700">{formatCurrency(item.kwsExtaseHa)}/ha</td>
+                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700 border-l border-gray-200">{formatCurrency(item.crusoeTotal)}</td>
+                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700">{formatCurrency(item.crusoeHa)}/ha</td>
+                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700 border-l border-gray-200">{formatCurrency(item.mayflowerTotal)}</td>
+                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700">{formatCurrency(item.mayflowerHa)}/ha</td>
+                 </tr>
+               ))}
+             </tbody>
+           </table>
+         </div>
+       </Modal>
+
     </div>
   );
 }
