@@ -485,7 +485,7 @@ export default function CropDetails() {
                <div className={`grid ${includeOperationsCosts ? 'grid-cols-2' : 'grid-cols-1'} gap-x-4 gap-y-2 text-left`}>
                  {/* Headers */}
                  <div className="text-xs font-medium text-gray-500 flex items-center"><Package size={14} className="mr-1 text-gray-400" />Input</div>
-                 {includeOperationsCosts && <div className="text-xs font-medium text-gray-500 flex items-center"><Tractor size={14} className="mr-1 text-gray-400" />Operations <span title="Operations costs may include baseline estimates. Visit Operations Center to update actuals for current season accuracy." className="ml-1 cursor-help"><HelpCircle size={12} className="text-gray-400" /></span></div>}
+                 {includeOperationsCosts && <div className="text-xs font-medium text-gray-500 flex items-center"><Tractor size={14} className="mr-1 text-gray-400" />Operations <span className="ml-1 cursor-help relative tooltip-container"><HelpCircle size={12} className="text-gray-400" /><span className="tooltip-text bg-gray-800 text-white text-xs rounded py-1 px-2 absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap opacity-0 transition-opacity duration-300 pointer-events-none">Operations costs may include baseline estimates. Visit Operations Center to update actuals for current season accuracy.</span></span></div>}
 
                  {/* Total Cost Row */}
                  <div className="text-sm font-semibold text-gray-900">{formatCurrency(totalActualInputCost)}</div>
@@ -688,7 +688,7 @@ export default function CropDetails() {
           {includeOperationsCosts && (
             <div className="mt-8">
                <div className="flex justify-between items-center mb-3">
-                 <h3 className="text-lg font-semibold text-gray-800 flex items-center">Operations Costs <span title="Operations costs may include baseline estimates. Visit Operations Center to update actuals for current season accuracy." className="ml-2 cursor-help"><HelpCircle size={14} className="text-gray-400" /></span></h3>
+                 <h3 className="text-lg font-semibold text-gray-800 flex items-center">Operations Costs <span className="ml-2 cursor-help relative tooltip-container"><HelpCircle size={14} className="text-gray-400" /><span className="tooltip-text bg-gray-800 text-white text-xs rounded py-1 px-2 absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap opacity-0 transition-opacity duration-300 pointer-events-none">Operations costs may include baseline estimates. Visit Operations Center to update actuals for current season accuracy.</span></span></h3>
                  {/* Unit Toggle */}
                  <div className="flex space-x-1 bg-gray-200 p-1 rounded-md">
                    <UnitToggleButton label="£/ha" value="perHa" currentUnit={operationsCostViewUnit} setUnit={setOperationsCostViewUnit} />

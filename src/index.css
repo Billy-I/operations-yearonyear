@@ -16,3 +16,9 @@
     }
   }
 }
+
+/* Tooltip Styles */
+.tooltip-container:hover .tooltip-text {
+  opacity: 1;
+  pointer-events: auto; /* Allow interaction if needed, though usually not for tooltips */
+}
