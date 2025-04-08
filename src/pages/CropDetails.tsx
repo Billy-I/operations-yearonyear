@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react'; // Added useEffect
 import { useParams, useLocation } from 'react-router-dom'; // Import useLocation
 import { HelpCircle, ArrowLeft, Info, Package, Tractor } from 'lucide-react'; // Added Info, Package, Tractor icons
 import { Link } from 'react-router-dom';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts'; // Added PieChart, Pie, Cell
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts'; // Added PieChart, Pie, Cell, ReferenceLine
 
 // Hardcoded data for UI implementation
 const CROP_AREA_HA = 641.16;
 const NUM_FIELDS = 36; // Hardcoded from image
-const ACHIEVED_PRICE = 0.00; // Hardcoded from image
+// Placeholder data for Sales & Profitability (replace with dynamic fetching later)
+const ACHIEVED_PRICE_PER_T = 219.17; // Example non-zero price for Wheat (Winter)
+const PERCENT_SOLD = 45; // Example percentage for Wheat (Winter)
+const MIN_PRICE_SOLD = 200.00; // Example
+const MAX_PRICE_SOLD = 250.00; // Example
 
 const budgetedInputCosts = {
   seed: 120.00,
@@ -157,9 +161,9 @@ const totalVariancePercent = totalBudgetCostHa === 0 ? 0 : (totalVarianceHa / to
 const yieldValue = 8.3; // From original image
 const productionTotal = CROP_AREA_HA * yieldValue;
 // Cost per tonne calculations (handle potential division by zero)
-const combinedCostOfProduction = totalActualCostHa / yieldValue; // Corrected: Removed redundant yieldValue check
-const inputCostPerTonne = totalActualInputCostHa / yieldValue; // Corrected: Removed redundant yieldValue check
-const opsCostPerTonne = totalActualOpsCostHa / yieldValue; // Corrected: Removed redundant yieldValue check
+const combinedCostOfProduction = yieldValue > 0 ? totalActualCostHa / yieldValue : 0;
+const inputCostPerTonne = yieldValue > 0 ? totalActualInputCostHa / yieldValue : 0;
+const opsCostPerTonne = yieldValue > 0 ? totalActualOpsCostHa / yieldValue : 0;
 
 
 // --- Chart Data ---
@@ -243,6 +247,20 @@ const OPS_PIE_COLORS = ['#34d399', '#10b981', '#059669', '#047857', '#065f46']; 
 
 // Helper to format currency
 const formatCurrency = (value: number) => `£${value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Helper to format Profit/Loss currency with color
+const formatProfitLossCurrency = (value: number | null | undefined) => {
+    if (value === null || value === undefined || isNaN(value) || !isFinite(value)) {
+        return <span className="text-gray-500">N/A</span>;
+    }
+    const isProfit = value >= 0;
+    const sign = isProfit ? '' : '-';
+    const color = isProfit ? 'text-green-600' : 'text-red-600';
+    const displayValue = formatCurrency(Math.abs(value));
+    // Remove the currency symbol from displayValue before prepending the sign
+    return <span className={color}>{sign}{displayValue.replace('£','')}</span>;
+};
+
 const formatVariancePercent = (value: number) => {
     const sign = value > 0 ? '+' : '';
     const color = value > 0 ? 'text-red-600' : value < 0 ? 'text-green-600' : 'text-gray-600';
@@ -355,7 +373,23 @@ export default function CropDetails() {
   // Calculate display values based on toggle
   const displayActualTotalCostHa = includeOperationsCosts ? totalActualCostHa : totalActualInputCostHa;
   const displayActualTotalCost = includeOperationsCosts ? totalActualCost : totalActualInputCost;
-  const displayCostOfProduction = includeOperationsCosts ? combinedCostOfProduction : inputCostPerTonne;
+  // Recalculate break-even based on toggle
+  const displayBreakEvenCost = includeOperationsCosts
+      ? (yieldValue > 0 ? totalActualCostHa / yieldValue : 0)
+      : (yieldValue > 0 ? totalActualInputCostHa / yieldValue : 0);
+
+  // Sales & Profitability Calculations (using placeholders)
+  const quantitySoldT = (productionTotal * PERCENT_SOLD) / 100;
+  const remainingQtyT = productionTotal - quantitySoldT;
+  const totalRevenue = ACHIEVED_PRICE_PER_T * quantitySoldT; // Based on avg price achieved
+  const potentialValueLeft = remainingQtyT * ACHIEVED_PRICE_PER_T; // Example: using current avg price
+  const totalPotentialValue = totalRevenue + potentialValueLeft;
+
+  // Margin and Profit/Loss based on the *sold* portion and *average* achieved price
+  const displayMarginPerTonne = ACHIEVED_PRICE_PER_T - displayBreakEvenCost;
+  // Calculate cost attributable to the sold portion
+  const costOfSoldPortion = displayActualTotalCost * (PERCENT_SOLD / 100);
+  const displayTotalProfitLoss = totalRevenue - costOfSoldPortion;
 
 
   // Helper component for the toggle buttons
@@ -472,50 +506,39 @@ export default function CropDetails() {
                 <div className="text-xs text-gray-500">Production</div>
                 <div className="text-lg font-semibold text-gray-900">{productionTotal.toFixed(2)} t</div>
               </div>
-              <div>
-                <div className="text-xs text-gray-500">£ Achieved</div>
-                <div className="text-lg font-semibold text-gray-900">{formatCurrency(ACHIEVED_PRICE)}</div>
-              </div>
+              {/* Removed £ Achieved from here, will be in Sales section */}
             </div>
 
             {/* Card 3: Costs - Updated for Toggle */}
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+               {/* ... (content mostly unchanged, ensure displayActualTotalCost etc. are used if not already) ... */}
                <h3 className="text-sm font-medium text-gray-600 mb-3">Costs</h3>
-               {/* Use grid-cols-1 if ops are excluded, otherwise grid-cols-2 */}
                <div className={`grid ${includeOperationsCosts ? 'grid-cols-2' : 'grid-cols-1'} gap-x-4 gap-y-2 text-left`}>
                  {/* Headers */}
                  <div className="text-xs font-medium text-gray-500 flex items-center"><Package size={14} className="mr-1 text-gray-400" />Input</div>
                  {includeOperationsCosts && <div className="text-xs font-medium text-gray-500 flex items-center"><Tractor size={14} className="mr-1 text-gray-400" />Operations <span className="ml-1 cursor-help relative tooltip-container"><HelpCircle size={12} className="text-gray-400" /><span className="tooltip-text bg-gray-800 text-white text-xs rounded py-1 px-2 absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap opacity-0 transition-opacity duration-300 pointer-events-none">Operations costs may include baseline estimates. Visit Operations Center to update actuals for current season accuracy.</span></span></div>}
 
-                 {/* Total Cost Row */}
+                 {/* Total Cost Row - Use display value */}
                  <div className="text-sm font-semibold text-gray-900">{formatCurrency(totalActualInputCost)}</div>
                  {includeOperationsCosts && <div className="text-sm font-semibold text-gray-900">{formatCurrency(totalActualOpsCost)}</div>}
 
-                 {/* Cost per Ha Row */}
+                 {/* Cost per Ha Row - Use display value */}
                  <div className="text-sm font-semibold text-gray-900">{formatCurrency(totalActualInputCostHa)}<span className="text-xs text-gray-500">/ha</span></div>
                  {includeOperationsCosts && <div className="text-sm font-semibold text-gray-900">{formatCurrency(totalActualOpsCostHa)}<span className="text-xs text-gray-500">/ha</span></div>}
 
-                 {/* Cost per Tonne Row */}
+                 {/* Cost per Tonne Row - Use display value */}
                  <div className="text-sm font-semibold text-gray-900">{formatCurrency(inputCostPerTonne)}<span className="text-xs text-gray-500">/t</span></div>
                  {includeOperationsCosts && <div className="text-sm font-semibold text-gray-900">{formatCurrency(opsCostPerTonne)}<span className="text-xs text-gray-500">/t</span></div>}
+               {/* Display Combined Total Cost */}
+               <div className="mt-3 pt-3 border-t border-gray-200">
+                  <div className="text-xs text-gray-500">Total Cost ({includeOperationsCosts ? 'Inputs + Ops' : 'Inputs Only'})</div>
+                  <div className="text-lg font-semibold text-gray-900">{formatCurrency(displayActualTotalCost)}</div>
+                  <div className="text-sm text-gray-600">{formatCurrency(displayActualTotalCostHa)}<span className="text-xs text-gray-500">/ha</span></div>
+               </div>
                </div>
                {/* Overall Total Cost - Updated */}
-                <div className="mt-4 pt-3 border-t border-gray-200">
-                    <div className="flex justify-between items-baseline">
-                        <span className="text-sm font-medium text-gray-600">Total Cost {includeOperationsCosts ? '' : '(Inputs Only)'}</span>
-                        <span className="text-lg font-semibold text-gray-900">{formatCurrency(displayActualTotalCost)}</span>
-                    </div>
-                    <div className="flex justify-between items-baseline text-sm text-gray-500">
-                        <span></span> {/* Empty space for alignment */}
-                        <span>{formatCurrency(displayActualTotalCostHa)}/ha</span>
-                    </div>
-                     <div className="flex justify-between items-baseline text-sm text-gray-500">
-                        <span></span> {/* Empty space for alignment */}
-                        <span>{formatCurrency(displayCostOfProduction)}/t</span>
-                    </div>
-                </div>
             </div>
-          </div>
+
         </div>
 
         {/* Costs Section */}
@@ -767,6 +790,15 @@ export default function CropDetails() {
                    <Bar yAxisId="right" dataKey="quantityContract" name="Quantity (contract)" fill="#6b7280" />
                    <Bar yAxisId="left" dataKey="price" name="Price" fill="#9ca3af" />
                    <Bar yAxisId="left" dataKey="priceContract" name="Price (contract)" fill="#d1d5db" />
+                   {/* Add Break-Even Line */}
+                   <ReferenceLine
+                     y={displayBreakEvenCost}
+                     yAxisId="left"
+                     stroke="red"
+                     strokeDasharray="3 3"
+                     strokeWidth={2}
+                     label={{ value: `Break-Even (${formatCurrency(displayBreakEvenCost)}/t)`, position: 'insideTopRight', fill: 'red', fontSize: 10 }}
+                   />
                  </BarChart>
               </ResponsiveContainer>
             </div>
@@ -790,21 +822,30 @@ export default function CropDetails() {
               </div>
               <div className="space-y-3">
                 {[
-                  { label: 'Min price', value: '£200.00/t' },
-                  { label: 'Avg. price', value: '£219.17/t' },
-                  { label: 'Max price', value: '£250.00/t' },
-                  { label: '£ achieved', value: '£0.00' },
-                  { label: 'Potential value left to sell', value: '£579,430.84' },
-                  { label: 'Total potential value', value: '£1,113,320.84' }
+                  { label: 'Min price', value: formatCurrency(MIN_PRICE_SOLD), unit: '/t' },
+                  { label: 'Avg. price', value: formatCurrency(ACHIEVED_PRICE_PER_T), unit: '/t' },
+                  { label: 'Max price', value: formatCurrency(MAX_PRICE_SOLD), unit: '/t' },
+                  { label: 'Total Revenue (Sold)', value: formatCurrency(totalRevenue) },
+                  { type: 'divider' }, // Visual separator
+                  { label: `Break-Even Cost (${includeOperationsCosts ? 'Inputs+Ops' : 'Inputs Only'})`, value: formatCurrency(displayBreakEvenCost), unit: '/t' },
+                  { label: `Margin (${includeOperationsCosts ? 'Net' : 'Gross'})`, value: formatProfitLossCurrency(displayMarginPerTonne), unit: '/t' },
+                  { label: 'Total Profit/Loss (Sold)', value: formatProfitLossCurrency(displayTotalProfitLoss) },
+                  { type: 'divider' }, // Visual separator
+                  { label: 'Potential value left to sell', value: formatCurrency(potentialValueLeft) },
+                  { label: 'Total potential value', value: formatCurrency(totalPotentialValue) },
                 ].map(item => (
-                  <div key={item.label}>
-                    <div className="flex justify-between items-center text-sm text-gray-600 mb-1">
-                      <span>{item.label}</span>
-                      <span title={`Info about ${item.label}`}>
-                        <HelpCircle size={16} className="text-gray-400 cursor-help" />
-                      </span>
-                    </div>
-                    <div className="font-semibold text-gray-900">{item.value}</div>
+                  item.type === 'divider' ?
+                  <div key={Math.random()} className="my-2 border-t border-gray-200"></div> :
+                  <div key={item.label} className="flex justify-between items-center py-1">
+                    <span className="text-xs text-gray-500 flex items-center">
+                      {item.label}
+                      <Info size={12} className="ml-1 text-gray-400 cursor-help" />
+                    </span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {/* Check if value is a JSX element (from formatProfitLossCurrency) */}
+                      {typeof item.value === 'string' || typeof item.value === 'number' ? item.value : item.value}
+                      {item.unit && <span className="text-xs text-gray-500 ml-1">{item.unit}</span>}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -815,7 +856,9 @@ export default function CropDetails() {
           </div>
         </div>
 
+            </div> {/* End Sales Section Grid */}
       </div> {/* End Main Content Area */}
     </div>
   );
 }
+
