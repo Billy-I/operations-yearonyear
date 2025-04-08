@@ -37,6 +37,21 @@ const actualOperationsCosts = {
   other: 12.00,     // Example data
 };
 
+// Placeholder 3-Year Average Data
+const avg3YrInputCosts = {
+  seed: 110.00,
+  fertiliser: 260.00,
+  chemical: 360.00,
+};
+
+const avg3YrOperationsCosts = {
+  cultivation: 52.00,
+  drilling: 31.00,
+  application: 82.00,
+  harvesting: 72.00,
+  other: 11.00,
+};
+
 // --- Calculation Logic ---
 const calculateVariance = (budget: number, actual: number) => {
   const variance = actual - budget;
@@ -44,18 +59,31 @@ const calculateVariance = (budget: number, actual: number) => {
   return { variance, variancePercent };
 };
 
+// Calculate variance against 3-year average
+const calculateVariance3YrAvg = (avg3yr: number, actual: number) => {
+  const variance = actual - avg3yr;
+  const variancePercent = avg3yr === 0 ? 0 : (variance / avg3yr) * 100;
+  return { variance3YrAvg: variance, variance3YrAvgPercent: variancePercent };
+};
+
 // Calculate Input Cost Details (including totals)
 const inputCostDetails = Object.keys(budgetedInputCosts).map((key) => {
   const budgetHa = budgetedInputCosts[key as keyof typeof budgetedInputCosts];
   const actualHa = actualInputCosts[key as keyof typeof actualInputCosts];
-  const { variance: varianceHa, variancePercent } = calculateVariance(budgetHa, actualHa);
+  const { variance: varianceHa, variancePercent } = calculateVariance(budgetHa, actualHa); // Variance vs Budget
+  const avg3YrHa = avg3YrInputCosts[key as keyof typeof avg3YrInputCosts];
+  const { variance3YrAvg, variance3YrAvgPercent } = calculateVariance3YrAvg(avg3YrHa, actualHa); // Variance vs 3yr Avg
   const budgetTotal = budgetHa * CROP_AREA_HA;
   const actualTotal = actualHa * CROP_AREA_HA;
   const varianceTotal = actualTotal - budgetTotal;
+  const avg3YrTotal = avg3YrHa * CROP_AREA_HA;
+  const variance3YrAvgTotal = actualTotal - avg3YrTotal;
   return {
     category: key.charAt(0).toUpperCase() + key.slice(1),
-    budgetHa, actualHa, varianceHa, variancePercent,
-    budgetTotal, actualTotal, varianceTotal
+    budgetHa, actualHa, varianceHa, variancePercent, // Budget related
+    avg3YrHa, variance3YrAvg, variance3YrAvgPercent, // 3yr Avg related
+    budgetTotal, actualTotal, varianceTotal, // Budget totals
+    avg3YrTotal, variance3YrAvgTotal // 3yr Avg totals
   };
 });
 
@@ -63,14 +91,20 @@ const inputCostDetails = Object.keys(budgetedInputCosts).map((key) => {
 const operationsCostDetails = Object.keys(budgetedOperationsCosts).map((key) => {
   const budgetHa = budgetedOperationsCosts[key as keyof typeof budgetedOperationsCosts];
   const actualHa = actualOperationsCosts[key as keyof typeof actualOperationsCosts];
-  const { variance: varianceHa, variancePercent } = calculateVariance(budgetHa, actualHa);
+  const { variance: varianceHa, variancePercent } = calculateVariance(budgetHa, actualHa); // Variance vs Budget
+  const avg3YrHa = avg3YrOperationsCosts[key as keyof typeof avg3YrOperationsCosts];
+  const { variance3YrAvg, variance3YrAvgPercent } = calculateVariance3YrAvg(avg3YrHa, actualHa); // Variance vs 3yr Avg
   const budgetTotal = budgetHa * CROP_AREA_HA;
   const actualTotal = actualHa * CROP_AREA_HA;
   const varianceTotal = actualTotal - budgetTotal;
+  const avg3YrTotal = avg3YrHa * CROP_AREA_HA;
+  const variance3YrAvgTotal = actualTotal - avg3YrTotal;
   return {
     category: key.charAt(0).toUpperCase() + key.slice(1),
-    budgetHa, actualHa, varianceHa, variancePercent,
-    budgetTotal, actualTotal, varianceTotal
+    budgetHa, actualHa, varianceHa, variancePercent, // Budget related
+    avg3YrHa, variance3YrAvg, variance3YrAvgPercent, // 3yr Avg related
+    budgetTotal, actualTotal, varianceTotal, // Budget totals
+    avg3YrTotal, variance3YrAvgTotal // 3yr Avg totals
   };
 });
 
@@ -78,23 +112,33 @@ const operationsCostDetails = Object.keys(budgetedOperationsCosts).map((key) => 
 const totalBudgetInputCostHa = inputCostDetails.reduce((sum, item) => sum + item.budgetHa, 0);
 const totalActualInputCostHa = inputCostDetails.reduce((sum, item) => sum + item.actualHa, 0);
 const totalVarianceInputCostHa = totalActualInputCostHa - totalBudgetInputCostHa;
-const totalVarianceInputPercent = totalBudgetInputCostHa === 0 ? 0 : (totalVarianceInputCostHa / totalBudgetInputCostHa) * 100;
+const totalVarianceInputPercent = totalBudgetInputCostHa === 0 ? 0 : (totalVarianceInputCostHa / totalBudgetInputCostHa) * 100; // Vs Budget
+const totalAvg3YrInputCostHa = inputCostDetails.reduce((sum, item) => sum + item.avg3YrHa, 0);
+const totalVariance3YrAvgInputHa = totalActualInputCostHa - totalAvg3YrInputCostHa;
+const totalVariance3YrAvgInputPercent = totalAvg3YrInputCostHa === 0 ? 0 : (totalVariance3YrAvgInputHa / totalAvg3YrInputCostHa) * 100; // Vs 3yr Avg
 
 // Input Totals (Total Cost)
 const totalBudgetInputCost = inputCostDetails.reduce((sum, item) => sum + item.budgetTotal, 0);
 const totalActualInputCost = inputCostDetails.reduce((sum, item) => sum + item.actualTotal, 0);
-const totalVarianceInputCost = totalActualInputCost - totalBudgetInputCost;
+const totalVarianceInputCost = totalActualInputCost - totalBudgetInputCost; // Vs Budget
+const totalAvg3YrInputCost = inputCostDetails.reduce((sum, item) => sum + item.avg3YrTotal, 0);
+const totalVariance3YrAvgInputCost = totalActualInputCost - totalAvg3YrInputCost; // Vs 3yr Avg
 
 // Operations Totals (Per Hectare)
 const totalBudgetOpsCostHa = operationsCostDetails.reduce((sum, item) => sum + item.budgetHa, 0);
 const totalActualOpsCostHa = operationsCostDetails.reduce((sum, item) => sum + item.actualHa, 0);
 const totalVarianceOpsCostHa = totalActualOpsCostHa - totalBudgetOpsCostHa;
-const totalVarianceOpsPercent = totalBudgetOpsCostHa === 0 ? 0 : (totalVarianceOpsCostHa / totalBudgetOpsCostHa) * 100;
+const totalVarianceOpsPercent = totalBudgetOpsCostHa === 0 ? 0 : (totalVarianceOpsCostHa / totalBudgetOpsCostHa) * 100; // Vs Budget
+const totalAvg3YrOpsCostHa = operationsCostDetails.reduce((sum, item) => sum + item.avg3YrHa, 0);
+const totalVariance3YrAvgOpsHa = totalActualOpsCostHa - totalAvg3YrOpsCostHa;
+const totalVariance3YrAvgOpsPercent = totalAvg3YrOpsCostHa === 0 ? 0 : (totalVariance3YrAvgOpsHa / totalAvg3YrOpsCostHa) * 100; // Vs 3yr Avg
 
 // Operations Totals (Total Cost)
 const totalBudgetOpsCost = operationsCostDetails.reduce((sum, item) => sum + item.budgetTotal, 0);
 const totalActualOpsCost = operationsCostDetails.reduce((sum, item) => sum + item.actualTotal, 0);
-const totalVarianceOpsCost = totalActualOpsCost - totalBudgetOpsCost;
+const totalVarianceOpsCost = totalActualOpsCost - totalBudgetOpsCost; // Vs Budget
+const totalAvg3YrOpsCost = operationsCostDetails.reduce((sum, item) => sum + item.avg3YrTotal, 0);
+const totalVariance3YrAvgOpsCost = totalActualOpsCost - totalAvg3YrOpsCost; // Vs 3yr Avg
 
 
 // Total Budget Costs (Combined)
@@ -202,6 +246,13 @@ const formatCurrency = (value: number) => `£${value.toLocaleString('en-GB', { m
 const formatVariancePercent = (value: number) => {
     const sign = value > 0 ? '+' : '';
     const color = value > 0 ? 'text-red-600' : value < 0 ? 'text-green-600' : 'text-gray-600';
+    return <span className={color}>{sign}{value.toFixed(0)}%</span>;
+};
+// New formatter for 3yr Avg Variance %
+const formatVariance3YrAvgPercent = (value: number) => {
+    const sign = value > 0 ? '+' : '';
+    const color = value > 0 ? 'text-red-600' : value < 0 ? 'text-green-600' : 'text-gray-600';
+    // Using slightly different styling or keeping it same as budget variance for now
     return <span className={color}>{sign}{value.toFixed(0)}%</span>;
 };
 const formatVarianceValue = (value: number) => {
@@ -582,48 +633,55 @@ export default function CropDetails() {
           </div>
 
           {/* Input Costs Table */}
-          <div className="mt-8">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-semibold text-gray-800">Input Costs</h3>
-              {/* Unit Toggle */}
-              <div className="flex space-x-1 bg-gray-200 p-1 rounded-md">
-                <UnitToggleButton label="£/ha" value="perHa" currentUnit={inputCostViewUnit} setUnit={setInputCostViewUnit} />
-                <UnitToggleButton label="£ Total" value="total" currentUnit={inputCostViewUnit} setUnit={setInputCostViewUnit} />
-              </div>
-            </div>
-            <div className="overflow-x-auto border border-gray-200 rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Budget {inputCostViewUnit === 'perHa' ? '£/ha' : '£'}</th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual {inputCostViewUnit === 'perHa' ? '£/ha' : '£'}</th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance {inputCostViewUnit === 'perHa' ? '£/ha' : '£'}</th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance %</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {inputCostDetails.map((item) => (
-                    <tr key={item.category}>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{item.category}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">{formatCurrency(inputCostViewUnit === 'perHa' ? item.budgetHa : item.budgetTotal)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">{formatCurrency(inputCostViewUnit === 'perHa' ? item.actualHa : item.actualTotal)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">{formatVarianceValue(inputCostViewUnit === 'perHa' ? item.varianceHa : item.varianceTotal)}</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{formatVariancePercent(item.variancePercent)}</td>
+           <div className="mt-8"> {/* Adjusted margin if needed */}
+             <div className="flex justify-between items-center mb-3">
+               <h3 className="text-lg font-semibold text-gray-800">Input Costs</h3>
+               {/* Unit Toggle */}
+               <div className="flex space-x-1 bg-gray-200 p-1 rounded-md">
+                 <UnitToggleButton label="£/ha" value="perHa" currentUnit={inputCostViewUnit} setUnit={setInputCostViewUnit} />
+                 <UnitToggleButton label="£ Total" value="total" currentUnit={inputCostViewUnit} setUnit={setInputCostViewUnit} />
+               </div>
+             </div>
+             <div className="overflow-x-auto border border-gray-200 rounded-lg">
+               <table className="min-w-full divide-y divide-gray-200">
+                 <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual {inputCostViewUnit === 'perHa' ? '£/ha' : '£'}</th>
+                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <div className="flex items-center justify-end" title="The amount you've spent to date relative to your total budget.">
+                          % Budget
+                          <HelpCircle size={12} className="ml-1 text-gray-400 cursor-help" />
+                        </div>
+                      </th>
+                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <div className="flex items-center justify-end" title="The %variance shows the difference between this season and last 3 years' average.">
+                          % 3yr Avg Variance
+                          <HelpCircle size={12} className="ml-1 text-gray-400 cursor-help" />
+                        </div>
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-                <tfoot className="bg-gray-50">
-                  <tr>
-                    <th scope="row" className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Totals</th>
-                    <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">{formatCurrency(inputCostViewUnit === 'perHa' ? totalBudgetInputCostHa : totalBudgetInputCost)}</td>
-                    <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">{formatCurrency(inputCostViewUnit === 'perHa' ? totalActualInputCostHa : totalActualInputCost)}</td>
-                    <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">{formatVarianceValue(inputCostViewUnit === 'perHa' ? totalVarianceInputCostHa : totalVarianceInputCost)}</td>
-                    <td className="px-4 py-3 text-right text-sm font-semibold">{formatVariancePercent(totalVarianceInputPercent)}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+                  </thead>
+                 <tbody className="bg-white divide-y divide-gray-200">
+                   {inputCostDetails.map((item) => (
+                      <tr key={item.category}>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{item.category}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">{formatCurrency(inputCostViewUnit === 'perHa' ? item.actualHa : item.actualTotal)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{formatVariancePercent(item.variancePercent)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{formatVariance3YrAvgPercent(item.variance3YrAvgPercent)}</td>
+                      </tr>
+                   ))}
+                 </tbody>
+                 <tfoot className="bg-gray-50">
+                    <tr>
+                      <th scope="row" className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Totals</th>
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">{formatCurrency(inputCostViewUnit === 'perHa' ? totalActualInputCostHa : totalActualInputCost)}</td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold">{formatVariancePercent(totalVarianceInputPercent)}</td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold">{formatVariance3YrAvgPercent(totalVariance3YrAvgInputPercent)}</td>
+                    </tr>
+                 </tfoot>
+               </table>
+             </div>
           </div>
 
           {/* Operations Costs Table - Conditional */}
@@ -642,30 +700,37 @@ export default function CropDetails() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Budget {operationsCostViewUnit === 'perHa' ? '£/ha' : '£'}</th>
                       <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual {operationsCostViewUnit === 'perHa' ? '£/ha' : '£'}</th>
-                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance {operationsCostViewUnit === 'perHa' ? '£/ha' : '£'}</th>
-                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance %</th>
+                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <div className="flex items-center justify-end" title="The amount you've spent to date relative to your total budget.">
+                          % Budget
+                          <HelpCircle size={12} className="ml-1 text-gray-400 cursor-help" />
+                        </div>
+                      </th>
+                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <div className="flex items-center justify-end" title="The %variance shows the difference between this season and last 3 years' average.">
+                          % 3yr Avg Variance
+                          <HelpCircle size={12} className="ml-1 text-gray-400 cursor-help" />
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {operationsCostDetails.map((item) => (
                       <tr key={item.category}>
                         <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{item.category}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">{formatCurrency(operationsCostViewUnit === 'perHa' ? item.budgetHa : item.budgetTotal)}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">{formatCurrency(operationsCostViewUnit === 'perHa' ? item.actualHa : item.actualTotal)}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">{formatVarianceValue(operationsCostViewUnit === 'perHa' ? item.varianceHa : item.varianceTotal)}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{formatVariancePercent(item.variancePercent)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{formatVariance3YrAvgPercent(item.variance3YrAvgPercent)}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="bg-gray-50">
                     <tr>
                       <th scope="row" className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Totals</th>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">{formatCurrency(operationsCostViewUnit === 'perHa' ? totalBudgetOpsCostHa : totalBudgetOpsCost)}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">{formatCurrency(operationsCostViewUnit === 'perHa' ? totalActualOpsCostHa : totalActualOpsCost)}</td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">{formatVarianceValue(operationsCostViewUnit === 'perHa' ? totalVarianceOpsCostHa : totalVarianceOpsCost)}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold">{formatVariancePercent(totalVarianceOpsPercent)}</td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold">{formatVariance3YrAvgPercent(totalVariance3YrAvgOpsPercent)}</td>
                     </tr>
                   </tfoot>
                 </table>
