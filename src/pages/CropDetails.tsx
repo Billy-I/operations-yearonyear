@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'; // Added useEffect
 import { useParams, useLocation } from 'react-router-dom'; // Import useLocation
-import { HelpCircle, ArrowLeft, Info, Package, Tractor, TableProperties } from 'lucide-react'; // Added Info, Package, Tractor, TableProperties icons
+import { HelpCircle, ArrowLeft, Info, Package, Tractor, TableProperties, ChevronDown, ChevronUp } from 'lucide-react'; // Added Info, Package, Tractor, TableProperties, Chevrons
 import { Link } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, ReferenceLine } from 'recharts'; // Added PieChart, Pie, Cell, ReferenceLine
 import Modal from '../components/Modal'; // Import Modal component
@@ -258,6 +258,41 @@ const variableCostsPerVarietyData = [
   { category: 'Chemical Plant Growth Regulator', kwsExtaseTotal: 10433.64, kwsExtaseHa: 28.29, crusoeTotal: 2795.27, crusoeHa: 20.83, mayflowerTotal: 2208.52, mayflowerHa: 20.15 },
 ];
 
+// --- Data Interfaces ---
+interface ContractData {
+  variety: string;
+  purchaseCompany: string;
+  contractNumber: string;
+  deliveryDate: string;
+  contractQuantity: number;
+  budgetDeliveredPrice: number;
+  premium: number;
+  totalPrice: number;
+}
+
+interface SalesData {
+  variety: string;
+  purchaseCompany: string;
+  contractNumber: string;
+  quantity: number;
+  quality: string;
+  soldDate: string;
+  deliveredPriceSold: number;
+  premium: number;
+  penalty: number;
+  totalPrice: number;
+}
+
+// Placeholder data for Sales & Contracts Modal (2025)
+const contractsData2025: ContractData[] = [
+  // Add some plausible contract data for 2025 if needed, or leave empty
+  { variety: 'KWS Extase', purchaseCompany: 'Frontier Agriculture Ltd', contractNumber: 'PT160367', deliveryDate: '01-01-2025', contractQuantity: 406.00, budgetDeliveredPrice: 205.00, premium: 0.00, totalPrice: 83230.00 },
+  // ... more contracts for 2025
+];
+const salesData2025: SalesData[] = [
+  // Likely empty for 2025 initially
+];
+
 
 // Helper to format currency
 const formatCurrency = (value: number) => `£${value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -337,7 +372,9 @@ export default function CropDetails() {
   const [inputCostViewUnit, setInputCostViewUnit] = useState<CostTableViewUnit>('perHa');
   const [operationsCostViewUnit, setOperationsCostViewUnit] = useState<CostTableViewUnit>('perHa');
   const [includeOperationsCosts, setIncludeOperationsCosts] = useState(true); // State for Cost Categories toggle
-  const [isVarietyCostModalOpen, setIsVarietyCostModalOpen] = useState(false); // State for the new modal
+  const [isVarietyCostModalOpen, setIsVarietyCostModalOpen] = useState(false); // State for the variety cost modal
+  const [isSalesContractsModalOpen, setIsSalesContractsModalOpen] = useState(false); // State for the sales/contracts modal
+  const [salesContractsModalTab, setSalesContractsModalTab] = useState<'Contracts' | 'Sales'>('Contracts'); // State for modal tab
 
   // State for group visibility - Benchmarks default off
   const [visibleGroups, setVisibleGroups] = useState<Record<GroupKey, boolean>>({
@@ -401,7 +438,8 @@ export default function CropDetails() {
   const totalPotentialValue = totalRevenue + potentialValueLeft;
 
   // Margin and Profit/Loss based on the *sold* portion and *average* achieved price
-  const displayMarginPerTonne = ACHIEVED_PRICE_PER_T - displayBreakEvenCost;
+  const grossMarginPerTonne = ACHIEVED_PRICE_PER_T - inputCostPerTonne; // Always based on input cost
+  const netMarginPerTonne = ACHIEVED_PRICE_PER_T - displayBreakEvenCost; // Based on toggle state via displayBreakEvenCost
   // Calculate cost attributable to the sold portion
   const costOfSoldPortion = displayActualTotalCost * (PERCENT_SOLD / 100);
   const displayTotalProfitLoss = totalRevenue - costOfSoldPortion;
@@ -510,27 +548,13 @@ export default function CropDetails() {
               </div>
             </div>
 
-            {/* Card 2: Yield and Production */}
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">
-              <h3 className="text-sm font-medium text-gray-600">Yield and Production</h3>
-              <div>
-                <div className="text-xs text-gray-500">Yield</div>
-                <div className="text-lg font-semibold text-gray-900">{yieldValue.toFixed(2)} t/ha</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">Production</div>
-                <div className="text-lg font-semibold text-gray-900">{productionTotal.toFixed(2)} t</div>
-              </div>
-              {/* Removed £ Achieved from here, will be in Sales section */}
-            </div>
-
-            {/* Card 3: Costs - Updated for Toggle */}
+            {/* Card 2: Costs - Updated for Toggle */}
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                {/* ... (content mostly unchanged, ensure displayActualTotalCost etc. are used if not already) ... */}
                <h3 className="text-sm font-medium text-gray-600 mb-3">Costs</h3>
                <div className={`grid ${includeOperationsCosts ? 'grid-cols-2' : 'grid-cols-1'} gap-x-4 gap-y-2 text-left`}>
                  {/* Headers */}
-                 <div className="text-xs font-medium text-gray-500 flex items-center"><Package size={14} className="mr-1 text-gray-400" />Input</div>
+                 <div className="text-xs font-medium text-gray-500 flex items-center"><Package size={14} className="mr-1 text-gray-400" />Inputs</div>
                  {includeOperationsCosts && <div className="text-xs font-medium text-gray-500 flex items-center"><Tractor size={14} className="mr-1 text-gray-400" />Operations <span className="ml-1 cursor-help relative tooltip-container"><HelpCircle size={12} className="text-gray-400" /><span className="tooltip-text bg-gray-800 text-white text-xs rounded py-1 px-2 absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap opacity-0 transition-opacity duration-300 pointer-events-none">Operations costs may include baseline estimates. Visit Operations Center to update actuals for current season accuracy.</span></span></div>}
 
                  {/* Total Cost Row - Use display value */}
@@ -546,12 +570,26 @@ export default function CropDetails() {
                  {includeOperationsCosts && <div className="text-sm font-semibold text-gray-900">{formatCurrency(opsCostPerTonne)}<span className="text-xs text-gray-500">/t</span></div>}
                {/* Display Combined Total Cost */}
                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <div className="text-xs text-gray-500">Total Cost ({includeOperationsCosts ? 'Inputs + Ops' : 'Inputs Only'})</div>
+                  <div className="text-xs text-gray-500">Total Cost ({includeOperationsCosts ? 'Inputs + Operations' : 'Inputs Only'})</div>
                   <div className="text-lg font-semibold text-gray-900">{formatCurrency(displayActualTotalCost)}</div>
                   <div className="text-sm text-gray-600">{formatCurrency(displayActualTotalCostHa)}<span className="text-xs text-gray-500">/ha</span></div>
                </div>
                </div>
                {/* Overall Total Cost - Updated */}
+            </div>
+
+            {/* Card 3: Yield and Production */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">
+              <h3 className="text-sm font-medium text-gray-600">Yield and Production</h3>
+              <div>
+                <div className="text-xs text-gray-500">Yield</div>
+                <div className="text-lg font-semibold text-gray-900">{yieldValue.toFixed(2)} t/ha</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">Production</div>
+                <div className="text-lg font-semibold text-gray-900">{productionTotal.toFixed(2)} t</div>
+              </div>
+              {/* Removed £ Achieved from here, will be in Sales section */}
             </div>
 
         </div>
@@ -591,50 +629,31 @@ export default function CropDetails() {
                 <LineChart data={combinedChartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} domain={[0, 'auto']} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: "11px", cursor: 'pointer' }} onClick={handleLegendClick} formatter={formatLegendValue} />
-                  {/* Totals */}
-                  <Line type="monotone" dataKey="actualTotal" name="Total - Actual" stroke="#8b5cf6" strokeWidth={2} dot={false} hide={!includeOperationsCosts || !visibleGroups.totals || !visibleLines.actualTotal} /> {/* Purple */}
-                  <Line type="monotone" dataKey="budgetTotal" name="Total - Budget" stroke="#8b5cf6" strokeWidth={2} strokeDasharray="5 5" dot={false} hide={!includeOperationsCosts || !visibleGroups.totals || !visibleLines.budgetTotal} /> {/* Purple Dashed */}
+                  <YAxis yAxisId="left" label={{ value: 'Cost £/ha', angle: -90, position: 'insideLeft', style: {fontSize: '12px'} }} tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Legend onClick={handleLegendClick} formatter={formatLegendValue} wrapperStyle={{ fontSize: "12px", paddingTop: '10px' }} />
                   {/* Inputs */}
-                  <Line type="monotone" dataKey="actualInputs" name="Inputs - Actual" stroke="#3b82f6" strokeWidth={2} dot={false} hide={!visibleGroups.inputs || !visibleLines.actualInputs} /> {/* Blue */}
-                  <Line type="monotone" dataKey="budgetInputs" name="Inputs - Budget" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" dot={false} hide={!visibleGroups.inputs || !visibleLines.budgetInputs} /> {/* Blue Dashed */}
+                  <Line yAxisId="left" type="monotone" dataKey="actualInputs" name="Inputs - Actual" stroke="#3b82f6" strokeWidth={2} dot={false} hide={!visibleGroups.inputs || !visibleLines.actualInputs} /> {/* Blue */}
+                  <Line yAxisId="left" type="monotone" dataKey="budgetInputs" name="Inputs - Budget" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" dot={false} hide={!visibleGroups.inputs || !visibleLines.budgetInputs} /> {/* Blue Dashed */}
                   {/* Operations */}
-                  <Line type="monotone" dataKey="actualOps" name="Ops - Actual" stroke="#10b981" strokeWidth={2} dot={false} hide={!includeOperationsCosts || !visibleGroups.ops || !visibleLines.actualOps} /> {/* Green */}
-                  <Line type="monotone" dataKey="budgetOps" name="Ops - Budget" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" dot={false} hide={!includeOperationsCosts || !visibleGroups.ops || !visibleLines.budgetOps} /> {/* Green Dashed */}
+                  <Line yAxisId="left" type="monotone" dataKey="actualOps" name="Operations - Actual" stroke="#10b981" strokeWidth={2} dot={false} hide={!includeOperationsCosts || !visibleGroups.ops || !visibleLines.actualOps} /> {/* Green */}
+                  <Line yAxisId="left" type="monotone" dataKey="budgetOps" name="Operations - Budget" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" dot={false} hide={!includeOperationsCosts || !visibleGroups.ops || !visibleLines.budgetOps} /> {/* Green Dashed */}
                   {/* Benchmarks */}
-                  <Line type="monotone" dataKey="bestInClass2024" name="Best in class (2024)" stroke="#f97316" strokeWidth={1.5} dot={false} hide={!visibleGroups.benchmarks || !visibleLines.bestInClass2024} /> {/* Orange */}
-                  <Line type="monotone" dataKey="bestInClass2023" name="Best in class (2023)" stroke="#ec4899" strokeWidth={1.5} dot={false} hide={!visibleGroups.benchmarks || !visibleLines.bestInClass2023} /> {/* Pink */}
-                  <Line type="monotone" dataKey="priorAverage" name="My prior 3 years' average" stroke="#14b8a6" strokeWidth={1.5} dot={false} hide={!visibleGroups.benchmarks || !visibleLines.priorAverage} /> {/* Teal */}
+                  <Line yAxisId="left" type="monotone" dataKey="bestInClass2024" name="Best in Class 2024" stroke="#a855f7" strokeWidth={1} dot={false} hide={!visibleGroups.benchmarks || !visibleLines.bestInClass2024} /> {/* Purple */}
+                  <Line yAxisId="left" type="monotone" dataKey="bestInClass2023" name="Best in Class 2023" stroke="#ec4899" strokeWidth={1} dot={false} hide={!visibleGroups.benchmarks || !visibleLines.bestInClass2023} /> {/* Pink */}
+                  <Line yAxisId="left" type="monotone" dataKey="priorAverage" name="Prior Average" stroke="#f97316" strokeWidth={1} dot={false} hide={!visibleGroups.benchmarks || !visibleLines.priorAverage} /> {/* Orange */}
+                  {/* Total (Hidden by default via group toggle) */}
+                  <Line yAxisId="left" type="monotone" dataKey="actualTotal" name="Total - Actual" stroke="#1f2937" strokeWidth={2} dot={false} hide={!includeOperationsCosts || !visibleGroups.totals || !visibleLines.actualTotal} /> {/* Dark Gray */}
+                  <Line yAxisId="left" type="monotone" dataKey="budgetTotal" name="Total - Budget" stroke="#1f2937" strokeWidth={2} strokeDasharray="5 5" dot={false} hide={!includeOperationsCosts || !visibleGroups.totals || !visibleLines.budgetTotal} /> {/* Dark Gray Dashed */}
                 </LineChart>
               </ResponsiveContainer>
             </div>
 
-            {/* Pie Chart Container - Conditional Logic Updated */}
-            <div className="lg:col-span-1 bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col items-center justify-start"> {/* Changed justify-center to justify-start */}
-              {!includeOperationsCosts ? (
-                 <>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center w-full">Input Cost Breakdown</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={inputBreakdownPieData}
-                        cx="50%" cy="50%" labelLine={false} outerRadius={100} fill="#8884d8" dataKey="value"
-                        label={renderCustomizedLabel}
-                      >
-                        {inputBreakdownPieData.map((entry, index) => (
-                          <Cell key={`cell-input-${index}`} fill={INPUT_PIE_COLORS[index % INPUT_PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </>
-              ) : (
+            {/* Pie Charts Container */}
+            <div className="space-y-6">
+                 {/* Removed duplicated combined pie chart */}
                 <div className="w-full"> {/* Wrapper div for multiple charts */}
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">Input Cost Breakdown</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">Inputs Breakdown</h3>
                    {/* Increased height and outerRadius */}
                    <ResponsiveContainer width="100%" height={180}>
                     <PieChart>
@@ -648,7 +667,7 @@ export default function CropDetails() {
 
                   {totalActualOpsCost > 0 ? (
                     <div className="mt-4 w-full"> {/* Added mt-4 and w-full */}
-                      <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">Operations Cost Breakdown</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">Operations Breakdown</h3>
                       {/* Increased height and outerRadius */}
                       <ResponsiveContainer width="100%" height={180}>
                         <PieChart>
@@ -661,23 +680,21 @@ export default function CropDetails() {
                       </ResponsiveContainer>
                     </div>
                   ) : (
-                     <div className="text-center text-gray-500 italic mt-4">
-                       Operations costs not available for breakdown.
-                     </div>
+                    <div className="mt-4 text-center text-gray-500 text-sm">No Operations cost data available.</div>
                   )}
                 </div>
-              )}
             </div>
           </div>
+        </div>
 
           {/* Input Costs Table */}
            <div className="mt-8"> {/* Adjusted margin if needed */}
              <div className="flex justify-between items-center mb-3">
                <div className="flex items-center"> {/* Wrap title and icon */}
-                 <h3 className="text-lg font-semibold text-gray-800 mr-2">Input Costs</h3>
+                 <h3 className="text-lg font-semibold text-gray-800 mr-2">Inputs</h3>
                  <button
                    onClick={() => setIsVarietyCostModalOpen(true)}
-                   className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-200"
+                   className="text-gray-600 bg-gray-100 border border-gray-300 hover:bg-gray-200 p-1 rounded shadow-sm"
                    title="View Variable Costs Per Variety"
                  >
                    <TableProperties size={18} />
@@ -694,26 +711,22 @@ export default function CropDetails() {
                  <thead className="bg-gray-50">
                     <tr>
                       <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual {inputCostViewUnit === 'perHa' ? '£/ha' : '£'}</th>
                       <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <div className="flex items-center justify-end" title="The amount you've spent to date relative to your total budget.">
-                          % Budget
-                          <HelpCircle size={12} className="ml-1 text-gray-400 cursor-help" />
-                        </div>
+                        {inputCostViewUnit === 'perHa' ? 'Actual £/ha' : 'Actual £ Total'}
                       </th>
                       <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <div className="flex items-center justify-end" title="The %variance shows the difference between this season and last 3 years' average.">
-                          % 3yr Avg Variance
-                          <HelpCircle size={12} className="ml-1 text-gray-400 cursor-help" />
-                        </div>
+                        % Budget <Info size={12} className="inline ml-1 text-gray-400" />
+                      </th>
+                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        % 3yr Avg Variance <Info size={12} className="inline ml-1 text-gray-400" />
                       </th>
                     </tr>
-                  </thead>
+                 </thead>
                  <tbody className="bg-white divide-y divide-gray-200">
                    {inputCostDetails.map((item) => (
                       <tr key={item.category}>
                         <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{item.category}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">{formatCurrency(inputCostViewUnit === 'perHa' ? item.actualHa : item.actualTotal)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-right">{formatCurrency(inputCostViewUnit === 'perHa' ? item.actualHa : item.actualTotal)}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{formatVariancePercent(item.variancePercent)}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{formatVariance3YrAvgPercent(item.variance3YrAvgPercent)}</td>
                       </tr>
@@ -721,7 +734,7 @@ export default function CropDetails() {
                  </tbody>
                  <tfoot className="bg-gray-50">
                     <tr>
-                      <th scope="row" className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Totals</th>
+                      <td className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Totals</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">{formatCurrency(inputCostViewUnit === 'perHa' ? totalActualInputCostHa : totalActualInputCost)}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold">{formatVariancePercent(totalVarianceInputPercent)}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold">{formatVariance3YrAvgPercent(totalVariance3YrAvgInputPercent)}</td>
@@ -735,7 +748,7 @@ export default function CropDetails() {
           {includeOperationsCosts && (
             <div className="mt-8">
                <div className="flex justify-between items-center mb-3">
-                 <h3 className="text-lg font-semibold text-gray-800 flex items-center">Operations Costs <span className="ml-2 cursor-help relative tooltip-container"><HelpCircle size={14} className="text-gray-400" /><span className="tooltip-text bg-gray-800 text-white text-xs rounded py-1 px-2 absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap opacity-0 transition-opacity duration-300 pointer-events-none">Operations costs may include baseline estimates. Visit Operations Center to update actuals for current season accuracy.</span></span></h3>
+                 <h3 className="text-lg font-semibold text-gray-800 flex items-center">Operations <span className="ml-2 cursor-help relative tooltip-container"><HelpCircle size={14} className="text-gray-400" /><span className="tooltip-text bg-gray-800 text-white text-xs rounded py-1 px-2 absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap opacity-0 transition-opacity duration-300 pointer-events-none">Operations costs may include baseline estimates. Visit Operations Center to update actuals for current season accuracy.</span></span></h3>
                  {/* Unit Toggle */}
                  <div className="flex space-x-1 bg-gray-200 p-1 rounded-md">
                    <UnitToggleButton label="£/ha" value="perHa" currentUnit={operationsCostViewUnit} setUnit={setOperationsCostViewUnit} />
@@ -747,18 +760,14 @@ export default function CropDetails() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual {operationsCostViewUnit === 'perHa' ? '£/ha' : '£'}</th>
                       <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <div className="flex items-center justify-end" title="The amount you've spent to date relative to your total budget.">
-                          % Budget
-                          <HelpCircle size={12} className="ml-1 text-gray-400 cursor-help" />
-                        </div>
+                        {operationsCostViewUnit === 'perHa' ? 'Actual £/ha' : 'Actual £ Total'}
                       </th>
                       <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <div className="flex items-center justify-end" title="The %variance shows the difference between this season and last 3 years' average.">
-                          % 3yr Avg Variance
-                          <HelpCircle size={12} className="ml-1 text-gray-400 cursor-help" />
-                        </div>
+                        % Budget <Info size={12} className="inline ml-1 text-gray-400" />
+                      </th>
+                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        % 3yr Avg Variance <Info size={12} className="inline ml-1 text-gray-400" />
                       </th>
                     </tr>
                   </thead>
@@ -766,7 +775,7 @@ export default function CropDetails() {
                     {operationsCostDetails.map((item) => (
                       <tr key={item.category}>
                         <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{item.category}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">{formatCurrency(operationsCostViewUnit === 'perHa' ? item.actualHa : item.actualTotal)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-right">{formatCurrency(operationsCostViewUnit === 'perHa' ? item.actualHa : item.actualTotal)}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{formatVariancePercent(item.variancePercent)}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-right">{formatVariance3YrAvgPercent(item.variance3YrAvgPercent)}</td>
                       </tr>
@@ -774,7 +783,7 @@ export default function CropDetails() {
                   </tbody>
                   <tfoot className="bg-gray-50">
                     <tr>
-                      <th scope="row" className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Totals</th>
+                      <td className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Totals</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">{formatCurrency(operationsCostViewUnit === 'perHa' ? totalActualOpsCostHa : totalActualOpsCost)}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold">{formatVariancePercent(totalVarianceOpsPercent)}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold">{formatVariance3YrAvgPercent(totalVariance3YrAvgOpsPercent)}</td>
@@ -851,8 +860,11 @@ export default function CropDetails() {
                   { label: 'Max price', value: formatCurrency(MAX_PRICE_SOLD), unit: '/t' },
                   { label: 'Total Revenue (Sold)', value: formatCurrency(totalRevenue) },
                   { type: 'divider' }, // Visual separator
-                  { label: `Break-Even Cost (${includeOperationsCosts ? 'Inputs+Ops' : 'Inputs Only'})`, value: formatCurrency(displayBreakEvenCost), unit: '/t' },
-                  { label: `Margin (${includeOperationsCosts ? 'Net' : 'Gross'})`, value: formatProfitLossCurrency(displayMarginPerTonne), unit: '/t' },
+                  { label: `Break-Even Cost (${includeOperationsCosts ? 'Inputs+Operations' : 'Inputs Only'})`, value: formatCurrency(displayBreakEvenCost), unit: '/t' },
+                  // Always show Gross Margin
+                  { label: `Margin (Gross)`, value: formatProfitLossCurrency(grossMarginPerTonne), unit: '/t' },
+                  // Conditionally show Net Margin
+                  ...(includeOperationsCosts ? [{ label: `Margin (Net)`, value: formatProfitLossCurrency(netMarginPerTonne), unit: '/t' }] : []),
                   { label: 'Total Profit/Loss (Sold)', value: formatProfitLossCurrency(displayTotalProfitLoss) },
                   { type: 'divider' }, // Visual separator
                   { label: 'Potential value left to sell', value: formatCurrency(potentialValueLeft) },
@@ -873,14 +885,13 @@ export default function CropDetails() {
                   </div>
                 ))}
               </div>
-              <button className="w-full mt-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 text-sm font-medium">
+              <button onClick={() => setIsSalesContractsModalOpen(true)} className="w-full mt-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 text-sm font-medium">
                 View sales / contracts →
               </button>
             </div>
           </div>
         </div>
 
-            </div> {/* End Sales Section Grid */}
       </div> {/* End Main Content Area */}
 
        {/* Variable Costs Per Variety Modal */}
@@ -890,17 +901,17 @@ export default function CropDetails() {
              <thead className="bg-gray-50">
                <tr>
                  <th scope="col" className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                 <th scope="col" colSpan={2} className="px-4 py-2 text-center font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">KWS Extase</th>
-                 <th scope="col" colSpan={2} className="px-4 py-2 text-center font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">Crusoe</th>
-                 <th scope="col" colSpan={2} className="px-4 py-2 text-center font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">Mayflower</th>
+                 <th scope="col" colSpan={2} className="px-4 py-2 text-center font-medium text-gray-500 uppercase tracking-wider border-l border-r">KWS Extase</th>
+                 <th scope="col" colSpan={2} className="px-4 py-2 text-center font-medium text-gray-500 uppercase tracking-wider border-r">Crusoe</th>
+                 <th scope="col" colSpan={2} className="px-4 py-2 text-center font-medium text-gray-500 uppercase tracking-wider">Mayflower</th>
                </tr>
                <tr>
                  <th scope="col" className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider"></th>
-                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">Total £</th>
-                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">£/ha</th>
-                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">Total £</th>
-                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">£/ha</th>
-                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">Total £</th>
+                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider border-l">£ Total</th>
+                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider border-r">£/ha</th>
+                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">£ Total</th>
+                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider border-r">£/ha</th>
+                 <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">£ Total</th>
                  <th scope="col" className="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">£/ha</th>
                </tr>
              </thead>
@@ -908,12 +919,12 @@ export default function CropDetails() {
                {variableCostsPerVarietyData.map((item) => (
                  <tr key={item.category}>
                    <td className="px-4 py-2 whitespace-nowrap font-medium text-gray-900">{item.category}</td>
-                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700 border-l border-gray-200">{formatCurrency(item.kwsExtaseTotal)}</td>
-                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700">{formatCurrency(item.kwsExtaseHa)}/ha</td>
-                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700 border-l border-gray-200">{formatCurrency(item.crusoeTotal)}</td>
-                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700">{formatCurrency(item.crusoeHa)}/ha</td>
-                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700 border-l border-gray-200">{formatCurrency(item.mayflowerTotal)}</td>
-                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700">{formatCurrency(item.mayflowerHa)}/ha</td>
+                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-500 border-l">{formatCurrency(item.kwsExtaseTotal)}</td>
+                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-500 border-r">{formatCurrency(item.kwsExtaseHa)}</td>
+                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-500">{formatCurrency(item.crusoeTotal)}</td>
+                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-500 border-r">{formatCurrency(item.crusoeHa)}</td>
+                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-500">{formatCurrency(item.mayflowerTotal)}</td>
+                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-500">{formatCurrency(item.mayflowerHa)}</td>
                  </tr>
                ))}
              </tbody>
@@ -921,7 +932,127 @@ export default function CropDetails() {
          </div>
        </Modal>
 
-    </div>
+       {/* Sales & Contracts Modal */}
+       <Modal
+         isOpen={isSalesContractsModalOpen}
+         onClose={() => setIsSalesContractsModalOpen(false)}
+         onConfirm={() => {}} // Add dummy confirm handler as it's required by ModalProps
+         title={`${crop} Contracts & Sales In ${selectedYear}`}
+         // Size is controlled by max-w- class in Modal.tsx component
+       >
+         <div className="p-1"> {/* Add padding around the modal content */}
+           {/* Tabs */}
+           <div className="mb-4 border-b border-gray-200">
+             <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+               <button
+                 onClick={() => setSalesContractsModalTab('Contracts')}
+                 className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${
+                   salesContractsModalTab === 'Contracts'
+                     ? 'border-blue-500 text-blue-600'
+                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                 }`}
+               >
+                 Contracts
+               </button>
+               <button
+                 onClick={() => setSalesContractsModalTab('Sales')}
+                 className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${
+                   salesContractsModalTab === 'Sales'
+                     ? 'border-blue-500 text-blue-600'
+                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                 }`}
+               >
+                 Sales
+               </button>
+             </nav>
+           </div>
+
+           {/* Content based on tab */}
+           <div className="overflow-x-auto">
+             {salesContractsModalTab === 'Contracts' && (
+               <table className="min-w-full divide-y divide-gray-200 text-sm">
+                 <thead className="bg-gray-50">
+                   <tr>
+                     {/* Add sort icons if needed later */}
+                     <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Variety</th>
+                     <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Purchase Company</th>
+                     <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Contract Number</th>
+                     <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Delivery Date</th>
+                     <th scope="col" className="px-3 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Contract Quantity</th>
+                     <th scope="col" className="px-3 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Budget Delivered Price</th>
+                     <th scope="col" className="px-3 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Premium</th>
+                     <th scope="col" className="px-3 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Total Price</th>
+                   </tr>
+                 </thead>
+                 <tbody className="bg-white divide-y divide-gray-200">
+                   {contractsData2025.length > 0 ? (
+                     contractsData2025.map((contract, index) => (
+                       <tr key={index} className="hover:bg-gray-50">
+                         <td className="px-3 py-2 whitespace-nowrap">{contract.variety}</td>
+                         <td className="px-3 py-2 whitespace-nowrap">{contract.purchaseCompany}</td>
+                         <td className="px-3 py-2 whitespace-nowrap">{contract.contractNumber}</td>
+                         <td className="px-3 py-2 whitespace-nowrap">{contract.deliveryDate}</td>
+                         <td className="px-3 py-2 whitespace-nowrap text-right">{contract.contractQuantity.toFixed(2)} t</td>
+                         <td className="px-3 py-2 whitespace-nowrap text-right">{formatCurrency(contract.budgetDeliveredPrice)} /t</td>
+                         <td className="px-3 py-2 whitespace-nowrap text-right">{formatCurrency(contract.premium)} /t</td>
+                         <td className="px-3 py-2 whitespace-nowrap text-right">{formatCurrency(contract.totalPrice)}</td>
+                       </tr>
+                     ))
+                   ) : (
+                     <tr>
+                       <td colSpan={8} className="text-center py-4 text-gray-500">There are no contracts to show for {selectedYear}.</td>
+                     </tr>
+                   )}
+                 </tbody>
+               </table>
+             )}
+
+             {salesContractsModalTab === 'Sales' && (
+               <table className="min-w-full divide-y divide-gray-200 text-sm">
+                 <thead className="bg-gray-50">
+                   <tr>
+                     {/* Add sort icons if needed later */}
+                     <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Variety</th>
+                     <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Purchase Company</th>
+                     <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Contract Number</th>
+                     <th scope="col" className="px-3 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                     <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Quality</th>
+                     <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Sold Date</th>
+                     <th scope="col" className="px-3 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Delivered Price Sold</th>
+                     <th scope="col" className="px-3 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Premium</th>
+                     <th scope="col" className="px-3 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Penalty</th>
+                     <th scope="col" className="px-3 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Total Price</th>
+                   </tr>
+                 </thead>
+                 <tbody className="bg-white divide-y divide-gray-200">
+                   {salesData2025.length > 0 ? (
+                     salesData2025.map((sale, index) => (
+                       <tr key={index} className="hover:bg-gray-50">
+                         {/* Populate with actual sales data fields */}
+                         <td className="px-3 py-2 whitespace-nowrap">{/* sale.variety */}</td>
+                         <td className="px-3 py-2 whitespace-nowrap">{/* sale.purchaseCompany */}</td>
+                         <td className="px-3 py-2 whitespace-nowrap">{/* sale.contractNumber */}</td>
+                         <td className="px-3 py-2 whitespace-nowrap text-right">{/* sale.quantity */} t</td>
+                         <td className="px-3 py-2 whitespace-nowrap">{/* sale.quality */}</td>
+                         <td className="px-3 py-2 whitespace-nowrap">{/* sale.soldDate */}</td>
+                         <td className="px-3 py-2 whitespace-nowrap text-right">{/* formatCurrency(sale.deliveredPriceSold) */} /t</td>
+                         <td className="px-3 py-2 whitespace-nowrap text-right">{/* formatCurrency(sale.premium) */} /t</td>
+                         <td className="px-3 py-2 whitespace-nowrap text-right">{/* formatCurrency(sale.penalty) */} /t</td>
+                         <td className="px-3 py-2 whitespace-nowrap text-right">{/* formatCurrency(sale.totalPrice) */}</td>
+                       </tr>
+                     ))
+                   ) : (
+                     <tr>
+                       <td colSpan={10} className="text-center py-4 text-gray-500">There are no sales records to show for {selectedYear}.</td>
+                     </tr>
+                   )}
+                 </tbody>
+               </table>
+             )}
+           </div>
+         </div>
+       </Modal>
+
+    </div> // End Page Container
   );
 }
-
