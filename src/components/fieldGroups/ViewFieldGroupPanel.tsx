@@ -8,16 +8,29 @@ interface ViewFieldGroupPanelProps {
   onClose: () => void;
   group: UserFieldGroup | FmsFieldGroup | null;
   allFields: FieldData[];
+  allUserGroups: UserFieldGroup[];
 }
+
+// Utility function to find which groups a field belongs to
+const getFieldGroupMemberships = (
+  fieldId: string,
+  groups: UserFieldGroup[],
+  currentGroupId: string
+): UserFieldGroup[] => {
+  return groups.filter(group =>
+    group.id !== currentGroupId &&
+    group.fieldIds.includes(fieldId)
+  );
+};
 
 export default function ViewFieldGroupPanel({
   isOpen,
   onClose,
   group,
   allFields,
+  allUserGroups,
 }: ViewFieldGroupPanelProps) {
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [cropFilter, setCropFilter] = useState<string>('');
 
   if (!isOpen || !group) return null;
 
@@ -39,12 +52,10 @@ export default function ViewFieldGroupPanel({
   )) as string[];
 
   // Filter fields based on search and crop
-  const filteredFields = searchQuery || cropFilter
-    ? groupFields.filter(field => {
-        const matchesSearch = field.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCrop = !cropFilter || field.rotations['2024'] === cropFilter;
-        return matchesSearch && matchesCrop;
-      })
+  const filteredFields = searchQuery
+    ? groupFields.filter(field =>
+        field.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     : groupFields;
 
   return (
@@ -95,9 +106,9 @@ export default function ViewFieldGroupPanel({
 
         {/* Fields List */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="mb-3">
             {/* Search Box */}
-            <div className="relative flex-grow">
+            <div className="relative">
               <Search size={16} className="absolute left-2 top-2.5 text-gray-400" />
               <input
                 type="text"
@@ -107,17 +118,6 @@ export default function ViewFieldGroupPanel({
                 className="w-full border border-gray-300 rounded-md pl-8 pr-2 py-2 text-sm"
               />
             </div>
-            {/* Crop Filter */}
-            <select
-              value={cropFilter}
-              onChange={(e) => setCropFilter(e.target.value)}
-              className="border border-gray-300 rounded-md px-2 py-2 text-sm min-w-[120px]"
-            >
-              <option value="">All Crops</option>
-              {uniqueCrops.map(crop => (
-                <option key={crop} value={crop}>{crop}</option>
-              ))}
-            </select>
           </div>
 
           <div className="border border-gray-200 rounded-md overflow-y-auto max-h-[calc(100vh-380px)]">
@@ -133,16 +133,30 @@ export default function ViewFieldGroupPanel({
                     className="px-3 py-2 hover:bg-gray-50"
                   >
                     <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{field.name}</span>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{field.name}</span>
+                          <span className="text-sm text-gray-600">
+                            ({field.size.toFixed(1)} ha)
+                          </span>
+                        </div>
                         <span className="text-sm text-gray-600">
-                          ({field.size.toFixed(1)} ha)
+                          {field.rotations['2024'] || 'No crop'}
                         </span>
+                        {/* Show group memberships */}
+                        {(() => {
+                          const memberships = getFieldGroupMemberships(field.id, allUserGroups, group.id);
+                          if (memberships.length > 0) {
+                            return (
+                              <span className="text-xs text-gray-500 mt-0.5">
+                                Also in groups: {memberships.map(g => g.name).join(', ')}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     </div>
-                    <span className="text-sm text-gray-600">
-                      {field.rotations['2024'] || 'No crop'}
-                    </span>
                   </div>
                 ))}
               </div>

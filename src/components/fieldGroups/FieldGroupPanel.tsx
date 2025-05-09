@@ -1,9 +1,7 @@
-import { X, Search, Filter } from 'lucide-react';
+import { X, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { UserFieldGroup } from '../../types';
 import { FieldData } from '../../data/fieldData';
-import { AVAILABLE_YEARS } from '../../constants/analytics';
-import type { Year } from '../../types/analytics';
 
 interface FieldGroupPanelProps {
   isOpen: boolean;
@@ -11,8 +9,21 @@ interface FieldGroupPanelProps {
   onSave: (group: UserFieldGroup) => void;
   initialData: Partial<UserFieldGroup> | null;
   allFields: FieldData[];
+  allUserGroups: UserFieldGroup[]; // Add all user groups to check membership
   mode: 'create' | 'edit' | 'copy';
 }
+
+// Utility function to find which groups a field belongs to
+const getFieldGroupMemberships = (
+  fieldId: string,
+  groups: UserFieldGroup[],
+  currentGroupId?: string // Exclude current group when editing
+): UserFieldGroup[] => {
+  return groups.filter(group =>
+    group.id !== currentGroupId && // Exclude current group
+    group.fieldIds.includes(fieldId)
+  );
+};
 
 export default function FieldGroupPanel({
   isOpen,
@@ -20,6 +31,7 @@ export default function FieldGroupPanel({
   onSave,
   initialData,
   allFields,
+  allUserGroups,
   mode
 }: FieldGroupPanelProps) {
   // Form state
@@ -27,13 +39,6 @@ export default function FieldGroupPanel({
   const [selectedFieldIds, setSelectedFieldIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const currentYear: Year = AVAILABLE_YEARS[AVAILABLE_YEARS.length - 1];
-  const [cropFilter, setCropFilter] = useState<string>('');
-
-  // Get unique crop types from all fields for current year
-  const uniqueCrops = Array.from(new Set(
-    allFields.map(field => field.rotations[currentYear]).filter(Boolean)
-  )) as string[];
 
   // Reset form when initialData changes
   useEffect(() => {
@@ -50,12 +55,10 @@ export default function FieldGroupPanel({
 
   if (!isOpen) return null;
 
-  // Filter fields based on search query, year, and crop
-  const filteredFields = allFields.filter(field => {
-    const matchesSearch = field.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCrop = !cropFilter || field.rotations[currentYear] === cropFilter;
-    return matchesSearch && matchesCrop;
-  }).sort((a, b) => a.name.localeCompare(b.name));
+  // Filter fields based on search query
+  const filteredFields = allFields
+    .filter(field => field.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const handleFieldToggle = (fieldId: string) => {
     setSelectedFieldIds(current =>
@@ -131,10 +134,9 @@ export default function FieldGroupPanel({
             </label>
           </div>
           
-          {/* Filters Section */}
-          <div className="mb-3 flex items-center gap-2">
-            {/* Search Box */}
-            <div className="relative flex-grow">
+          {/* Search Box */}
+          <div className="mb-3">
+            <div className="relative">
               <Search size={16} className="absolute left-2 top-2.5 text-gray-400" />
               <input
                 type="text"
@@ -144,17 +146,6 @@ export default function FieldGroupPanel({
                 className="w-full border border-gray-300 rounded-md pl-8 pr-2 py-2 text-sm"
               />
             </div>
-            {/* Crop Filter */}
-            <select
-              value={cropFilter}
-              onChange={(e) => setCropFilter(e.target.value)}
-              className="border border-gray-300 rounded-md px-2 py-2 text-sm min-w-[120px]"
-            >
-              <option value="">All Crops</option>
-              {uniqueCrops.map(crop => (
-                <option key={crop} value={crop}>{crop}</option>
-              ))}
-            </select>
           </div>
 
           {/* Fields List */}
@@ -177,9 +168,23 @@ export default function FieldGroupPanel({
                       className="mr-3"
                     />
                     <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{field.name}</span>
-                        <span className="text-sm text-gray-600">({field.size.toFixed(1)} ha)</span>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{field.name}</span>
+                          <span className="text-sm text-gray-600">({field.size.toFixed(1)} ha)</span>
+                        </div>
+                        {/* Show group memberships */}
+                        {(() => {
+                          const memberships = getFieldGroupMemberships(field.id, allUserGroups, initialData?.id);
+                          if (memberships.length > 0) {
+                            return (
+                              <span className="text-xs text-gray-500 mt-0.5">
+                                In groups: {memberships.map(g => g.name).join(', ')}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     </div>
                   </label>
