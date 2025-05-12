@@ -8,6 +8,9 @@ interface AddOperationPanelProps {
   onAdd: (operation: Omit<Operation, 'totalCost'>) => void;
   categoryName: string;
   existingOperations: string[];
+  selectedCrop?: string; // Added prop
+  filterLabel?: string; // Added prop
+  subFilterLabels?: string[]; // Added prop
 }
 
 const predefinedOperations = {
@@ -18,7 +21,16 @@ const predefinedOperations = {
   'Other': ['Crop walking', 'Field margin maintenance', 'Soil sampling']
 };
 
-export default function AddOperationPanel({ isOpen, onClose, onAdd, categoryName, existingOperations }: AddOperationPanelProps) {
+export default function AddOperationPanel({
+  isOpen,
+  onClose,
+  onAdd,
+  categoryName,
+  existingOperations,
+  selectedCrop, // Destructure new prop
+  filterLabel, // Destructure new prop
+  subFilterLabels // Destructure new prop
+}: AddOperationPanelProps) {
   const [operationType, setOperationType] = useState<'list' | 'other'>('list');
   const [selectedOperation, setSelectedOperation] = useState('');
   const [customOperation, setCustomOperation] = useState('');
@@ -62,6 +74,16 @@ export default function AddOperationPanel({ isOpen, onClose, onAdd, categoryName
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
             <X size={20} />
           </button>
+        </div>
+
+        {/* Context Display Section */}
+        <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-600">
+          <p><span className="font-medium">Category:</span> {categoryName}</p>
+          {selectedCrop && <p><span className="font-medium">Applying to Crop:</span> {selectedCrop}</p>}
+          {filterLabel && <p><span className="font-medium">Filter:</span> {filterLabel}</p>}
+          {subFilterLabels && subFilterLabels.length > 0 && (
+            <p><span className="font-medium">Sub-filters:</span> {subFilterLabels.join(', ')}</p>
+          )}
         </div>
 
         <div className="space-y-6">

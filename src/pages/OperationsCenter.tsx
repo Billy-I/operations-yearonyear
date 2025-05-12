@@ -91,6 +91,18 @@ export default function OperationsCenter() {
     index: null,
   });
 
+  // Helper function to get filter labels
+  const getFilterContext = (filterValue: string, subFilterValues: string[]) => {
+    const filter = filterOptions.find(opt => opt.value === filterValue);
+    const filterLabel = filter?.label || 'None';
+
+    const subFilterLabels = filter?.subOptions
+      ?.filter(subOpt => subFilterValues.includes(subOpt.value))
+      .map(subOpt => subOpt.label) || [];
+
+    return { filterLabel, subFilterLabels };
+  };
+
   
     // Banner visibility is now determined by selectedYear === '2025'
   
@@ -1033,6 +1045,8 @@ export default function OperationsCenter() {
           const existingOperations = operation.subOperations
             ?.filter(op => op.cropData?.[selectedCrop])
             ?.map(op => op.name) || [];
+
+          const { filterLabel, subFilterLabels } = getFilterContext(selectedFilter, selectedSubFilters);
           
           return (
             <AddOperationPanel
@@ -1042,6 +1056,10 @@ export default function OperationsCenter() {
               onAdd={(operation) => handleAddOperation(category, operation)}
               categoryName={operation.name}
               existingOperations={existingOperations}
+              // Add the new context props
+              selectedCrop={selectedCrop}
+              filterLabel={selectedFilter !== 'none' ? filterLabel : undefined} // Only pass label if filter is active
+              subFilterLabels={subFilterLabels.length > 0 ? subFilterLabels : undefined} // Only pass labels if sub-filters are active
             />
           );
         }

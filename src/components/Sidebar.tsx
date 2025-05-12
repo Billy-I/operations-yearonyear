@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, Database, BarChart2, ShoppingCart, Compass, LineChart, LogOut, Target, Wallet, ChevronDown, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Settings, Database, BarChart2, ShoppingCart, Compass, LineChart, LogOut, Target, Wallet, ChevronDown, ChevronRight, FolderKanban } from 'lucide-react'; // Add FolderKanban icon
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -117,6 +117,10 @@ export default function Sidebar() {
           <Link to="/data/operations" className={getLinkClasses('/data/operations')}>
             <Compass size={20} />
             <span>Operations</span>
+          </Link>
+          <Link to="/data/field-groups" className={getLinkClasses('/data/field-groups')}>
+            <FolderKanban size={20} /> {/* Use new icon */}
+            <span>Field Groups</span>
           </Link>
         </DropdownSection>
 

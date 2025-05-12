@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom'; // Import useLocation
+import React, { useState, useEffect, Fragment } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Popover, Transition } from '@headlessui/react';
+import { PencilIcon, TrashIcon, EllipsisVerticalIcon } from '@heroicons/react/24/solid';
 import AddBudgetPanel from '../components/AddBudgetPanel';
 
 interface SummaryItem {
@@ -50,9 +52,10 @@ interface CropRowProps {
   price: string;
   gm: string; // Gross Margin per hectare
   onEdit: () => void;
+  onDelete: (crop: string) => void; // Add onDelete prop
 }
 
-const CropRow: React.FC<CropRowProps> = ({ crop, area, seed, fertiliser, chemical, yield: yieldValue, price, gm, onEdit }) => (
+const CropRow: React.FC<CropRowProps> = ({ crop, area, seed, fertiliser, chemical, yield: yieldValue, price, gm, onEdit, onDelete }) => (
   <tr className="border-b border-gray-200 hover:bg-gray-50">
     <td className="py-3 px-4 text-gray-900">{crop}</td>
     <td className="py-3 px-4 text-gray-600">{area}</td>
@@ -62,10 +65,46 @@ const CropRow: React.FC<CropRowProps> = ({ crop, area, seed, fertiliser, chemica
     <td className="py-3 px-4 text-gray-600">{yieldValue}</td>
     <td className="py-3 px-4 text-gray-600">{price}</td>
     <td className="py-3 px-4 text-gray-600">{gm}</td>
-    <td className="py-3 px-4">
-      <button onClick={onEdit} className="text-gray-600 hover:text-gray-900">
-        ✏️
-      </button>
+    <td className="py-3 px-4 text-center">
+      <Popover className="relative">
+        {({ open }) => (
+          <>
+            <Popover.Button className="p-1 rounded-md text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+              <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
+            </Popover.Button>
+            <Transition
+              as={Fragment}
+              enter="transition ease-out duration-100"
+              enterFrom="transform opacity-0 scale-95"
+              enterTo="transform opacity-100 scale-100"
+              leave="transition ease-in duration-75"
+              leaveFrom="transform opacity-100 scale-100"
+              leaveTo="transform opacity-0 scale-95"
+            >
+              <Popover.Panel className="absolute right-0 z-10 mt-2 w-32 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <div className="py-1">
+                  <Popover.Button
+                    as="button"
+                    onClick={onEdit}
+                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    <PencilIcon className="mr-3 h-5 w-5 text-gray-400" aria-hidden="true" />
+                    <span>Edit</span>
+                  </Popover.Button>
+                  <Popover.Button
+                    as="button"
+                    onClick={() => onDelete(crop)}
+                    className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-800"
+                  >
+                    <TrashIcon className="mr-3 h-5 w-5 text-red-400" aria-hidden="true" />
+                    <span>Delete</span>
+                  </Popover.Button>
+                </div>
+              </Popover.Panel>
+            </Transition>
+          </>
+        )}
+      </Popover>
     </td>
   </tr>
 );
@@ -79,6 +118,7 @@ interface OperationsRowProps {
   other: string;        // Stored as Total £
   netMargin?: string;   // Stored as Total £
   onEdit: () => void;
+  onDelete: (crop: string) => void; // Add onDelete prop
 }
 
 // This component receives already formatted strings based on the toggle
@@ -90,7 +130,8 @@ const OperationsRow: React.FC<OperationsRowProps> = ({
   harvesting,
   other,
   netMargin,
-  onEdit
+  onEdit,
+  onDelete
 }) => (
   <tr className="border-b border-gray-200 hover:bg-gray-50">
     <td className="py-3 px-4 text-gray-900">{crop}</td>
@@ -99,11 +140,47 @@ const OperationsRow: React.FC<OperationsRowProps> = ({
     <td className="py-3 px-4 text-gray-600">{application}</td>
     <td className="py-3 px-4 text-gray-600">{harvesting}</td>
     <td className="py-3 px-4 text-gray-600">{other}</td>
-    <td className="py-3 px-4 text-gray-600">{netMargin}</td>
-    <td className="py-3 px-4">
-      <button onClick={onEdit} className="text-gray-600 hover:text-gray-900">
-        ✏️
-      </button>
+    <td className="py-3 px-4 text-gray-600">{netMargin ?? '-'}</td> {/* Display '-' if netMargin is undefined */}
+    <td className="py-3 px-4 text-center">
+       <Popover className="relative">
+        {({ open }) => (
+          <>
+            <Popover.Button className="p-1 rounded-md text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+              <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
+            </Popover.Button>
+            <Transition
+              as={Fragment}
+              enter="transition ease-out duration-100"
+              enterFrom="transform opacity-0 scale-95"
+              enterTo="transform opacity-100 scale-100"
+              leave="transition ease-in duration-75"
+              leaveFrom="transform opacity-100 scale-100"
+              leaveTo="transform opacity-0 scale-95"
+            >
+              <Popover.Panel className="absolute right-0 z-10 mt-2 w-32 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <div className="py-1">
+                  <Popover.Button
+                    as="button"
+                    onClick={onEdit}
+                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    <PencilIcon className="mr-3 h-5 w-5 text-gray-400" aria-hidden="true" />
+                    <span>Edit</span>
+                  </Popover.Button>
+                  <Popover.Button
+                    as="button"
+                    onClick={() => onDelete(crop)}
+                    className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-800"
+                  >
+                    <TrashIcon className="mr-3 h-5 w-5 text-red-400" aria-hidden="true" />
+                    <span>Delete</span>
+                  </Popover.Button>
+                </div>
+              </Popover.Panel>
+            </Transition>
+          </>
+        )}
+      </Popover>
     </td>
   </tr>
 );
@@ -178,7 +255,7 @@ const Budgets: React.FC = () => {
      ];
 
     // Calculate net margin (Total £)
-    const calculateNetMarginTotal = (cropName: string, currentVarCosts: CropRowProps[], currentOpCosts: Omit<OperationsRowProps, 'netMargin' | 'onEdit'>) => {
+    const calculateNetMarginTotal = (cropName: string, currentVarCosts: CropRowProps[], currentOpCosts: Omit<OperationsRowProps, 'netMargin' | 'onEdit' | 'onDelete'>) => {
       const variableCost = currentVarCosts.find(vc => vc.crop === cropName);
       if (!variableCost) return formatCurrencyValue(0);
 
@@ -197,23 +274,25 @@ const Budgets: React.FC = () => {
       return formatCurrencyValue(netMargin);
     };
 
-    // Map initial variable costs data and add onEdit
-    const initialVariableCostsWithEdit = initialVariableCostsData.map(item => ({
+    // Map initial variable costs data and add onEdit/onDelete
+    const initialVariableCostsWithHandlers = initialVariableCostsData.map(item => ({
         ...item,
-        onEdit: () => handleEdit(item, 'variable')
+        onEdit: () => handleEdit(item, 'variable'),
+        onDelete: (crop: string) => handleDelete(crop, 'variable') // Pass type
     }));
-    setVariableCosts(initialVariableCostsWithEdit);
+    setVariableCosts(initialVariableCostsWithHandlers);
 
-    // Map initial operations costs data, calculate net margin, and add onEdit
-    const initialOperationsCostsWithEditAndMargin = initialOperationsCostsData.map(item => {
-        const netMargin = calculateNetMarginTotal(item.crop, initialVariableCostsWithEdit, item);
+    // Map initial operations costs data, calculate net margin, and add onEdit/onDelete
+    const initialOperationsCostsWithHandlersAndMargin = initialOperationsCostsData.map(item => {
+        const netMargin = calculateNetMarginTotal(item.crop, initialVariableCostsWithHandlers, item); // Use updated variable costs list here
         return {
             ...item,
             netMargin: netMargin,
-            onEdit: () => handleEdit(item, 'operations')
+            onEdit: () => handleEdit(item, 'operations'),
+            onDelete: (crop: string) => handleDelete(crop, 'operations') // Ensure onDelete is passed
         };
     });
-    setOperationsCosts(initialOperationsCostsWithEditAndMargin);
+    setOperationsCosts(initialOperationsCostsWithHandlersAndMargin); // Set the state
 
     // TODO: Filter or fetch data based on selectedYear and selectedCrop here
 
@@ -230,26 +309,37 @@ const Budgets: React.FC = () => {
     };
 
     const crop = itemData.crop;
-    const matchingVariableCost = variableCosts.find(c => c.crop === crop);
-    const matchingOperationsCost = operationsCosts.find(c => c.crop === crop);
-
-    const dataToEdit = {
+    let dataToEdit: any = {
       type,
       crop: itemData.crop,
-      // Variable costs data (expecting per ha values for edit)
-      area: matchingVariableCost ? parseEditValue(matchingVariableCost.area) : '',
-      seed: matchingVariableCost ? parseEditValue(matchingVariableCost.seed) : '',
-      fertiliser: matchingVariableCost ? parseEditValue(matchingVariableCost.fertiliser) : '',
-      chemical: matchingVariableCost ? parseEditValue(matchingVariableCost.chemical) : '',
-      yield: matchingVariableCost ? parseEditValue(matchingVariableCost.yield) : '',
-      price: matchingVariableCost ? parseEditValue(matchingVariableCost.price) : '',
-      // Operations costs data (expecting total values for edit)
-      cultivation: matchingOperationsCost ? parseEditValue(matchingOperationsCost.cultivation) : '',
-      drilling: matchingOperationsCost ? parseEditValue(matchingOperationsCost.drilling) : '',
-      application: matchingOperationsCost ? parseEditValue(matchingOperationsCost.application) : '',
-      harvesting: matchingOperationsCost ? parseEditValue(matchingOperationsCost.harvesting) : '',
-      other: matchingOperationsCost ? parseEditValue(matchingOperationsCost.other) : '',
     };
+
+    if (type === 'variable') {
+      const matchingVariableCost = variableCosts.find(c => c.crop === crop);
+      if (matchingVariableCost) {
+        dataToEdit = {
+          ...dataToEdit,
+          area: parseEditValue(matchingVariableCost.area),
+          seed: parseEditValue(matchingVariableCost.seed),
+          fertiliser: parseEditValue(matchingVariableCost.fertiliser),
+          chemical: parseEditValue(matchingVariableCost.chemical),
+          yield: parseEditValue(matchingVariableCost.yield),
+          price: parseEditValue(matchingVariableCost.price),
+        };
+      }
+    } else { // operations
+      const matchingOperationsCost = operationsCosts.find(c => c.crop === crop);
+      if (matchingOperationsCost) {
+        dataToEdit = {
+          ...dataToEdit,
+          cultivation: parseEditValue(matchingOperationsCost.cultivation),
+          drilling: parseEditValue(matchingOperationsCost.drilling),
+          application: parseEditValue(matchingOperationsCost.application),
+          harvesting: parseEditValue(matchingOperationsCost.harvesting),
+          other: parseEditValue(matchingOperationsCost.other),
+        };
+      }
+    }
 
     setEditingBudgetData(dataToEdit);
     setPanelMode('edit');
@@ -269,7 +359,7 @@ const Budgets: React.FC = () => {
      };
 
     // Recalculate Net Margin (Total £) based on potentially updated data
-    const recalculateNetMarginTotal = (cropName: string, currentVarCosts: CropRowProps[], currentOpCostsData: any) => {
+    const recalculateNetMarginTotal = (cropName: string, currentVarCosts: CropRowProps[], currentOpCostsData: any): string => {
         const variableCost = currentVarCosts.find(vc => vc.crop === cropName);
         if (!variableCost) return formatCurrency(0);
 
@@ -294,7 +384,7 @@ const Budgets: React.FC = () => {
       const gmPerHa = (Number(data.yield || 0) * Number(data.price || 0)) -
                       (Number(data.seed || 0) + Number(data.fertiliser || 0) + Number(data.chemical || 0));
 
-      const budgetData: Omit<CropRowProps, 'onEdit'> = {
+      const budgetData: Omit<CropRowProps, 'onEdit' | 'onDelete'> = {
         crop: data.crop,
         area: formatUnit(data.area, 'ha'),
         seed: formatCurrency(data.seed, '/ha'),
@@ -307,7 +397,8 @@ const Budgets: React.FC = () => {
 
       const finalBudgetData: CropRowProps = {
           ...budgetData,
-          onEdit: () => handleEdit(budgetData, 'variable')
+          onEdit: () => handleEdit(budgetData, 'variable'),
+          onDelete: (crop: string) => handleDelete(crop, 'variable')
       };
 
       let updatedVariableCosts: CropRowProps[];
@@ -326,18 +417,26 @@ const Budgets: React.FC = () => {
       }
       setVariableCosts(updatedVariableCosts);
 
-      // After updating variable costs, recalculate and update net margins in *existing* operations costs
+      // After updating variable costs, recalculate and update net margins in *existing* operations costs using map
       setOperationsCosts(prevOpsCosts => prevOpsCosts.map(opCost => {
+          // Check if this is the operations cost item corresponding to the updated variable cost
           if (opCost.crop === data.crop) {
-              // Recalculate net margin using the *updated* variable costs list
+              // Recalculate net margin using the *updated* variable costs list and this opCost item's data
               const newNetMargin = recalculateNetMarginTotal(data.crop, updatedVariableCosts, opCost);
-              return { ...opCost, netMargin: newNetMargin };
+
+              // Return a *new* object containing all original properties (including handlers from opCost)
+              // but with the updated netMargin.
+              return {
+                  ...opCost, // Spread the existing object from the map callback (includes handlers)
+                  netMargin: newNetMargin // Override only the netMargin
+              };
           }
+          // If it's not the item to update, return it unchanged
           return opCost;
       }));
 
     } else if (data.type === 'operations') {
-       const budgetData: Omit<OperationsRowProps, 'onEdit' | 'netMargin'> = {
+       const budgetData: Omit<OperationsRowProps, 'onEdit' | 'onDelete' | 'netMargin'> = {
          crop: data.crop,
          cultivation: formatCurrency(data.cultivation), // Store as total £
          drilling: formatCurrency(data.drilling),
@@ -352,7 +451,8 @@ const Budgets: React.FC = () => {
        const finalBudgetData: OperationsRowProps = {
            ...budgetData,
            netMargin: netMarginStr, // Store total net margin
-           onEdit: () => handleEdit(budgetData, 'operations')
+           onEdit: () => handleEdit(budgetData, 'operations'),
+           onDelete: (crop: string) => handleDelete(crop, 'operations')
        };
 
       if (mode === 'edit') {
@@ -377,6 +477,29 @@ const Budgets: React.FC = () => {
 
     setIsPanelOpen(false);
     setEditingBudgetData(null);
+  };
+
+  // --- Delete Handling ---
+  const handleDelete = (cropToDelete: string, type: 'variable' | 'operations') => {
+    const confirmBoth = window.confirm(`Do you want to delete BOTH variable and operations budgets for "${cropToDelete}"?`);
+
+    if (confirmBoth) {
+      setVariableCosts(prev => prev.filter(cost => cost.crop !== cropToDelete));
+      setOperationsCosts(prev => prev.filter(cost => cost.crop !== cropToDelete));
+    } else {
+      const confirmSingle = window.confirm(`Delete only the ${type} budget for "${cropToDelete}"?`);
+      if (confirmSingle) {
+        if (type === 'variable') {
+          setVariableCosts(prev => prev.filter(cost => cost.crop !== cropToDelete));
+          // Also remove the corresponding operations cost if only variable is deleted?
+          // For now, let's keep operations cost even if variable is deleted,
+          // but the net margin calculation might become invalid or need adjustment.
+          // Consider adding a check or warning if operations exist without variable costs.
+        } else { // type === 'operations'
+          setOperationsCosts(prev => prev.filter(cost => cost.crop !== cropToDelete));
+        }
+      }
+    }
   };
 
 
@@ -486,12 +609,12 @@ const Budgets: React.FC = () => {
                   <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Yield (t/ha)</th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Price (£/t)</th>
                   <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">GM (£/ha)</th>
-                  <th className="py-3 px-4"></th>
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {variableCosts.map((cost) => (
-                  <CropRow key={cost.crop} {...cost} onEdit={() => handleEdit(cost, 'variable')} />
+                  <CropRow key={cost.crop} {...cost} />
                 ))}
                 {/* Total Variable Costs Row */}
                 <tr className="border-t-2 border-gray-300 bg-gray-50 font-medium">
@@ -581,6 +704,7 @@ const Budgets: React.FC = () => {
                       other={displayCost(cost.other)}
                       netMargin={displayNetMargin(cost.netMargin)}
                       onEdit={() => handleEdit(cost, 'operations')}
+                      onDelete={cost.onDelete} // Add the missing onDelete prop
                     />
                   );
                 })}

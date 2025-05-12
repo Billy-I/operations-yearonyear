@@ -154,21 +154,25 @@ const AddBudgetPanel: React.FC<AddBudgetPanelProps> = ({ isOpen, onClose, onSave
       if (mode === 'edit' && initialData) { // EDIT MODE
         console.log("AddBudgetPanel useEffect - Received initialData:", initialData);
         
-        // Pre-fill all fields regardless of which table was clicked
+        // Pre-fill only the fields relevant to the type being edited
         const editFormData = {
           ...defaultData,
           crop: initialData.crop || defaultData.crop,
-          area: initialData.area || '',
-          seed: initialData.seed || '',
-          fertiliser: initialData.fertiliser || '',
-          chemical: initialData.chemical || '',
-          yield: initialData.yield || '',
-          price: initialData.price || '',
-          cultivation: initialData.cultivation || '',
-          drilling: initialData.drilling || '',
-          application: initialData.application || '',
-          harvesting: initialData.harvesting || '',
-          other: initialData.other || ''
+          ...(initialData.type === 'variable' ? {
+            area: initialData.area || '',
+            seed: initialData.seed || '',
+            fertiliser: initialData.fertiliser || '',
+            chemical: initialData.chemical || '',
+            yield: initialData.yield || '',
+            price: initialData.price || '',
+          } : {}),
+          ...(initialData.type === 'operations' ? {
+            cultivation: initialData.cultivation || '',
+            drilling: initialData.drilling || '',
+            application: initialData.application || '',
+            harvesting: initialData.harvesting || '',
+            other: initialData.other || '',
+          } : {})
         };
         
         setFormData(editFormData);

@@ -11,6 +11,7 @@ import BudgetsAlternative from './pages/BudgetsAlternative';
 import BudgetsSimple from './pages/BudgetsSimple';
 import AddBudget from './pages/AddBudget';
 import CropProgress from './pages/CropProgress';
+import FieldGroupsPage from './pages/FieldGroupsPage'; // Import the new page
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/data/operations" element={<OperationsCenter />} />
+            <Route path="/data/field-groups" element={<FieldGroupsPage />} /> {/* Add route for Field Groups */}
             <Route path="/analytics/explorer" element={<Explorer />} />
             <Route path="/analytics/explorer/:crop" element={<ExplorerCropDetails />} />
             <Route path="/analytics/multi-year" element={<MultiYear />} />
