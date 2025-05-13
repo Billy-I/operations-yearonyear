@@ -170,6 +170,62 @@ export const mockDashboardCropsData: DashboardCropData[] = [
     costToDate_value: 28000,
     costToDate_change: 22,
     soldPercentage: 45
+  },
+  {
+    id: '3',
+    name: 'Oilseed Rape',
+    area: 85,
+    yield: 3.8,
+    yield_value: 3.8,
+    yield_change: 0.8,
+    yieldChange: 0.8,
+    cost: 38000,
+    revenue: 72000,
+    costToDate_value: 32000,
+    costToDate_change: 18,
+    soldPercentage: 75
+  },
+  {
+    id: '4',
+    name: 'Potatoes',
+    area: 45,
+    yield: 42.5,
+    yield_value: 42.5,
+    yield_change: -0.4,
+    yieldChange: -0.4,
+    cost: 65000,
+    revenue: 95000,
+    costToDate_value: 55000,
+    costToDate_change: 25,
+    soldPercentage: 85
+  },
+  {
+    id: '5',
+    name: 'Sugar Beet',
+    area: 60,
+    yield: 75.0,
+    yield_value: 75.0,
+    yield_change: 0.5,
+    yieldChange: 0.5,
+    cost: 42000,
+    revenue: 78000,
+    costToDate_value: 36000,
+    costToDate_change: 12,
+    soldPercentage: 55
+  },
+  {
+    id: '6',
+    name: 'Peas',
+    area: 30,
+    yield: 4.2,
+    yield_value: 4.2,
+    yield_change: -0.2,
+    yieldChange: -0.2,
+    cost: 25000,
+    revenue: 45000,
+    costToDate_value: 20000,
+    costToDate_change: 8,
+    soldPercentage: 90
   }
 ];
 
