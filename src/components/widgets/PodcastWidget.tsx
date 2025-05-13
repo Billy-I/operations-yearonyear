@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PodcastEpisode } from '../../data/dashboardMockData';
 
 interface PodcastWidgetProps {
@@ -6,6 +6,11 @@ interface PodcastWidgetProps {
 }
 
 const PodcastWidget: React.FC<PodcastWidgetProps> = ({ episodes }) => {
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+
+  const handleImageError = (episodeId: string) => {
+    setFailedImages(prev => ({ ...prev, [episodeId]: true }));
+  };
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-lg font-semibold mb-4">Latest Podcasts</h2>
@@ -18,11 +23,20 @@ const PodcastWidget: React.FC<PodcastWidgetProps> = ({ episodes }) => {
             }`}
           >
             <div className="flex gap-4">
-              <img 
-                src={episode.cover_art_url} 
-                alt={episode.episode_title}
-                className="w-20 h-20 object-cover rounded"
-              />
+              {failedImages[episode.id] ? (
+                <div className="w-20 h-20 bg-gray-200 rounded flex items-center justify-center">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              ) : (
+                <img
+                  src={episode.cover_art_url}
+                  alt={episode.episode_title}
+                  className="w-20 h-20 object-cover rounded"
+                  onError={() => handleImageError(episode.id)}
+                />
+              )}
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium mb-1 text-base truncate">
                   {episode.episode_title}
