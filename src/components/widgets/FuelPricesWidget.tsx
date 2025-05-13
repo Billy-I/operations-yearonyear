@@ -1,5 +1,11 @@
 import React from 'react';
-import { FuelPriceData } from '../../data/dashboardMockData';
+
+interface FuelPriceData {
+  fuel_type: string;
+  current_price: number;
+  unit: string;
+  price_trend: 'up' | 'down' | 'stable';
+}
 
 interface FuelPricesWidgetProps {
   fuelPrices: FuelPriceData[];
