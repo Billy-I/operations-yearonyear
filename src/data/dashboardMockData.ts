@@ -1,5 +1,4 @@
-// Mock data types and sample data for the new dashboard widgets
-
+// Types
 export interface InsightData {
   id: string;
   title: string;
@@ -10,33 +9,40 @@ export interface InsightData {
   link?: string;
 }
 
-export interface FuelPriceData {
-  fuel_type: string;
-  current_price: number;
-  price_trend: 'up' | 'down' | 'stable';
-  unit: string;
-}
-
 export interface PodcastEpisode {
   id: string;
   episode_title: string;
-  guest_name: string;
-  publish_date: string;
+  description_snippet: string;
+  date: string;
   duration: string;
+  guest_name: string;
   spotify_link: string;
   cover_art_url: string;
-  description_snippet: string;
 }
 
-// --- New Interfaces for Commodities Widget ---
+export interface DashboardCropData {
+  id: string;
+  name: string;
+  area: number;
+  yield: number;
+  yield_value: number;
+  yield_change: number;
+  yieldChange: number;
+  cost: number;
+  revenue: number;
+  costToDate_value: number;
+  costToDate_change: number;
+  soldPercentage: number;
+}
+
 export interface CommodityPricePoint {
-  date: string; // YYYY-MM-DD
+  date: string;
   price: number;
 }
 
 export interface CommodityDetails {
   name: string;
-  unit: string; // e.g., £/L, £/tonne
+  unit: string;
   currentPrice: number;
   oneYearHigh: number;
   oneYearLow: number;
@@ -46,195 +52,183 @@ export interface CommodityDetails {
     last1year: CommodityPricePoint[];
   };
 }
-// --- End New Interfaces ---
 
-// New interface for individual crop data for the dashboard tracker widget
-export interface DashboardCropData {
-  name: string;
-  area: number; // hectares
-  yield_value: number; // t/ha
-  yield_change: number; // percentage
-  costToDate_value: number; // £/ha
-  costToDate_change: number; // percentage
-  soldPercentage: number; // percentage
-}
+// Generate price history data
+const generatePriceHistory = (basePrice: number, days: number): CommodityPricePoint[] => {
+  const data: CommodityPricePoint[] = [];
+  const now = new Date();
+  
+  for (let i = days; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    const variation = (Math.random() - 0.5) * 0.1; // +/- 5% variation
+    data.push({
+      date: date.toISOString(),
+      price: +(basePrice * (1 + variation)).toFixed(2)
+    });
+  }
+  return data;
+};
 
-// Sample mock data
+// Mock data
 export const mockInsights: InsightData[] = [
   {
-    id: "1",
-    title: "Cropping Overview Q2 2025",
-    summary: "Review the changing cropping area over time. Winter wheat showing strong performance.",
-    date: "2025-05-13",
+    id: '1',
+    title: 'Cost Savings Opportunity',
+    summary: 'Potential savings identified in fertilizer costs',
+    date: '2025-05-13',
+    contentType: 'text',
+    expandedContent: 'Analysis shows you could save up to 15% on fertilizer costs by adjusting application timing...'
+  },
+  {
+    id: '2',
+    title: 'Yield Performance Alert',
+    summary: 'Above average yields detected in Field Group A',
+    date: '2025-05-12',
     contentType: 'graph_placeholder',
-    expandedContent: "https://i.imgur.com/YOUR_CROPPING_OVERVIEW_IMAGE.png",
-    link: "/analytics/crops"
+    expandedContent: '/yield-performance-graph.png',
+    link: '/analytics/yield'
   },
   {
-    id: "2",
-    title: "Market Alert: Fuel Prices",
-    summary: "Red diesel prices trending downward. Consider reviewing fuel contracts for potential savings.",
-    date: "2025-05-12",
+    id: '3',
+    title: 'Market Price Update',
+    summary: 'Wheat prices trending upward',
+    date: '2025-05-11',
     contentType: 'text',
-    expandedContent: "Detailed analysis shows a 5% decrease in average red diesel prices over the past month, attributed to increased global supply. We recommend contacting your suppliers to renegotiate terms. White diesel prices remain stable.",
-    link: "/marketplace/fuel"
-  },
-  {
-    id: "3",
-    title: "New Feature: Automated Anomaly Detection",
-    summary: "Our latest update includes AI-powered anomaly detection for your field data.",
-    date: "2025-05-10",
-    contentType: 'text',
-    expandedContent: "The new anomaly detection system continuously monitors your sensor data, satellite imagery, and operational logs to identify unusual patterns that may indicate pest infestations, nutrient deficiencies, or irrigation issues. You'll receive alerts directly in your dashboard and via email.",
-  }
-];
-
-export const mockFuelPrices: FuelPriceData[] = [
-  {
-    fuel_type: "Red Diesel",
-    current_price: 0.85,
-    price_trend: "down",
-    unit: "£/L"
-  },
-  {
-    fuel_type: "White Diesel",
-    current_price: 1.45,
-    price_trend: "stable",
-    unit: "£/L"
+    expandedContent: 'Current market analysis indicates a positive trend in wheat prices...'
   }
 ];
 
 export const mockPodcastEpisodes: PodcastEpisode[] = [
   {
-    id: "ep1",
-    episode_title: "Future of Precision Agriculture",
-    guest_name: "Dr. Sarah Johnson",
-    publish_date: "2025-05-10",
-    duration: "45:30",
-    spotify_link: "https://spotify.com/episode1",
-    cover_art_url: "/podcast/episode1-cover.jpg",
-    description_snippet: "Exploring how AI and automation are transforming modern farming practices."
+    id: '1',
+    episode_title: 'Future of Farming',
+    description_snippet: 'Exploring technological innovations in agriculture and how they will shape the future of farming.',
+    date: '2025-05-10',
+    duration: '45min',
+    guest_name: 'John Smith',
+    spotify_link: 'https://open.spotify.com/episode/1',
+    cover_art_url: 'https://source.unsplash.com/random/400x400?farm'
   },
   {
-    id: "ep2",
-    episode_title: "Sustainable Farming Practices",
-    guest_name: "Michael Roberts",
-    publish_date: "2025-05-03",
-    duration: "38:15",
-    spotify_link: "https://spotify.com/episode2",
-    cover_art_url: "/podcast/episode2-cover.jpg",
-    description_snippet: "Discussing innovative approaches to reduce environmental impact while maintaining profitability."
+    id: '2',
+    episode_title: 'Sustainable Agriculture',
+    description_snippet: 'Discussing sustainable farming practices and their impact on the environment.',
+    date: '2025-05-03',
+    duration: '38min',
+    guest_name: 'Sarah Johnson',
+    spotify_link: 'https://open.spotify.com/episode/2',
+    cover_art_url: 'https://source.unsplash.com/random/400x400?agriculture'
+  },
+  {
+    id: '3',
+    episode_title: 'Market Trends 2025',
+    description_snippet: 'Analysis of current market trends and predictions for the agricultural sector.',
+    date: '2025-04-26',
+    duration: '42min',
+    guest_name: 'Michael Brown',
+    spotify_link: 'https://open.spotify.com/episode/3',
+    cover_art_url: 'https://source.unsplash.com/random/400x400?market'
+  },
+  {
+    id: '4',
+    episode_title: 'Smart Irrigation Systems',
+    description_snippet: 'Deep dive into modern irrigation technologies and water management.',
+    date: '2025-04-19',
+    duration: '35min',
+    guest_name: 'Emily Wilson',
+    spotify_link: 'https://open.spotify.com/episode/4',
+    cover_art_url: 'https://source.unsplash.com/random/400x400?irrigation'
   }
 ];
 
-// New mock data for the Tracker Widget, reflecting CropProgress structure
 export const mockDashboardCropsData: DashboardCropData[] = [
   {
-    name: 'Wheat (Winter)',
-    area: 641.16,
-    yield_value: 8.30, yield_change: 12, // Positive yield change
-    costToDate_value: 769.43, costToDate_change: 7,
-    soldPercentage: 45,
+    id: '1',
+    name: 'Wheat',
+    area: 150,
+    yield: 8.5,
+    yield_value: 8.5,
+    yield_change: 0.3,
+    yieldChange: 0.3,
+    cost: 45000,
+    revenue: 85000,
+    costToDate_value: 35000,
+    costToDate_change: 15,
+    soldPercentage: 65
   },
   {
-    name: 'Field Bean (Spring)',
-    area: 234.53,
-    yield_value: 5.55, yield_change: -8, // Negative yield change
-    costToDate_value: 346.63, costToDate_change: 10,
-    soldPercentage: 0,
-  },
-  {
-    name: 'Barley (Winter)',
-    area: 195.78,
-    yield_value: 10.11, yield_change: 9,
-    costToDate_value: 630.34, costToDate_change: -2,
-    soldPercentage: 0,
-  },
-  {
-    name: 'Linseed',
-    area: 157.68,
-    yield_value: 1.99, yield_change: -14, // Significant negative yield change
-    costToDate_value: 478.46, costToDate_change: 39, // High cost increase
-    soldPercentage: 0,
-  },
-  {
-    name: 'Oats (Spring)',
-    area: 122.79,
-    yield_value: 7.14, yield_change: 10,
-    costToDate_value: 380.49, costToDate_change: 28, // High cost increase
-    soldPercentage: 60,
-  },
+    id: '2',
+    name: 'Barley',
+    area: 100,
+    yield: 7.2,
+    yield_value: 7.2,
+    yield_change: -0.1,
+    yieldChange: -0.1,
+    cost: 35000,
+    revenue: 65000,
+    costToDate_value: 28000,
+    costToDate_change: 22,
+    soldPercentage: 45
+  }
 ];
 
-// The old TrackerSummary type and mockTrackerSummary object are no longer needed
-// as the widget will now process mockDashboardCropsData directly.
-
-// --- New Mock Data for Commodities Widget ---
 export const mockCommoditiesData: { [key: string]: CommodityDetails } = {
-  "Red Diesel": {
-    name: "Red Diesel",
-    unit: "£/L",
-    currentPrice: 0.83, // Slightly different from old mock to distinguish
-    oneYearHigh: 0.95,
-    oneYearLow: 0.78,
+  fertilizer: {
+    name: 'Fertilizer',
+    unit: '£',
+    currentPrice: 350.50,
+    oneYearHigh: 380.00,
+    oneYearLow: 320.00,
     priceHistory: {
-      last30days: [
-        { date: "2025-04-14", price: 0.85 },
-        { date: "2025-04-21", price: 0.84 },
-        { date: "2025-04-28", price: 0.83 },
-        { date: "2025-05-05", price: 0.82 },
-        { date: "2025-05-13", price: 0.83 },
-      ],
-      last90days: [
-        { date: "2025-02-13", price: 0.88 },
-        { date: "2025-03-01", price: 0.87 },
-        { date: "2025-03-15", price: 0.86 },
-        { date: "2025-03-30", price: 0.85 },
-        { date: "2025-04-14", price: 0.85 },
-        { date: "2025-04-28", price: 0.83 },
-        { date: "2025-05-13", price: 0.83 },
-      ],
-      last1year: [
-        { date: "2024-05-13", price: 0.92 },
-        { date: "2024-08-13", price: 0.95 },
-        { date: "2024-11-13", price: 0.85 },
-        { date: "2025-02-13", price: 0.78 },
-        { date: "2025-05-13", price: 0.83 },
-      ],
-    },
-  }, // Comma after Red Diesel entry
-  "White Diesel": {
-    name: "White Diesel",
-    unit: "£/L",
-    currentPrice: 1.42,
-    oneYearHigh: 1.55,
+      last30days: generatePriceHistory(350.50, 30),
+      last90days: generatePriceHistory(350.50, 90),
+      last1year: generatePriceHistory(350.50, 365)
+    }
+  },
+  fuel: {
+    name: 'Fuel',
+    unit: '£',
+    currentPrice: 1.45,
+    oneYearHigh: 1.65,
     oneYearLow: 1.35,
     priceHistory: {
-      last30days: [
-        { date: "2025-04-14", price: 1.45 },
-        { date: "2025-04-21", price: 1.44 },
-        { date: "2025-04-28", price: 1.43 },
-        { date: "2025-05-05", price: 1.42 },
-        { date: "2025-05-13", price: 1.42 },
-      ],
-      last90days: [
-        { date: "2025-02-13", price: 1.48 },
-        { date: "2025-03-01", price: 1.47 },
-        { date: "2025-03-15", price: 1.46 },
-        { date: "2025-03-30", price: 1.45 },
-        { date: "2025-04-14", price: 1.45 },
-        { date: "2025-04-28", price: 1.43 },
-        { date: "2025-05-13", price: 1.42 },
-      ],
-      last1year: [
-        { date: "2024-05-13", price: 1.52 },
-        { date: "2024-08-13", price: 1.55 },
-        { date: "2024-11-13", price: 1.45 },
-        { date: "2025-02-13", price: 1.38 },
-        { date: "2025-05-13", price: 1.42 },
-      ],
-    },
-  } // No comma after the last entry (White Diesel)
-  // We can add other commodities like "LCE Feed Wheat", "CBOT Corn" later
+      last30days: generatePriceHistory(1.45, 30),
+      last90days: generatePriceHistory(1.45, 90),
+      last1year: generatePriceHistory(1.45, 365)
+    }
+  }
 };
-// --- End New Mock Data ---
+
+export const mockWeatherData = [
+  {
+    date: '2025-05-13',
+    condition: 'sunny' as const,
+    temperature: 22,
+    rainfall: 0
+  },
+  {
+    date: '2025-05-14',
+    condition: 'cloudy' as const,
+    temperature: 19,
+    rainfall: 0
+  },
+  {
+    date: '2025-05-15',
+    condition: 'rainy' as const,
+    temperature: 17,
+    rainfall: 12
+  },
+  {
+    date: '2025-05-16',
+    condition: 'cloudy' as const,
+    temperature: 18,
+    rainfall: 3
+  },
+  {
+    date: '2025-05-17',
+    condition: 'sunny' as const,
+    temperature: 21,
+    rainfall: 0
+  }
+];

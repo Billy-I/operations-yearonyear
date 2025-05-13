@@ -1,73 +1,95 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InsightData } from '../../data/dashboardMockData';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import ViewSwitcher from '../common/ViewSwitcher';
 
 interface LatestInsightsWidgetProps {
   insights: InsightData[];
 }
 
 const LatestInsightsWidget: React.FC<LatestInsightsWidgetProps> = ({ insights }) => {
-  const [expandedInsightId, setExpandedInsightId] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const toggleExpand = (insightId: string) => {
-    setExpandedInsightId(prevId => (prevId === insightId ? null : insightId));
+  const handlePrevious = () => {
+    setCurrentIndex(prev => (prev > 0 ? prev - 1 : insights.length - 1));
   };
+
+  const handleNext = () => {
+    setCurrentIndex(prev => (prev < insights.length - 1 ? prev + 1 : 0));
+  };
+
+  // Keyboard navigation
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      handlePrevious();
+    } else if (e.key === 'ArrowRight') {
+      handleNext();
+    }
+  };
+
+  // Add/remove keyboard event listener
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const currentInsight = insights[currentIndex];
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-lg font-semibold mb-4">Latest Insights</h2>
-      <div className="space-y-4">
-        {insights.map(insight => (
-          <div key={insight.id} className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-medium mb-1 text-base">{insight.title}</h3>
-                <p className="text-gray-600 text-sm mb-2">{insight.summary}</p>
-                <span className="text-xs text-gray-500">{new Date(insight.date).toLocaleDateString()}</span>
-              </div>
-              <button
-                onClick={() => toggleExpand(insight.id)}
-                className="text-blue-600 hover:text-blue-800 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-expanded={expandedInsightId === insight.id}
-                aria-controls={`insight-content-${insight.id}`}
-              >
-                {expandedInsightId === insight.id ? (
-                  <ChevronUp size={20} />
-                ) : (
-                  <ChevronDown size={20} />
-                )}
-                <span className="sr-only">{expandedInsightId === insight.id ? 'See less' : 'See more'}</span>
-              </button>
-            </div>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-semibold">Latest Insights</h2>
+        <ViewSwitcher 
+          currentIndex={currentIndex}
+          totalItems={insights.length}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+        />
+      </div>
 
-            {expandedInsightId === insight.id && (
-              <div id={`insight-content-${insight.id}`} className="mt-4 pt-4 border-t border-gray-200">
-                {insight.contentType === 'text' && (
-                  <p className="text-gray-700 text-sm whitespace-pre-line">{insight.expandedContent}</p>
-                )}
-                {insight.contentType === 'graph_placeholder' && (
-                  <div>
-                    <img 
-                      src={insight.expandedContent} 
-                      alt={`${insight.title} - graph`} 
-                      className="w-full h-auto rounded-md border border-gray-300" 
-                    />
-                    <p className="text-xs text-gray-500 mt-1 text-center">
-                      Graph placeholder. Actual chart component will be implemented later.
-                    </p>
-                  </div>
-                )}
-                {insight.link && (
-                   <div className="mt-3 text-right">
-                     <a href={insight.link} className="text-blue-600 text-sm hover:underline">
-                       Go to details →
-                     </a>
-                   </div>
-                )}
-              </div>
-            )}
+      <div className="space-y-4">
+        <div key={currentInsight.id}>
+          <div>
+            <h3 className="font-medium mb-2 text-base">{currentInsight.title}</h3>
+            <p className="text-gray-600 text-sm mb-3">{currentInsight.summary}</p>
+            
+            {/* Expanded content is always visible */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              {currentInsight.contentType === 'text' && (
+                <p className="text-gray-700 text-sm whitespace-pre-line">
+                  {currentInsight.expandedContent}
+                </p>
+              )}
+              {currentInsight.contentType === 'graph_placeholder' && (
+                <div>
+                  <img 
+                    src={currentInsight.expandedContent} 
+                    alt={`${currentInsight.title} - graph`} 
+                    className="w-full h-auto rounded-md border border-gray-300" 
+                  />
+                  <p className="text-xs text-gray-500 mt-1 text-center">
+                    Graph placeholder. Actual chart component will be implemented later.
+                  </p>
+                </div>
+              )}
+              {currentInsight.link && (
+                <div className="mt-3 text-right">
+                  <a 
+                    href={currentInsight.link} 
+                    className="text-blue-600 text-sm hover:underline"
+                  >
+                    Go to details →
+                  </a>
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-4 text-xs text-gray-500">
+              {new Date(currentInsight.date).toLocaleDateString()}
+            </div>
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );

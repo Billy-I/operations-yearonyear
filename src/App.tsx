@@ -16,9 +16,9 @@ import FieldGroupsPage from './pages/FieldGroupsPage'; // Import the new page
 function App() {
   return (
     <Router>
-      <div className="flex">
+      <div className="flex h-screen overflow-hidden">
         <Sidebar />
-        <div className="flex-1">
+        <div className="flex-1 overflow-y-auto">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ChevronDown, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { CommodityDetails, CommodityPricePoint } from '../../data/dashboardMockData'; // Assuming interfaces are exported
+import { CommodityDetails } from '../../data/dashboardMockData';
 
 interface CommoditiesWidgetProps {
   allCommoditiesData: { [key: string]: CommodityDetails };
@@ -39,7 +39,7 @@ const CommoditiesWidget: React.FC<CommoditiesWidgetProps> = ({ allCommoditiesDat
   );
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-800">Commodities - Inputs</h3>
@@ -73,7 +73,7 @@ const CommoditiesWidget: React.FC<CommoditiesWidgetProps> = ({ allCommoditiesDat
         </div>
       </div>
 
-      <div className="flex-grow mb-4" style={{ minHeight: '200px' }}>
+      <div className="h-[300px] mb-4">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />

@@ -1,4 +1,5 @@
-import { LayoutDashboard, Settings, Database, BarChart2, ShoppingCart, Compass, LineChart, LogOut, Target, Wallet, ChevronDown, ChevronRight, FolderKanban } from 'lucide-react'; // Add FolderKanban icon
+import { LayoutDashboard, Settings, Database, BarChart2, ShoppingCart, Compass, LineChart, LogOut, Target, Wallet, ChevronDown, ChevronRight, FolderKanban } from 'lucide-react';
+import UploadDataPromptWidget from './widgets/UploadDataPromptWidget';
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -61,12 +62,12 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-64 bg-gray-100 min-h-screen p-4">
-      <div className="mb-8">
+    <div className="w-64 bg-gray-100 h-screen p-4 flex flex-col">
+      <div className="flex-none mb-8">
         <h1 className="text-2xl font-bold">Logo</h1>
       </div>
       
-      <nav className="space-y-2">
+      <nav className="flex-1 space-y-2 overflow-y-auto">
         <Link to="/dashboard" className={getLinkClasses('/dashboard')}>
           <LayoutDashboard size={20} />
           <span>Dashboard</span>
@@ -134,6 +135,11 @@ export default function Sidebar() {
           <span>Logout</span>
         </Link>
       </nav>
+
+      {/* Upload Data Section at bottom of sidebar */}
+      <div className="flex-none pt-4 border-t border-gray-200">
+        <UploadDataPromptWidget />
+      </div>
     </div>
   );
 }
