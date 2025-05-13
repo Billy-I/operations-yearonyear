@@ -40,15 +40,15 @@ const CostAreaView: React.FC<CostAreaViewProps> = ({ crops }) => {
 
   // Color based on cost change
   const getPointColor = (change: number) => {
-    if (change > 10) return '#EF4444'; // red-500 for significant increase
-    if (change > 0) return '#FCA5A5';  // red-300 for small increase
-    if (change > -10) return '#86EFAC'; // green-300 for small decrease
-    return '#22C55E'; // green-500 for significant decrease
+    if (change > 10) return '#1a1a1a'; // darkest gray for significant increase
+    if (change > 0) return '#4d4d4d';  // dark gray for small increase
+    if (change > -10) return '#808080'; // medium gray for small decrease
+    return '#b3b3b3'; // light gray for significant decrease
   };
 
   return (
     <div className="w-full h-full">
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={350}>
         <ScatterChart
           margin={{ top: 20, right: 30, left: 60, bottom: 30 }}
         >
@@ -106,19 +106,19 @@ const CostAreaView: React.FC<CostAreaViewProps> = ({ crops }) => {
       {/* Legend */}
       <div className="flex justify-center gap-4 text-sm text-gray-600 mt-2">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-green-500" />
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#b3b3b3' }} />
           <span>&gt;10% decrease</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-green-300" />
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#808080' }} />
           <span>0-10% decrease</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-red-300" />
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#4d4d4d' }} />
           <span>0-10% increase</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-red-500" />
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1a1a1a' }} />
           <span>&gt;10% increase</span>
         </div>
       </div>

@@ -50,7 +50,7 @@ const CommoditiesWidget: React.FC<CommoditiesWidgetProps> = ({ allCommoditiesDat
                 onClick={() => setSelectedCommodityKey(key)}
                 className={`px-3 py-1 text-sm rounded-full transition-colors ${
                   selectedCommodityKey === key
-                    ? 'bg-green-500 text-white'
+                    ? 'bg-gray-700 text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -63,7 +63,7 @@ const CommoditiesWidget: React.FC<CommoditiesWidgetProps> = ({ allCommoditiesDat
           <select
             value={selectedTimeRange}
             onChange={(e) => setSelectedTimeRange(e.target.value as TimeRangeKey)}
-            className="appearance-none bg-gray-100 border border-gray-300 text-gray-700 py-2 pl-3 pr-8 rounded-md text-sm focus:outline-none focus:bg-white focus:border-blue-500"
+            className="appearance-none bg-gray-100 border border-gray-300 text-gray-700 py-2 pl-3 pr-8 rounded-md text-sm focus:outline-none focus:bg-white focus:border-gray-500"
           >
             {timeRangeOptions.map(option => (
               <option key={option.key} value={option.key}>{option.label}</option>
@@ -85,7 +85,7 @@ const CommoditiesWidget: React.FC<CommoditiesWidgetProps> = ({ allCommoditiesDat
               itemStyle={{ fontSize: 12 }}
             />
             <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Line type="monotone" dataKey="price" stroke="#10B981" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} name={currentCommodityData.name} />
+            <Line type="monotone" dataKey="price" stroke="#4d4d4d" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} name={currentCommodityData.name} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -98,7 +98,7 @@ const CommoditiesWidget: React.FC<CommoditiesWidgetProps> = ({ allCommoditiesDat
 
       <button
         onClick={() => onViewInMarketplaceClick(selectedCommodityKey)}
-        className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-150 ease-in-out text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+        className="w-full bg-gray-700 hover:bg-gray-800 text-white font-medium py-2 px-4 rounded-md transition-colors duration-150 ease-in-out text-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
       >
         View in Marketplace
       </button>

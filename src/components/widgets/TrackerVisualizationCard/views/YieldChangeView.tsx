@@ -32,15 +32,15 @@ const YieldChangeView: React.FC<YieldChangeViewProps> = ({ crops }) => {
   const domain = [-Math.ceil(maxChange), Math.ceil(maxChange)];
 
   const getBarColor = (change: number) => {
-    if (change > 5) return '#22C55E'; // green-500 for significant increase
-    if (change > 0) return '#86EFAC'; // green-300 for small increase
-    if (change > -5) return '#FCA5A5'; // red-300 for small decrease
-    return '#EF4444'; // red-500 for significant decrease
+    if (change > 5) return '#1a1a1a'; // darkest gray for significant increase
+    if (change > 0) return '#4d4d4d'; // dark gray for small increase
+    if (change > -5) return '#808080'; // medium gray for small decrease
+    return '#b3b3b3'; // light gray for significant decrease
   };
 
   return (
     <div className="w-full h-full">
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={350}>
         <BarChart
           data={sortedCrops}
           layout="vertical"
@@ -59,7 +59,7 @@ const YieldChangeView: React.FC<YieldChangeViewProps> = ({ crops }) => {
             tick={{ fontSize: 12 }}
           />
           <Tooltip content={<CustomTooltip />} />
-          <ReferenceLine x={0} stroke="#94A3B8" strokeWidth={2} />
+          <ReferenceLine x={0} stroke="#666666" strokeWidth={2} />
           <Bar
             dataKey="yield_change"
             radius={[4, 4, 4, 4]}
@@ -72,25 +72,25 @@ const YieldChangeView: React.FC<YieldChangeViewProps> = ({ crops }) => {
         </BarChart>
       </ResponsiveContainer>
       
-      {/* Legend */}
-      <div className="flex justify-center gap-4 text-sm text-gray-600 mt-2">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-sm bg-green-500" />
-          <span>&gt;5% increase</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-sm bg-green-300" />
-          <span>0-5% increase</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-sm bg-red-300" />
-          <span>0-5% decrease</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-sm bg-red-500" />
-          <span>&gt;5% decrease</span>
-        </div>
-      </div>
+     {/* Legend */}
+     <div className="flex justify-center gap-4 text-sm text-gray-600 mt-2">
+       <div className="flex items-center gap-1">
+         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#1a1a1a' }} />
+         <span>&gt;5% increase</span>
+       </div>
+       <div className="flex items-center gap-1">
+         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#4d4d4d' }} />
+         <span>0-5% increase</span>
+       </div>
+       <div className="flex items-center gap-1">
+         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#808080' }} />
+         <span>0-5% decrease</span>
+       </div>
+       <div className="flex items-center gap-1">
+         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#b3b3b3' }} />
+         <span>&gt;5% decrease</span>
+       </div>
+     </div>
     </div>
   );
 };

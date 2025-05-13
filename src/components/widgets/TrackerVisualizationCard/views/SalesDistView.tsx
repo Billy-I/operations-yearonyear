@@ -37,7 +37,7 @@ const SalesDistView: React.FC<SalesDistViewProps> = ({ crops }) => {
 
   return (
     <div className="w-full h-full">
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={350}>
         <BarChart
           data={chartData}
           margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
@@ -59,7 +59,7 @@ const SalesDistView: React.FC<SalesDistViewProps> = ({ crops }) => {
           <Tooltip content={<CustomTooltip />} />
           <Bar
             dataKey="soldPercentage"
-            fill="#3B82F6" // blue-500
+            fill="#4d4d4d" // medium-dark gray
             radius={[4, 4, 0, 0]}
             maxBarSize={60}
           >
@@ -67,7 +67,7 @@ const SalesDistView: React.FC<SalesDistViewProps> = ({ crops }) => {
               <rect
                 key={`rect-${index}`}
                 width={entry.areaScale}
-                fillOpacity={entry.soldPercentage > 0 ? 1 : 0.3}
+                fillOpacity={entry.soldPercentage > 0 ? 0.9 : 0.3}
               />
             ))}
           </Bar>
