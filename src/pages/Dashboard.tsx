@@ -2,16 +2,19 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   mockInsights,
-  mockFuelPrices,
+  // mockFuelPrices, // Removed import
   mockPodcastEpisodes,
-  mockDashboardCropsData
+  mockDashboardCropsData,
+  mockCommoditiesData // Added import
 } from '../data/dashboardMockData';
 
 // Import components
 import LatestInsightsWidget from '../components/widgets/LatestInsightsWidget';
-import FuelPricesWidget from '../components/widgets/FuelPricesWidget';
+// import FuelPricesWidget from '../components/widgets/FuelPricesWidget'; // Removed import
 import PodcastWidget from '../components/widgets/PodcastWidget';
+import UploadDataPromptWidget from '../components/widgets/UploadDataPromptWidget'; // Added import
 import TrackerZone from '../components/zones/TrackerZone';
+import CommoditiesWidget from '../components/widgets/CommoditiesWidget'; // Added import
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -31,16 +34,21 @@ const Dashboard: React.FC = () => {
       
       {/* Zone 1: Prime Visibility */}
       <div className="space-y-6 mb-8">
+        {/* Upload Data Prompt Widget */}
+        <UploadDataPromptWidget />
+
         {/* Latest Insights Widget */}
         <LatestInsightsWidget insights={mockInsights} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Marketplace Snippet (Fuel Prices) */}
-          <FuelPricesWidget 
-            fuelPrices={mockFuelPrices} 
-            onExploreClick={handleExploreMarketplace} 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> {/* Adjusted grid columns back */}
+          {/* Commodities Widget */}
+          <CommoditiesWidget
+            allCommoditiesData={mockCommoditiesData}
+            onViewInMarketplaceClick={(commodityKey) => {
+              console.log(`CommoditiesWidget: View in Marketplace clicked for ${commodityKey}`);
+              // Future: navigate(`/marketplace/commodities/${commodityKey.toLowerCase().replace(' ', '-')}`);
+            }}
           />
-
           {/* Yagro Podcast Widget */}
           <PodcastWidget episodes={mockPodcastEpisodes} />
         </div>

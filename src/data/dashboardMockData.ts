@@ -28,6 +28,26 @@ export interface PodcastEpisode {
   description_snippet: string;
 }
 
+// --- New Interfaces for Commodities Widget ---
+export interface CommodityPricePoint {
+  date: string; // YYYY-MM-DD
+  price: number;
+}
+
+export interface CommodityDetails {
+  name: string;
+  unit: string; // e.g., £/L, £/tonne
+  currentPrice: number;
+  oneYearHigh: number;
+  oneYearLow: number;
+  priceHistory: {
+    last30days: CommodityPricePoint[];
+    last90days: CommodityPricePoint[];
+    last1year: CommodityPricePoint[];
+  };
+}
+// --- End New Interfaces ---
+
 // New interface for individual crop data for the dashboard tracker widget
 export interface DashboardCropData {
   name: string;
@@ -148,3 +168,73 @@ export const mockDashboardCropsData: DashboardCropData[] = [
 
 // The old TrackerSummary type and mockTrackerSummary object are no longer needed
 // as the widget will now process mockDashboardCropsData directly.
+
+// --- New Mock Data for Commodities Widget ---
+export const mockCommoditiesData: { [key: string]: CommodityDetails } = {
+  "Red Diesel": {
+    name: "Red Diesel",
+    unit: "£/L",
+    currentPrice: 0.83, // Slightly different from old mock to distinguish
+    oneYearHigh: 0.95,
+    oneYearLow: 0.78,
+    priceHistory: {
+      last30days: [
+        { date: "2025-04-14", price: 0.85 },
+        { date: "2025-04-21", price: 0.84 },
+        { date: "2025-04-28", price: 0.83 },
+        { date: "2025-05-05", price: 0.82 },
+        { date: "2025-05-13", price: 0.83 },
+      ],
+      last90days: [
+        { date: "2025-02-13", price: 0.88 },
+        { date: "2025-03-01", price: 0.87 },
+        { date: "2025-03-15", price: 0.86 },
+        { date: "2025-03-30", price: 0.85 },
+        { date: "2025-04-14", price: 0.85 },
+        { date: "2025-04-28", price: 0.83 },
+        { date: "2025-05-13", price: 0.83 },
+      ],
+      last1year: [
+        { date: "2024-05-13", price: 0.92 },
+        { date: "2024-08-13", price: 0.95 },
+        { date: "2024-11-13", price: 0.85 },
+        { date: "2025-02-13", price: 0.78 },
+        { date: "2025-05-13", price: 0.83 },
+      ],
+    },
+  }, // Comma after Red Diesel entry
+  "White Diesel": {
+    name: "White Diesel",
+    unit: "£/L",
+    currentPrice: 1.42,
+    oneYearHigh: 1.55,
+    oneYearLow: 1.35,
+    priceHistory: {
+      last30days: [
+        { date: "2025-04-14", price: 1.45 },
+        { date: "2025-04-21", price: 1.44 },
+        { date: "2025-04-28", price: 1.43 },
+        { date: "2025-05-05", price: 1.42 },
+        { date: "2025-05-13", price: 1.42 },
+      ],
+      last90days: [
+        { date: "2025-02-13", price: 1.48 },
+        { date: "2025-03-01", price: 1.47 },
+        { date: "2025-03-15", price: 1.46 },
+        { date: "2025-03-30", price: 1.45 },
+        { date: "2025-04-14", price: 1.45 },
+        { date: "2025-04-28", price: 1.43 },
+        { date: "2025-05-13", price: 1.42 },
+      ],
+      last1year: [
+        { date: "2024-05-13", price: 1.52 },
+        { date: "2024-08-13", price: 1.55 },
+        { date: "2024-11-13", price: 1.45 },
+        { date: "2025-02-13", price: 1.38 },
+        { date: "2025-05-13", price: 1.42 },
+      ],
+    },
+  } // No comma after the last entry (White Diesel)
+  // We can add other commodities like "LCE Feed Wheat", "CBOT Corn" later
+};
+// --- End New Mock Data ---
