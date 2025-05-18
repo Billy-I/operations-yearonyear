@@ -53,6 +53,80 @@ export interface CommodityDetails {
   };
 }
 
+export interface BreakEvenAnalysis {
+  cropId: string;
+  cropName: string;
+  budgetedCosts: number;
+  actualSales: number;
+  breakEvenPoint: number;
+  salesProgress: number;
+  monthlyData: {
+    month: string;
+    budgetedCosts: number;
+    actualSales: number;
+  }[];
+}
+
+export const mockBreakEvenData: { [key: string]: BreakEvenAnalysis } = {
+  '1': {
+    cropId: '1',
+    cropName: 'Wheat',
+    budgetedCosts: 250000,
+    actualSales: 175000,
+    breakEvenPoint: 200000,
+    salesProgress: 70,
+    monthlyData: [
+      { month: 'Jan', budgetedCosts: 20000, actualSales: 18000 },
+      { month: 'Feb', budgetedCosts: 40000, actualSales: 35000 },
+      { month: 'Mar', budgetedCosts: 65000, actualSales: 55000 },
+      { month: 'Apr', budgetedCosts: 95000, actualSales: 85000 },
+      { month: 'May', budgetedCosts: 125000, actualSales: 115000 },
+      { month: 'Jun', budgetedCosts: 150000, actualSales: 140000 },
+      { month: 'Jul', budgetedCosts: 175000, actualSales: 155000 },
+      { month: 'Aug', budgetedCosts: 200000, actualSales: 165000 },
+      { month: 'Sep', budgetedCosts: 220000, actualSales: 175000 }
+    ]
+  },
+  '2': {
+    cropId: '2',
+    cropName: 'Barley',
+    budgetedCosts: 180000,
+    actualSales: 145000,
+    breakEvenPoint: 160000,
+    salesProgress: 85,
+    monthlyData: [
+      { month: 'Jan', budgetedCosts: 15000, actualSales: 16000 },
+      { month: 'Feb', budgetedCosts: 35000, actualSales: 32000 },
+      { month: 'Mar', budgetedCosts: 55000, actualSales: 50000 },
+      { month: 'Apr', budgetedCosts: 85000, actualSales: 80000 },
+      { month: 'May', budgetedCosts: 105000, actualSales: 100000 },
+      { month: 'Jun', budgetedCosts: 130000, actualSales: 120000 },
+      { month: 'Jul', budgetedCosts: 155000, actualSales: 135000 },
+      { month: 'Aug', budgetedCosts: 170000, actualSales: 140000 },
+      { month: 'Sep', budgetedCosts: 180000, actualSales: 145000 }
+    ]
+  },
+  '3': {
+    cropId: '3',
+    cropName: 'Oilseed Rape',
+    budgetedCosts: 220000,
+    actualSales: 195000,
+    breakEvenPoint: 180000,
+    salesProgress: 95,
+    monthlyData: [
+      { month: 'Jan', budgetedCosts: 18000, actualSales: 20000 },
+      { month: 'Feb', budgetedCosts: 38000, actualSales: 40000 },
+      { month: 'Mar', budgetedCosts: 60000, actualSales: 65000 },
+      { month: 'Apr', budgetedCosts: 90000, actualSales: 95000 },
+      { month: 'May', budgetedCosts: 120000, actualSales: 125000 },
+      { month: 'Jun', budgetedCosts: 150000, actualSales: 155000 },
+      { month: 'Jul', budgetedCosts: 180000, actualSales: 175000 },
+      { month: 'Aug', budgetedCosts: 200000, actualSales: 185000 },
+      { month: 'Sep', budgetedCosts: 220000, actualSales: 195000 }
+    ]
+  }
+};
+
 // Generate price history data
 const generatePriceHistory = (basePrice: number, days: number): CommodityPricePoint[] => {
   const data: CommodityPricePoint[] = [];

@@ -4,7 +4,8 @@ import {
   mockInsights,
   mockPodcastEpisodes,
   mockDashboardCropsData,
-  mockCommoditiesData
+  mockCommoditiesData,
+  mockBreakEvenData
 } from '../data/dashboardMockData';
 
 // Import components
@@ -12,6 +13,7 @@ import LatestInsightsWidget from '../components/widgets/LatestInsightsWidget';
 import PodcastWidget from '../components/widgets/PodcastWidget';
 import TrackerZone from '../components/zones/TrackerZone';
 import CommoditiesWidget from '../components/widgets/CommoditiesWidget';
+import BreakEvenWidget from '../components/widgets/BreakEvenWidget';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -48,8 +50,9 @@ const Dashboard: React.FC = () => {
         onViewTrackerClick={handleViewTracker}
       />
 
-      {/* Zone 3: Latest Podcasts */}
-      <div className="mt-6">
+      {/* Zone 3: Break-Even Analysis and Latest Podcasts */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <BreakEvenWidget data={mockBreakEvenData} />
         <PodcastWidget episodes={mockPodcastEpisodes} />
       </div>
 
