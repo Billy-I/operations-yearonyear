@@ -4,13 +4,11 @@ import {
   mockInsights,
   mockPodcastEpisodes,
   mockDashboardCropsData,
-  mockCommoditiesData,
-  mockWeatherData
+  mockCommoditiesData
 } from '../data/dashboardMockData';
 
 // Import components
 import LatestInsightsWidget from '../components/widgets/LatestInsightsWidget';
-import WeatherWidget from '../components/widgets/WeatherWidget';
 import PodcastWidget from '../components/widgets/PodcastWidget';
 import TrackerZone from '../components/zones/TrackerZone';
 import CommoditiesWidget from '../components/widgets/CommoditiesWidget';
@@ -28,17 +26,11 @@ const Dashboard: React.FC = () => {
       
       {/* Zone 1: Prime Visibility */}
       <div className="space-y-6 mb-8">
-        {/* Insights and Weather Grid */}
+        {/* Primary Widgets Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Latest Insights Widget */}
           <LatestInsightsWidget insights={mockInsights} />
           
-          {/* Weather Widget */}
-          <WeatherWidget weatherData={mockWeatherData} />
-        </div>
-
-        {/* Commodities and Podcast Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Commodities Widget */}
           <CommoditiesWidget
             allCommoditiesData={mockCommoditiesData}
@@ -47,9 +39,6 @@ const Dashboard: React.FC = () => {
               // Future: navigate(`/marketplace/commodities/${commodityKey.toLowerCase().replace(' ', '-')}`);
             }}
           />
-          
-          {/* Yagro Podcast Widget */}
-          <PodcastWidget episodes={mockPodcastEpisodes} />
         </div>
       </div>
 
@@ -59,7 +48,12 @@ const Dashboard: React.FC = () => {
         onViewTrackerClick={handleViewTracker}
       />
 
-      {/* Zone 3: Future expansion area */}
+      {/* Zone 3: Latest Podcasts */}
+      <div className="mt-6">
+        <PodcastWidget episodes={mockPodcastEpisodes} />
+      </div>
+
+      {/* Zone 4: Future expansion area */}
       <div className="mt-6 p-6 border-2 border-dashed border-gray-300 rounded-lg bg-white">
         <p className="text-center text-gray-500">
           Additional widgets coming soon...
