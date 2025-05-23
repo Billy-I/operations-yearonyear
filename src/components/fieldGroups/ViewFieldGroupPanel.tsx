@@ -1,4 +1,4 @@
-import { X, Search } from 'lucide-react';
+import { X, Search, Maximize2, Minimize2 } from 'lucide-react';
 import { useState } from 'react';
 import { UserFieldGroup, FmsFieldGroup } from '../../types';
 import { FieldData } from '../../data/fieldData';
@@ -32,6 +32,7 @@ export default function ViewFieldGroupPanel({
 }: ViewFieldGroupPanelProps) {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (!isOpen || !group) return null;
 
@@ -67,7 +68,7 @@ export default function ViewFieldGroupPanel({
   });
 
   return (
-    <div className="fixed inset-y-0 right-0 w-[60rem] bg-white shadow-lg z-50 overflow-y-auto">
+    <div className={`fixed inset-y-0 right-0 ${isExpanded ? 'w-[60rem]' : 'w-96'} bg-white shadow-lg z-50 overflow-y-auto transition-all duration-300 ease-in-out`}>
       <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -126,12 +127,22 @@ export default function ViewFieldGroupPanel({
                 className="w-full border border-gray-300 rounded-md pl-8 pr-2 py-2 text-sm"
               />
             </div>
-            <button
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="ml-3 text-sm text-blue-600 hover:text-blue-800 whitespace-nowrap"
-            >
-              Sort by Name ({sortOrder === 'asc' ? 'Asc' : 'Desc'})
-            </button>
+            <div className="flex items-center gap-2 ml-3">
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="text-sm text-blue-600 hover:text-blue-800 whitespace-nowrap"
+                title={sortOrder === 'asc' ? 'Sort descending' : 'Sort ascending'}
+              >
+                Sort ({sortOrder === 'asc' ? 'Asc' : 'Desc'})
+              </button>
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="p-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                title={isExpanded ? "Collapse View" : "Expand View"}
+              >
+                {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </button>
+            </div>
           </div>
 
           <div className="border border-gray-200 rounded-md overflow-y-auto max-h-[calc(100vh-420px)] min-h-[200px] bg-gray-50 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 hover:scrollbar-thumb-gray-500">
@@ -140,7 +151,7 @@ export default function ViewFieldGroupPanel({
                 {searchQuery ? 'No fields match your search' : 'No fields in this group'}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2 bg-white">
+              <div className={`grid ${isExpanded ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' : 'grid-cols-1'} gap-2 p-2 bg-white`}>
                 {sortedAndFilteredFields.map(field => (
                   <div
                     key={field.id}

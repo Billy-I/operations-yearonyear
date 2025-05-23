@@ -1,4 +1,4 @@
-import { X, Search } from 'lucide-react';
+import { X, Search, Maximize2, Minimize2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { UserFieldGroup } from '../../types';
 import { FieldData } from '../../data/fieldData';
@@ -40,6 +40,7 @@ export default function FieldGroupPanel({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Reset form when initialData changes
   useEffect(() => {
@@ -97,7 +98,7 @@ export default function FieldGroupPanel({
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 w-[60rem] bg-white shadow-lg z-50 overflow-y-auto">
+    <div className={`fixed inset-y-0 right-0 ${isExpanded ? 'w-[60rem]' : 'w-96'} bg-white shadow-lg z-50 overflow-y-auto transition-all duration-300 ease-in-out`}>
       <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -139,12 +140,22 @@ export default function FieldGroupPanel({
             <label className="font-medium">
               Select Fields ({selectedFieldIds.length} selected)
             </label>
-            <button
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              Sort by Name ({sortOrder === 'asc' ? 'Ascending' : 'Descending'})
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="text-sm text-blue-600 hover:text-blue-800"
+                title={sortOrder === 'asc' ? 'Sort descending' : 'Sort ascending'}
+              >
+                Sort ({sortOrder === 'asc' ? 'Asc' : 'Desc'})
+              </button>
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="p-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                title={isExpanded ? "Collapse View" : "Expand View"}
+              >
+                {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </button>
+            </div>
           </div>
 
           {/* Search Box */}
@@ -168,7 +179,7 @@ export default function FieldGroupPanel({
                 No fields match your criteria
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2 bg-white">
+              <div className={`grid ${isExpanded ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' : 'grid-cols-1'} gap-2 p-2 bg-white`}>
                 {filteredFields.map(field => (
                   <label
                     key={field.id}
