@@ -39,6 +39,7 @@ export default function FieldGroupPanel({
   const [selectedFieldIds, setSelectedFieldIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Reset form when initialData changes
   useEffect(() => {
@@ -58,7 +59,13 @@ export default function FieldGroupPanel({
   // Filter fields based on search query
   const filteredFields = allFields
     .filter(field => field.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => {
+      if (sortOrder === 'asc') {
+        return a.name.localeCompare(b.name);
+      } else {
+        return b.name.localeCompare(a.name);
+      }
+    });
 
   const handleFieldToggle = (fieldId: string) => {
     setSelectedFieldIds(current =>
@@ -90,7 +97,7 @@ export default function FieldGroupPanel({
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 w-112 bg-white shadow-lg z-50 overflow-y-auto">
+    <div className="fixed inset-y-0 right-0 w-[60rem] bg-white shadow-lg z-50 overflow-y-auto">
       <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -132,8 +139,14 @@ export default function FieldGroupPanel({
             <label className="font-medium">
               Select Fields ({selectedFieldIds.length} selected)
             </label>
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              Sort by Name ({sortOrder === 'asc' ? 'Ascending' : 'Descending'})
+            </button>
           </div>
-          
+
           {/* Search Box */}
           <div className="mb-3">
             <div className="relative">
@@ -155,11 +168,11 @@ export default function FieldGroupPanel({
                 No fields match your criteria
               </div>
             ) : (
-              <div className="divide-y divide-gray-200 bg-white">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2 bg-white">
                 {filteredFields.map(field => (
                   <label
                     key={field.id}
-                    className="flex items-center px-3 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors duration-150"
+                    className="flex items-center px-3 py-2.5 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer transition-colors duration-150"
                   >
                     <input
                       type="checkbox"
@@ -167,25 +180,23 @@ export default function FieldGroupPanel({
                       onChange={() => handleFieldToggle(field.id)}
                       className="mr-3"
                     />
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{field.name}</span>
-                          <span className="text-sm text-gray-600">({field.size.toFixed(1)} ha)</span>
-                        </div>
-                        {/* Show group memberships */}
-                        {(() => {
-                          const memberships = getFieldGroupMemberships(field.id, allUserGroups, initialData?.id);
-                          if (memberships.length > 0) {
-                            return (
-                              <span className="text-xs text-gray-500 mt-0.5">
-                                In groups: {memberships.map(g => g.name).join(', ')}
-                              </span>
-                            );
-                          }
-                          return null;
-                        })()}
+                    <div className="flex flex-col overflow-hidden"> {/* Added overflow-hidden for long names */}
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium truncate" title={field.name}>{field.name}</span> {/* Added truncate and title */}
+                        <span className="text-sm text-gray-600 whitespace-nowrap">({field.size.toFixed(1)} ha)</span> {/* Added whitespace-nowrap */}
                       </div>
+                      {/* Show group memberships */}
+                      {(() => {
+                        const memberships = getFieldGroupMemberships(field.id, allUserGroups, initialData?.id);
+                        if (memberships.length > 0) {
+                          return (
+                            <span className="text-xs text-gray-500 mt-0.5 truncate" title={memberships.map(g => g.name).join(', ')}> {/* Added truncate and title */}
+                              In groups: {memberships.map(g => g.name).join(', ')}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   </label>
                 ))}

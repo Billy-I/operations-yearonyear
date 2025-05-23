@@ -31,6 +31,7 @@ export default function ViewFieldGroupPanel({
   allUserGroups,
 }: ViewFieldGroupPanelProps) {
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   if (!isOpen || !group) return null;
 
@@ -41,8 +42,7 @@ export default function ViewFieldGroupPanel({
   // Get fields in this group
   const groupFields = group.fieldIds
     .map(id => allFields.find(f => f.id === id))
-    .filter((f): f is FieldData => f !== undefined)
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .filter((f): f is FieldData => f !== undefined);
 
   const totalSize = groupFields.reduce((sum, field) => sum + field.size, 0);
 
@@ -58,8 +58,16 @@ export default function ViewFieldGroupPanel({
       )
     : groupFields;
 
+  const sortedAndFilteredFields = [...filteredFields].sort((a, b) => {
+    if (sortOrder === 'asc') {
+      return a.name.localeCompare(b.name);
+    } else {
+      return b.name.localeCompare(a.name);
+    }
+  });
+
   return (
-    <div className="fixed inset-y-0 right-0 w-112 bg-white shadow-lg z-50 overflow-y-auto">
+    <div className="fixed inset-y-0 right-0 w-[60rem] bg-white shadow-lg z-50 overflow-y-auto">
       <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -106,9 +114,9 @@ export default function ViewFieldGroupPanel({
 
         {/* Fields List */}
         <div>
-          <div className="mb-3">
+          <div className="flex justify-between items-center mb-3">
             {/* Search Box */}
-            <div className="relative">
+            <div className="relative flex-grow">
               <Search size={16} className="absolute left-2 top-2.5 text-gray-400" />
               <input
                 type="text"
@@ -118,44 +126,49 @@ export default function ViewFieldGroupPanel({
                 className="w-full border border-gray-300 rounded-md pl-8 pr-2 py-2 text-sm"
               />
             </div>
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="ml-3 text-sm text-blue-600 hover:text-blue-800 whitespace-nowrap"
+            >
+              Sort by Name ({sortOrder === 'asc' ? 'Asc' : 'Desc'})
+            </button>
           </div>
 
-          <div className="border border-gray-200 rounded-md overflow-y-auto max-h-[calc(100vh-380px)]">
-            {filteredFields.length === 0 ? (
+          <div className="border border-gray-200 rounded-md overflow-y-auto max-h-[calc(100vh-420px)] min-h-[200px] bg-gray-50 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 hover:scrollbar-thumb-gray-500">
+            {sortedAndFilteredFields.length === 0 ? (
               <div className="p-3 text-center text-gray-500">
                 {searchQuery ? 'No fields match your search' : 'No fields in this group'}
               </div>
             ) : (
-              <div className="divide-y divide-gray-200">
-                {filteredFields.map(field => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2 bg-white">
+                {sortedAndFilteredFields.map(field => (
                   <div
                     key={field.id}
-                    className="px-3 py-2 hover:bg-gray-50"
+                    className="px-3 py-2.5 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors duration-150"
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{field.name}</span>
-                          <span className="text-sm text-gray-600">
-                            ({field.size.toFixed(1)} ha)
-                          </span>
-                        </div>
-                        <span className="text-sm text-gray-600">
-                          {field.rotations['2024'] || 'No crop'}
+                    <div className="flex flex-col overflow-hidden">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium truncate" title={field.name}>{field.name}</span>
+                        <span className="text-sm text-gray-600 whitespace-nowrap">
+                          ({field.size.toFixed(1)} ha)
                         </span>
-                        {/* Show group memberships */}
-                        {(() => {
-                          const memberships = getFieldGroupMemberships(field.id, allUserGroups, group.id);
-                          if (memberships.length > 0) {
-                            return (
-                              <span className="text-xs text-gray-500 mt-0.5">
-                                Also in groups: {memberships.map(g => g.name).join(', ')}
-                              </span>
-                            );
-                          }
-                          return null;
-                        })()}
                       </div>
+                      <span className="text-sm text-gray-600 truncate" title={field.rotations['2024'] || 'No crop'}>
+                        {field.rotations['2024'] || 'No crop'}
+                      </span>
+                      {/* Show group memberships */}
+                      {(() => {
+                        const memberships = getFieldGroupMemberships(field.id, allUserGroups, group.id);
+                        if (memberships.length > 0) {
+                          const groupNames = memberships.map(g => g.name).join(', ');
+                          return (
+                            <span className="text-xs text-gray-500 mt-0.5 truncate" title={`Also in groups: ${groupNames}`}>
+                              Also in groups: {groupNames}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   </div>
                 ))}
