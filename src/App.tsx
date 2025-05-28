@@ -12,6 +12,7 @@ import BudgetsSimple from './pages/BudgetsSimple';
 import AddBudget from './pages/AddBudget';
 import CropProgress from './pages/CropProgress';
 import FieldGroupsPage from './pages/FieldGroupsPage'; // Import the new page
+import HiddenDashboard from './pages/HiddenDashboard'; // Import the hidden dashboard
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
             <Route path="/tracker/budgets-simple/add" element={<AddBudget />} />
             <Route path="/tracker/crop-progress" element={<CropProgress />} />
             <Route path="/tracker/crop-progress/:crop" element={<CropDetails />} />
+            <Route path="/dashboard-preview-xyz" element={<HiddenDashboard />} /> {/* Add route for Hidden Dashboard */}
           </Routes>
         </div>
       </div>
