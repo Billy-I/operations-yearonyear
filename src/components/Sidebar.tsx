@@ -1,5 +1,4 @@
 import { LayoutDashboard, Settings, Database, BarChart2, ShoppingCart, Compass, LineChart, LogOut, Target, Wallet, ChevronDown, ChevronRight, FolderKanban } from 'lucide-react';
-import UploadDataPromptWidget from './widgets/UploadDataPromptWidget';
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -136,10 +135,6 @@ export default function Sidebar() {
         </Link>
       </nav>
 
-      {/* Upload Data Section at bottom of sidebar */}
-      <div className="flex-none pt-4 border-t border-gray-200">
-        <UploadDataPromptWidget />
-      </div>
     </div>
   );
 }
