@@ -14,14 +14,14 @@ interface CropAreaViewProps {
   };
 }
 
-// Grayscale color palette
+// New palette colors for crop areas
 const baseColors = [
-  '#1a1a1a', // Dark gray
-  '#4d4d4d', // Medium-dark gray
-  '#666666', // Medium gray
-  '#808080', // Gray
-  '#999999', // Medium-light gray
-  '#b3b3b3'  // Light gray
+  '#006838', // Brand 400 (Dark Green)
+  '#3B82F6', // Graph color-1 500 (Blue)
+  '#F59E0B', // Accent-1 400 (Yellow-Orange)
+  '#DC2626', // Danger 500 (Red)
+  '#059855', // Success 400 (Green)
+  '#9333EA'  // Graph color-4 500 (Purple)
 ];
 
 // Patterns for bars using the same colors

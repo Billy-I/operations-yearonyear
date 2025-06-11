@@ -106,19 +106,19 @@ const CostAreaView: React.FC<CostAreaViewProps> = ({ crops }) => {
       {/* Legend */}
       <div className="flex justify-center gap-4 text-sm text-gray-600 mt-2">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#b3b3b3' }} />
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#6EE7B7' }} />
           <span>&gt;10% decrease</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#808080' }} />
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#93C5FD' }} />
           <span>0-10% decrease</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#4d4d4d' }} />
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#FED7AA' }} />
           <span>0-10% increase</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1a1a1a' }} />
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#FCA5A5' }} />
           <span>&gt;10% increase</span>
         </div>
       </div>

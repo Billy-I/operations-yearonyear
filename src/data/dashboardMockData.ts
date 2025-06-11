@@ -182,7 +182,7 @@ export const mockPodcastEpisodes: PodcastEpisode[] = [
     duration: '45min',
     guest_name: 'John Smith',
     spotify_link: 'https://open.spotify.com/episode/1',
-    cover_art_url: 'https://source.unsplash.com/random/400x400?farm'
+    cover_art_url: '/images/podcasts/future-farming.svg'
   },
   {
     id: '2',
@@ -192,7 +192,7 @@ export const mockPodcastEpisodes: PodcastEpisode[] = [
     duration: '38min',
     guest_name: 'Sarah Johnson',
     spotify_link: 'https://open.spotify.com/episode/2',
-    cover_art_url: 'https://source.unsplash.com/random/400x400?agriculture'
+    cover_art_url: '/images/podcasts/sustainable-agriculture.svg'
   },
   {
     id: '3',
@@ -202,7 +202,7 @@ export const mockPodcastEpisodes: PodcastEpisode[] = [
     duration: '42min',
     guest_name: 'Michael Brown',
     spotify_link: 'https://open.spotify.com/episode/3',
-    cover_art_url: 'https://source.unsplash.com/random/400x400?market'
+    cover_art_url: '/images/podcasts/market-trends.svg'
   },
   {
     id: '4',
@@ -212,7 +212,7 @@ export const mockPodcastEpisodes: PodcastEpisode[] = [
     duration: '35min',
     guest_name: 'Emily Wilson',
     spotify_link: 'https://open.spotify.com/episode/4',
-    cover_art_url: 'https://source.unsplash.com/random/400x400?irrigation'
+    cover_art_url: '/images/podcasts/smart-irrigation.svg'
   }
 ];
 
@@ -360,5 +360,374 @@ export const mockWeatherData = [
     condition: 'sunny' as const,
     temperature: 21,
     rainfall: 0
+  }
+];
+
+// Cash Flow Data
+export interface CashFlowDataPoint {
+  month: string;
+  salesWheat?: number;
+  salesOats?: number;
+  salesBarley?: number;
+  salesOilseedRape?: number;
+  invoiceSeed?: number;
+  invoiceFertiliser?: number;
+  invoiceChemical?: number;
+  netCashFlow: number;
+}
+
+export const mockCashFlowData: CashFlowDataPoint[] = [
+  { month: 'Apr', salesWheat: 80, invoiceChemical: -90, netCashFlow: 85.89 },
+  { month: 'May', salesOats: 60, invoiceChemical: -100, netCashFlow: 50 },
+  { month: 'Jun', invoiceChemical: -30, invoiceFertiliser: -20, netCashFlow: -10 },
+  { month: 'Jul', salesOilseedRape: 70, invoiceSeed: -10, invoiceFertiliser: -110, invoiceChemical: -5, netCashFlow: -105 },
+  { month: 'Aug', salesBarley: 90, invoiceFertiliser: -60, invoiceChemical: -20, netCashFlow: -85 },
+  { month: 'Sep', invoiceChemical: -100, invoiceFertiliser: -30, netCashFlow: -190 },
+  { month: 'Oct', invoiceChemical: -20, netCashFlow: -205 },
+  { month: 'Nov', invoiceChemical: -10, netCashFlow: -210 },
+  { month: 'Dec', invoiceChemical: -5, netCashFlow: -212 },
+  { month: 'Jan', invoiceChemical: -15, netCashFlow: -220 },
+  { month: 'Feb', invoiceChemical: -30, netCashFlow: -250 },
+  { month: 'Mar', invoiceChemical: -25, netCashFlow: -274.54 },
+];
+
+// Mock data for Explorer Snapshot Widget
+export interface CropPerformanceMetric {
+  label: string; 
+  value: string; 
+}
+
+export interface ExplorerCropYearData {
+  cropName: string;
+  harvestYear: string; 
+  metrics: CropPerformanceMetric[];
+}
+
+export type MockExplorerSnapshotDataType = {
+  [cropId: string]: ExplorerCropYearData; 
+};
+
+export const mockExplorerSnapshotData: MockExplorerSnapshotDataType = {
+  'winter_wheat': {
+    cropName: 'Winter Wheat',
+    harvestYear: '2024',
+    metrics: [
+      { label: 'Avg. Yield', value: '9.1 t/ha' },
+      { label: 'Avg. Gross Margin', value: '£650/ha' },
+      { label: 'Avg. Net Margin', value: '£395/ha' },
+      { label: 'Seed Cost', value: '£75/ha' },
+      { label: 'Fertiliser Cost', value: '£220/ha' },
+      { label: 'Spray Cost', value: '£110/ha' },
+    ]
+  },
+  'oilseed_rape': {
+    cropName: 'Oilseed Rape',
+    harvestYear: '2024',
+    metrics: [
+      { label: 'Avg. Yield', value: '3.8 t/ha' },
+      { label: 'Avg. Gross Margin', value: '£580/ha' },
+      { label: 'Avg. Net Margin', value: '£340/ha' },
+      { label: 'Seed Cost', value: '£60/ha' },
+      { label: 'Fertiliser Cost', value: '£190/ha' },
+      { label: 'Spray Cost', value: '£135/ha' },
+    ]
+  },
+  'spring_barley': {
+    cropName: 'Spring Barley',
+    harvestYear: '2024',
+    metrics: [
+      { label: 'Avg. Yield', value: '7.2 t/ha' },
+      { label: 'Avg. Gross Margin', value: '£550/ha' },
+      { label: 'Avg. Net Margin', value: '£310/ha' },
+      { label: 'Seed Cost', value: '£65/ha' },
+      { label: 'Fertiliser Cost', value: '£180/ha' },
+      { label: 'Spray Cost', value: '£95/ha' },
+    ]
+  }
+};
+
+// --- New Structure for Multi-Year Trends Widget ---
+export interface TrendDataPoint {
+  year: string;
+  value: number;
+}
+
+export interface MetricTrend {
+  label: string;
+  unit: string;
+  history: TrendDataPoint[];
+}
+
+export type MockMultiYearTrendsDataType = {
+  contextName: string;
+  availableMetrics: {
+    [metricKey: string]: MetricTrend;
+  };
+};
+
+export const mockMultiYearTrendsData: MockMultiYearTrendsDataType = {
+  contextName: "Farm Performance - Last 3 Years",
+  availableMetrics: {
+    'yield': {
+      label: "Avg. Yield",
+      unit: "t/ha",
+      history: [
+        { year: "2022", value: 8.8 },
+        { year: "2023", value: 9.1 },
+        { year: "2024", value: 9.0 },
+      ]
+    },
+    'grossMargin': {
+      label: "Avg. Gross Margin",
+      unit: "£/ha",
+      history: [
+        { year: "2022", value: 620 },
+        { year: "2023", value: 650 },
+        { year: "2024", value: 635 },
+      ]
+    },
+    'netMargin': {
+      label: "Avg. Net Margin",
+      unit: "£/ha",
+      history: [
+        { year: "2022", value: 380 },
+        { year: "2023", value: 395 },
+        { year: "2024", value: 385 },
+      ]
+    },
+    'totalCosts': {
+      label: "Avg. Total Costs",
+      unit: "£/ha",
+      history: [
+        { year: "2022", value: 500 },
+        { year: "2023", value: 515 },
+        { year: "2024", value: 515 },
+      ]
+    }
+  }
+};
+// --- End of New Structure for Multi-Year Trends Widget ---
+
+// --- Key Performance Indicators (KPI) Summary Card Data ---
+export interface KpiDataItem {
+  id: string;
+  label: string;
+  icon: string;
+  iconBgColor: string;
+  iconColor: string;
+  link?: string;
+
+  // For typical display KPIs
+  value?: string;        // The main large value e.g., "40,689"
+  trendIcon?: 'ArrowUpRight' | 'ArrowDownRight' | 'Minus'; // Optional: Lucide icon for trend
+  trendText?: string;      // Text like "8.5% Up from yesterday"
+  trendColorClass?: string; // Tailwind class for trend text & icon e.g., "text-green-600"
+
+  // For action-oriented cards
+  actionText?: string;    // e.g., "Import your latest field data"
+}
+
+export const mockKpiSummaryData: KpiDataItem[] = [
+  {
+    id: 'profitability',
+    label: 'Farm Profitability',
+    value: '£12.3k',
+    icon: 'TrendingUp',
+    iconBgColor: 'bg-green-100',
+    iconColor: 'text-green-600',
+    trendIcon: 'ArrowUpRight',
+    trendText: '5.2% YTD vs Target',
+    trendColorClass: 'text-green-600',
+    link: '/financials/overview'
+  },
+  {
+    id: 'critical_alerts',
+    label: 'Critical Alerts',
+    value: '2 Active',
+    icon: 'AlertTriangle',
+    iconBgColor: 'bg-red-100',
+    iconColor: 'text-red-600',
+    trendText: 'Requires attention',
+    trendColorClass: 'text-red-600',
+    link: '/alerts'
+  },
+  {
+    id: 'weather',
+    label: 'Local Forecast',
+    value: '18°C, Showers',
+    icon: 'CloudRain',
+    iconBgColor: 'bg-sky-100',
+    iconColor: 'text-sky-600',
+    trendText: 'Next 24h',
+    trendColorClass: 'text-gray-500',
+    link: '/weather'
+  },
+  {
+    id: 'upload_data',
+    label: 'Data Import',
+    icon: 'UploadCloud',
+    iconBgColor: 'bg-indigo-100',
+    iconColor: 'text-indigo-600',
+    actionText: 'Upload new field or financial data to update your dashboard.',
+    link: '/data/upload' // Example link to an upload page
+  }
+];
+// --- End of KPI Summary Card Data ---
+
+// --- Market Prices Data ---
+export interface MarketItem {
+  id: string;
+  name: string;
+  category: 'fuel' | 'fertilizer' | 'seeds' | 'chemicals';
+  currentPrice: number;
+  unit: string;
+  trend: 'up' | 'down' | 'stable';
+  changePercent: number;
+  icon?: string;
+}
+
+export const mockMarketPricesData: MarketItem[] = [
+  {
+    id: 'diesel',
+    name: 'Red Diesel',
+    category: 'fuel',
+    currentPrice: 1.45,
+    unit: 'L',
+    trend: 'up',
+    changePercent: 3.2
+  },
+  {
+    id: 'petrol',
+    name: 'Petrol',
+    category: 'fuel',
+    currentPrice: 1.52,
+    unit: 'L',
+    trend: 'down',
+    changePercent: 1.8
+  },
+  {
+    id: 'nitrogen',
+    name: 'Nitrogen (34.5%)',
+    category: 'fertilizer',
+    currentPrice: 385.50,
+    unit: 'tonne',
+    trend: 'stable',
+    changePercent: 0.1
+  },
+  {
+    id: 'phosphate',
+    name: 'Triple Super Phosphate',
+    category: 'fertilizer',
+    currentPrice: 520.00,
+    unit: 'tonne',
+    trend: 'up',
+    changePercent: 2.5
+  },
+  {
+    id: 'wheat_seed',
+    name: 'Winter Wheat Seed',
+    category: 'seeds',
+    currentPrice: 75.00,
+    unit: 'ha',
+    trend: 'down',
+    changePercent: 1.2
+  },
+  {
+    id: 'barley_seed',
+    name: 'Spring Barley Seed',
+    category: 'seeds',
+    currentPrice: 65.00,
+    unit: 'ha',
+    trend: 'stable',
+    changePercent: 0.5
+  },
+  {
+    id: 'herbicide',
+    name: 'Glyphosate 360',
+    category: 'chemicals',
+    currentPrice: 4.25,
+    unit: 'L',
+    trend: 'up',
+    changePercent: 4.1
+  },
+  {
+    id: 'fungicide',
+    name: 'Azoxystrobin',
+    category: 'chemicals',
+    currentPrice: 12.80,
+    unit: 'L',
+    trend: 'down',
+    changePercent: 2.3
+  }
+];
+
+// --- Farm Insights Data ---
+export interface FarmInsight {
+  id: string;
+  title: string;
+  description: string;
+  type: 'opportunity' | 'alert' | 'recommendation' | 'trend';
+  priority: 'high' | 'medium' | 'low';
+  confidence: number; // 0-100
+  aiGenerated: boolean;
+  actionable?: boolean;
+  estimatedImpact?: string;
+}
+
+export const mockFarmInsightsData: FarmInsight[] = [
+  {
+    id: 'yield_optimization',
+    title: 'Yield Optimization Opportunity',
+    description: 'AI analysis suggests optimizing nitrogen application timing in Field Group A could increase wheat yield by 8-12%.',
+    type: 'opportunity',
+    priority: 'high',
+    confidence: 87,
+    aiGenerated: true,
+    actionable: true,
+    estimatedImpact: '+£8.5k revenue'
+  },
+  {
+    id: 'weather_alert',
+    title: 'Weather Risk Alert',
+    description: 'Heavy rainfall predicted for next week. Consider delaying herbicide application to prevent runoff.',
+    type: 'alert',
+    priority: 'medium',
+    confidence: 92,
+    aiGenerated: true,
+    actionable: true,
+    estimatedImpact: 'Risk mitigation'
+  },
+  {
+    id: 'cost_reduction',
+    title: 'Fertilizer Cost Reduction',
+    description: 'Market analysis shows fertilizer prices expected to drop 5-7% in the next 3 weeks. Consider delaying large purchases.',
+    type: 'recommendation',
+    priority: 'medium',
+    confidence: 74,
+    aiGenerated: true,
+    actionable: true,
+    estimatedImpact: '-£3.2k costs'
+  },
+  {
+    id: 'yield_trend',
+    title: 'Above-Average Yield Trend',
+    description: 'Your oilseed rape is tracking 15% above regional average. Current practices are highly effective.',
+    type: 'trend',
+    priority: 'low',
+    confidence: 95,
+    aiGenerated: true,
+    actionable: false,
+    estimatedImpact: 'Positive trend'
+  },
+  {
+    id: 'equipment_maintenance',
+    title: 'Preventive Maintenance Due',
+    description: 'Combine harvester maintenance scheduled based on usage patterns. Book service to avoid harvest delays.',
+    type: 'alert',
+    priority: 'high',
+    confidence: 98,
+    aiGenerated: false,
+    actionable: true,
+    estimatedImpact: 'Prevent downtime'
   }
 ];

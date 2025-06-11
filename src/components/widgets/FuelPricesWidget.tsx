@@ -30,11 +30,11 @@ const FuelPricesWidget: React.FC<FuelPricesWidgetProps> = ({
   const getTrendColor = (trend: string) => {
     switch (trend) {
       case 'up':
-        return 'text-red-600';
+        return '#DC2626'; // Danger 500 (Red)
       case 'down':
-        return 'text-green-600';
+        return '#059855'; // Success 400 (Green)
       default:
-        return 'text-gray-600';
+        return '#6B7280'; // Gray 500
     }
   };
 
@@ -52,7 +52,7 @@ const FuelPricesWidget: React.FC<FuelPricesWidgetProps> = ({
               <div className="font-medium">
                 {fuel.current_price.toFixed(2)} {fuel.unit}
               </div>
-              <div className={`text-sm ${getTrendColor(fuel.price_trend)}`}>
+              <div className="text-sm" style={{ color: getTrendColor(fuel.price_trend) }}>
                 {getTrendIcon(fuel.price_trend)} 
                 {fuel.price_trend.charAt(0).toUpperCase() + fuel.price_trend.slice(1)}
               </div>
@@ -62,7 +62,14 @@ const FuelPricesWidget: React.FC<FuelPricesWidgetProps> = ({
       </div>
       <button 
         onClick={onExploreClick}
-        className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+        className="mt-4 w-full text-white px-4 py-2 rounded transition-colors"
+        style={{ backgroundColor: '#006838' }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#004D28';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '#006838';
+        }}
       >
         Explore Marketplace
       </button>

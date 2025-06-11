@@ -59,7 +59,7 @@ const SalesDistView: React.FC<SalesDistViewProps> = ({ crops }) => {
           <Tooltip content={<CustomTooltip />} />
           <Bar
             dataKey="soldPercentage"
-            fill="#4d4d4d" // medium-dark gray
+            fill="#05976A" // Graph green
             radius={[4, 4, 0, 0]}
             maxBarSize={60}
           >

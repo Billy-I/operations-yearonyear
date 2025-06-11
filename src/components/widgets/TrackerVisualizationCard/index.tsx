@@ -27,7 +27,7 @@ const viewDescriptions: Record<ViewType, string> = {
 
 const TrackerVisualizationCard: React.FC<TrackerVisualizationCardProps> = ({
   crops,
-  initialView = 'sales'
+  initialView = 'yield'
 }) => {
   const [currentView, setCurrentView] = useState<ViewType>(initialView);
 

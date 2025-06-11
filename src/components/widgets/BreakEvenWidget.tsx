@@ -26,13 +26,26 @@ const BreakEvenWidget: React.FC<BreakEvenWidgetProps> = ({ data }) => {
   const progressPercentage = (selectedCrop.actualSales / selectedCrop.breakEvenPoint) * 100;
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div 
+      className="p-6"
+      style={{
+        background: '#FFFFFF',
+        borderRadius: '8px',
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+      }}
+    >
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-800">Break-Even Analysis</h2>
         <select
           value={selectedCropId}
           onChange={handleCropChange}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
+          className="px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          style={{
+            border: '1px solid #D1D5DB',
+            borderRadius: '8px',
+            background: '#FFFFFF'
+          }}
         >
           {Object.values(data).map((crop) => (
             <option key={crop.cropId} value={crop.cropId}>
@@ -54,8 +67,11 @@ const BreakEvenWidget: React.FC<BreakEvenWidgetProps> = ({ data }) => {
         </div>
         <div className="h-2 bg-gray-200 rounded-full">
           <div 
-            className="h-2 bg-gray-700 rounded-full transition-all duration-500"
-            style={{ width: `${progressPercentage}%` }}
+            className="h-2 rounded-full transition-all duration-500"
+            style={{ 
+              width: `${progressPercentage}%`,
+              backgroundColor: 'var(--yagro-brand)'
+            }}
           />
         </div>
       </div>
@@ -99,7 +115,7 @@ const BreakEvenWidget: React.FC<BreakEvenWidgetProps> = ({ data }) => {
               type="monotone"
               dataKey="budgetedCosts"
               name="Budgeted Costs"
-              stroke="#4B5563"
+              stroke="#DC2626"
               strokeWidth={2}
               dot={false}
             />
@@ -107,7 +123,7 @@ const BreakEvenWidget: React.FC<BreakEvenWidgetProps> = ({ data }) => {
               type="monotone"
               dataKey="actualSales"
               name="Actual Sales"
-              stroke="#1F2937"
+              stroke="#059855"
               strokeWidth={2}
               dot={false}
             />
@@ -117,19 +133,40 @@ const BreakEvenWidget: React.FC<BreakEvenWidgetProps> = ({ data }) => {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-4 mt-6 text-center">
-        <div className="p-3 bg-gray-50 rounded-lg">
+        <div 
+          className="p-3"
+          style={{
+            background: '#F8FAFC',
+            borderRadius: '8px',
+            border: '1px solid #E5E7EB'
+          }}
+        >
           <div className="text-sm text-gray-600">Area</div>
           <div className="text-lg font-semibold text-gray-800">
             {selectedCrop.cropName}
           </div>
         </div>
-        <div className="p-3 bg-gray-50 rounded-lg">
+        <div 
+          className="p-3"
+          style={{
+            background: '#F8FAFC',
+            borderRadius: '8px',
+            border: '1px solid #E5E7EB'
+          }}
+        >
           <div className="text-sm text-gray-600">Budgeted Costs</div>
           <div className="text-lg font-semibold text-gray-800">
             £{(selectedCrop.budgetedCosts / 1000).toFixed(0)}k
           </div>
         </div>
-        <div className="p-3 bg-gray-50 rounded-lg">
+        <div 
+          className="p-3"
+          style={{
+            background: '#F8FAFC',
+            borderRadius: '8px',
+            border: '1px solid #E5E7EB'
+          }}
+        >
           <div className="text-sm text-gray-600">Actual Sales</div>
           <div className="text-lg font-semibold text-gray-800">
             £{(selectedCrop.actualSales / 1000).toFixed(0)}k

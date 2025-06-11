@@ -77,7 +77,8 @@ const LatestInsightsWidget: React.FC<LatestInsightsWidgetProps> = ({ insights })
                 <div className="mt-3 text-right">
                   <a 
                     href={currentInsight.link} 
-                    className="text-blue-600 text-sm hover:underline"
+                    className="text-sm hover:underline"
+                    style={{ color: '#006838' }}
                   >
                     Go to details →
                   </a>

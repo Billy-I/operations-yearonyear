@@ -2,6 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    /* New Yagro Palette */
+    --brand-primary: #3B7A57;       /* Forest-green */
+    --brand-primary-dark: #2F6545;  /* Darker shade for hover */
+    --brand-primary-light: #5CAE80; /* Lighter shade */
+
+    --brand-secondary: #8DC63F;     /* Bright lime */
+    --brand-secondary-dark: #7AB835;
+    --brand-secondary-light: #A5D866;
+
+    --brand-accent: #007BDF;        /* Tech accent */
+    --brand-accent-dark: #0062B3;
+    --brand-accent-light: #3398E8;
+
+    --brand-cta: #FF8C42;           /* Call-to-action */
+    --brand-cta-dark: #E67E3A;
+    --brand-cta-light: #FFA56B;
+
+    --neutral-900: #2F2F32;         /* Primary text */
+    --neutral-500: #86888A;         /* Muted text */
+    --neutral-200: #E9EAEB;         /* For borders, dividers */
+    --neutral-100: #F7F8F8;         /* Card & page background */
+    
+    /* Status Colors */
+    --status-success: #4CAF50;
+    --status-success-light: #E8F5E9;
+    --status-success-dark: #388E3C;
+    
+    --status-warning: #F4B400;
+    --status-warning-light: #FFF8E1;
+    --status-warning-dark: #C79100;
+
+    --status-error: #E53935;
+    --status-error-light: #FFEBEE;
+    --status-error-dark: #C62828;
+    
+    /* Data Visualisation - Categorical */
+    --vis-cat-1: #009E73;
+    --vis-cat-2: #0072B2;
+    --vis-cat-3: #D55E00;
+    --vis-cat-4: #E69F00;
+    --vis-cat-5: #CC79A7;
+    --vis-cat-6: #56B4E9;
+
+    /* Data Visualisation - Diverging */
+    --vis-div-1: #E7F6B7;
+    --vis-div-2: #8DC63F;
+    --vis-div-3: #F4B400;
+    --vis-div-4: #FF8C42;
+    --vis-div-5: #007BDF;
+  }
+  
+  /* Better typography */
+  body {
+    font-feature-settings: "cv01", "cv03", "cv04", "cv09";
+    letter-spacing: -0.01em;
+  }
+}
+
 @layer utilities {
   .animate-pulse-once {
     animation: pulse-once 2s ease-in-out;
@@ -14,6 +74,249 @@
     50% {
       opacity: 0.5;
     }
+  }
+
+  .animate-slide-in-up {
+    animation: slide-in-up 0.6s ease-out;
+  }
+
+  @keyframes slide-in-up {
+    0% {
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 1s ease-in-out;
+  }
+
+  @keyframes bounce-subtle {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-2px);
+    }
+  }
+
+  /* Modern Glass Effects */
+  .glass {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .glass-subtle {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  /* Apple-inspired backgrounds */
+  .apple-card {
+    background: rgba(255, 255, 255, 1);
+    border: 0.5px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 
+      0 1px 3px rgba(0, 0, 0, 0.02),
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 0 0 1px rgba(0, 0, 0, 0.02);
+  }
+  
+  .apple-frosted {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(20px) saturate(1.8);
+    border: 0.5px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+  
+  .apple-gray {
+    background: #FAFAFA;
+    border: 0.5px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 
+      0 1px 3px rgba(0, 0, 0, 0.03),
+      0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+  
+  .apple-gradient {
+    background: linear-gradient(180deg, 
+      rgba(255, 255, 255, 1) 0%, 
+      rgba(251, 251, 251, 1) 100%);
+    border: 0.5px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 
+      0 1px 3px rgba(0, 0, 0, 0.04),
+      0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Modern Shadows */
+  .shadow-modern {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  }
+  
+  .shadow-modern-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  }
+  
+  .shadow-modern-xl {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Better gradients */
+  .gradient-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
+  }
+  
+  .gradient-success {
+    background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+  }
+  
+  .gradient-warning {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+  }
+  
+  .gradient-danger {
+    background: linear-gradient(135deg, var(--status-error-light) 0%, #FECACA 100%);
+  }
+  
+  .gradient-brand {
+    background: linear-gradient(135deg, rgba(59, 122, 87, 0.05) 0%, rgba(59, 122, 87, 0.15) 100%);
+  }
+
+  /* Force Brand Colors */
+  .text-brand-primary { color: var(--brand-primary) !important; }
+  .text-brand-primary-dark { color: var(--brand-primary-dark) !important; }
+  .text-brand-primary-light { color: var(--brand-primary-light) !important; }
+  .bg-brand-primary { background-color: var(--brand-primary) !important; }
+  .bg-brand-primary-dark { background-color: var(--brand-primary-dark) !important; }
+  .bg-brand-secondary { background-color: var(--brand-secondary) !important; }
+  .bg-neutral-100 { background-color: var(--neutral-100) !important; }
+  
+  .text-status-success { color: var(--status-success) !important; }
+  .text-status-success-dark { color: var(--status-success-dark) !important; }
+  .bg-status-success { background-color: var(--status-success) !important; }
+  .bg-status-success-light { background-color: var(--status-success-light) !important; }
+  
+  .text-status-warning { color: var(--status-warning) !important; }
+  .text-status-warning-dark { color: var(--status-warning-dark) !important; }
+  .bg-status-warning { background-color: var(--status-warning) !important; }
+  .bg-status-warning-light { background-color: var(--status-warning-light) !important; }
+  
+  .text-status-error { color: var(--status-error) !important; }
+  .text-status-error-dark { color: var(--status-error-dark) !important; }
+  .bg-status-error { background-color: var(--status-error) !important; }
+  .bg-status-error-light { background-color: var(--status-error-light) !important; }
+  
+  .text-brand-accent { color: var(--brand-accent) !important; }
+  .text-brand-accent-dark { color: var(--brand-accent-dark) !important; }
+  .bg-brand-accent { background-color: var(--brand-accent) !important; }
+  .bg-brand-accent-light { background-color: var(--brand-accent-light) !important; }
+  
+  .text-neutral-500 { color: var(--neutral-500) !important; }
+  .bg-neutral-200 { background-color: var(--neutral-200) !important; }
+  .border-neutral-200 { border-color: var(--neutral-200) !important; }
+  .border-brand-primary { border-color: var(--brand-primary) !important; }
+  
+  /* Special opacity variants */
+  .bg-brand-primary\/10 { background-color: rgb(59 122 87 / 0.1) !important; }
+  .text-brand-primary\/60 { color: rgb(59 122 87 / 0.6) !important; }
+  .text-status-success\/60 { color: rgb(76 175 80 / 0.6) !important; }
+  .text-status-warning\/60 { color: rgb(244 180 0 / 0.6) !important; }
+  .text-brand-accent\/60 { color: rgb(0 123 223 / 0.6) !important; }
+  
+  /* Focus and hover states */
+  .focus\:ring-brand-primary:focus { --tw-ring-color: var(--brand-primary) !important; }
+  .focus\:border-brand-primary:focus { border-color: var(--brand-primary) !important; }
+  .hover\:bg-brand-primary-dark:hover { background-color: var(--brand-primary-dark) !important; }
+  .hover\:text-brand-primary-dark:hover { color: var(--brand-primary-dark) !important; }
+  .hover\:bg-neutral-200:hover { background-color: var(--neutral-200) !important; }
+  .hover\:shadow-modern:hover { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important; }
+  .hover\:shadow-modern-lg:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.04) !important; }
+  
+  /* Border variants */
+  .border-brand-primary\/20 { border-color: rgb(59 122 87 / 0.2) !important; }
+  .border-status-success\/20 { border-color: rgb(76 175 80 / 0.2) !important; }
+  .border-status-warning\/20 { border-color: rgb(244 180 0 / 0.2) !important; }
+  .border-status-error\/20 { border-color: rgb(229 57 53 / 0.2) !important; }
+  
+  /* Modern metric cards */
+  .metric-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 1rem !important;
+    padding: 1.5rem !important;
+    box-shadow: 0 0 6px 0 rgba(194, 196, 197, 0.2) !important;
+    border: none !important;
+  }
+  
+  .metric-value {
+    font-size: 1.875rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.025em !important;
+  }
+  
+  .metric-label {
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #4b5563 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+  }
+  
+  /* Modern buttons */
+  .btn-primary {
+    @apply px-4 py-2 bg-brand-primary text-white font-semibold rounded-lg shadow-md transition-all duration-300 ease-in-out;
+  }
+  .btn-primary:hover {
+    @apply bg-brand-primary-dark shadow-lg;
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-neutral-100 text-neutral-900 font-semibold rounded-lg border border-neutral-200 transition-all duration-300 ease-in-out;
+  }
+  
+  .btn-secondary:hover {
+    @apply bg-neutral-200 border-neutral-200 shadow-sm;
+     transform: translateY(-1px);
+  }
+
+  .field-card {
+    @apply relative p-4 bg-white rounded-lg shadow-modern transition-all duration-300 ease-in-out border-l-4 border-transparent;
+  }
+  
+  .field-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+    @apply border-brand-primary;
+  }
+  
+  .heading-primary {
+    @apply text-2xl font-bold text-neutral-900 mb-1;
+  }
+  
+  .heading-secondary {
+    @apply text-lg font-semibold text-neutral-900 mb-2;
+  }
+
+  .text-emphasis {
+    @apply font-semibold text-neutral-900;
+  }
+  
+  .text-muted {
+    @apply text-neutral-500 text-sm;
   }
 }
 

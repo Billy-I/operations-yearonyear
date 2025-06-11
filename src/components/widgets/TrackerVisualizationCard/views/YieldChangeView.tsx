@@ -24,18 +24,16 @@ const CustomTooltip: React.FC<any> = ({ active, payload, label }) => {
 };
 
 const YieldChangeView: React.FC<YieldChangeViewProps> = ({ crops }) => {
-  // Sort crops by yield change (highest to lowest)
   const sortedCrops = [...crops].sort((a, b) => b.yield_change - a.yield_change);
-
-  // Calculate domain for the chart
   const maxChange = Math.max(...crops.map(c => Math.abs(c.yield_change)));
   const domain = [-Math.ceil(maxChange), Math.ceil(maxChange)];
 
-  const getBarColor = (change: number) => {
-    if (change > 5) return '#1a1a1a'; // darkest gray for significant increase
-    if (change > 0) return '#4d4d4d'; // dark gray for small increase
-    if (change > -5) return '#808080'; // medium gray for small decrease
-    return '#b3b3b3'; // light gray for significant decrease
+  // Updated color logic using new palette
+  const getBarColor = (change: number): string => {
+    if (change > 5) return '#059855';  // Success 400 (Dark Green)
+    if (change > 0) return '#6EE7B7';  // Success 300 (Light Green)
+    if (change > -5) return '#FCA5A5'; // Danger 300 (Light Red)
+    return '#DC2626';      // Danger 500 (Dark Red)
   };
 
   return (
@@ -72,22 +70,22 @@ const YieldChangeView: React.FC<YieldChangeViewProps> = ({ crops }) => {
         </BarChart>
       </ResponsiveContainer>
       
-     {/* Legend */}
-     <div className="flex justify-center gap-4 text-sm text-gray-600 mt-2">
+     {/* Updated Legend with direct hex codes */}
+     <div className="flex justify-center flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600 mt-2">
        <div className="flex items-center gap-1">
-         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#1a1a1a' }} />
+         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: getBarColor(6) }} />
          <span>&gt;5% increase</span>
        </div>
        <div className="flex items-center gap-1">
-         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#4d4d4d' }} />
+         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: getBarColor(1) }} />
          <span>0-5% increase</span>
        </div>
        <div className="flex items-center gap-1">
-         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#808080' }} />
+         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: getBarColor(-1) }} />
          <span>0-5% decrease</span>
        </div>
        <div className="flex items-center gap-1">
-         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#b3b3b3' }} />
+         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: getBarColor(-6) }} />
          <span>&gt;5% decrease</span>
        </div>
      </div>

@@ -48,11 +48,21 @@ const CommoditiesWidget: React.FC<CommoditiesWidgetProps> = ({ allCommoditiesDat
               <button
                 key={key}
                 onClick={() => setSelectedCommodityKey(key)}
-                className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                  selectedCommodityKey === key
-                    ? 'bg-gray-700 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className="px-3 py-1 text-sm rounded-full transition-colors"
+                style={{
+                  backgroundColor: selectedCommodityKey === key ? '#006838' : '#F3F4F6',
+                  color: selectedCommodityKey === key ? '#FFFFFF' : '#6B7280'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedCommodityKey !== key) {
+                    e.currentTarget.style.backgroundColor = '#E5E7EB';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedCommodityKey !== key) {
+                    e.currentTarget.style.backgroundColor = '#F3F4F6';
+                  }
+                }}
               >
                 {data.name}
               </button>
@@ -85,7 +95,7 @@ const CommoditiesWidget: React.FC<CommoditiesWidgetProps> = ({ allCommoditiesDat
               itemStyle={{ fontSize: 12 }}
             />
             <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Line type="monotone" dataKey="price" stroke="#4d4d4d" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} name={currentCommodityData.name} />
+            <Line type="monotone" dataKey="price" stroke="#05976A" strokeWidth={2} dot={{ r: 3, fill: '#05976A' }} activeDot={{ r: 5, fill: '#047857' }} name={currentCommodityData.name} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -98,7 +108,14 @@ const CommoditiesWidget: React.FC<CommoditiesWidgetProps> = ({ allCommoditiesDat
 
       <button
         onClick={() => onViewInMarketplaceClick(selectedCommodityKey)}
-        className="w-full bg-gray-700 hover:bg-gray-800 text-white font-medium py-2 px-4 rounded-md transition-colors duration-150 ease-in-out text-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+        className="w-full text-white font-medium py-2 px-4 rounded-md transition-colors duration-150 ease-in-out text-sm focus:outline-none focus:ring-2 focus:ring-offset-2"
+        style={{ backgroundColor: '#006838' }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#004D28';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '#006838';
+        }}
       >
         View in Marketplace
       </button>
